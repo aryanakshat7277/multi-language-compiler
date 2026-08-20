@@ -1,0 +1,105 @@
+/* ==========================================================================
+   CODEFORGE PRO — WARM CLAY AST TREE WINDOW
+   ========================================================================== */
+
+.ast-tree-window-panel {
+  display: flex;
+  flex-direction: column;
+  height: 490px;
+  background-color: var(--bg-panel);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-clay-flat);
+  overflow: hidden;
+}
+
+.ast-window-header {
+  height: 44px;
+  background-color: var(--bg-surface);
+  border-bottom: 1px solid var(--border-hairline);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.ast-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.text-terracotta {
+  color: var(--accent-terracotta);
+}
+
+.ast-window-title {
+  font-family: var(--font-serif);
+  font-size: 14.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.ast-canvas-container {
+  flex: 1;
+  background-color: var(--bg-surface-sunken);
+  box-shadow: var(--shadow-inset-well);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.ast-tree-svg {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  padding: 10px;
+}
+
+.tree-node-group {
+  cursor: pointer;
+  transition: opacity var(--duration-fast) var(--ease-smooth);
+}
+
+.tree-node-group:hover {
+  opacity: 0.88;
+}
+
+.tree-node-group.selected rect {
+  filter: drop-shadow(0 2px 6px rgba(200, 90, 50, 0.35));
+}
+
+.ast-footer-status {
+  padding: 8px 16px;
+  background-color: var(--bg-surface);
+  border-top: 1px solid var(--border-hairline);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font-serif);
+  font-size: 12px;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.ast-footer-status strong {
+  color: var(--accent-terracotta);
+  font-family: var(--font-mono);
+}
+
+.ast-scope-tag {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: var(--accent-terracotta);
+  background-color: var(--accent-terracotta-tint);
+  border: 1px solid var(--border-strong);
+  padding: 1px 6px;
+  border-radius: var(--radius-xs);
+  font-family: var(--font-mono);
+}

@@ -1,0 +1,230 @@
+/* ==========================================================================
+   CODEFORGE PRO — CODE EXECUTIONS & SUBMISSIONS (WARM CLAY THEME)
+   ========================================================================== */
+
+.light-submissions-page {
+  padding: 22px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 1440px;
+  margin: 0 auto;
+  min-height: calc(100vh - 58px);
+  background-color: var(--bg-canvas);
+}
+
+/* --------------------------------------------------------------------------
+   Header Row
+   -------------------------------------------------------------------------- */
+.submissions-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.submissions-title-col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.submissions-heading-title {
+  font-family: var(--font-serif);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.submissions-heading-subtitle {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  color: var(--text-secondary);
+}
+
+.submissions-filters-group {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.sub-search-shell {
+  height: 42px;
+  width: 300px;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-inset-well);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  transition: border-color var(--duration-fast) var(--ease-smooth), box-shadow var(--duration-fast) var(--ease-smooth);
+}
+
+.sub-search-shell:focus-within {
+  border-color: var(--accent-terracotta);
+  box-shadow: 0 0 0 2px var(--accent-terracotta-tint);
+}
+
+.search-ico {
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+}
+
+.sub-search-input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  font-size: 14.5px;
+  color: var(--text-primary);
+  outline: none;
+  font-family: var(--font-serif);
+}
+
+.sub-search-input::placeholder {
+  color: var(--text-tertiary);
+}
+
+/* --------------------------------------------------------------------------
+   Table Card & Data Table
+   -------------------------------------------------------------------------- */
+.table-card-container {
+  background-color: var(--bg-surface);
+  border: 1px solid rgba(214, 198, 183, 0.88);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-clay-flat);
+  overflow: hidden;
+}
+
+.light-data-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.light-data-table th {
+  background-color: var(--bg-surface-sunken);
+  color: var(--text-secondary);
+  font-family: var(--font-serif);
+  font-size: 12.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.light-data-table td {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-hairline);
+  color: var(--text-primary);
+  vertical-align: middle;
+  font-family: var(--font-serif);
+  font-size: 14.5px;
+}
+
+.light-data-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* --------------------------------------------------------------------------
+   Table Columns Specifics
+   -------------------------------------------------------------------------- */
+.sub-id-mono {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+}
+
+.sub-problem-title {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.tag-language {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent-ochre);
+  background-color: var(--accent-ochre-tint);
+  border: 1px solid rgba(139, 90, 43, 0.3);
+  padding: 3px 8px;
+  border-radius: var(--radius-xs);
+  text-transform: uppercase;
+}
+
+.badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-serif);
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+}
+
+.badge-verdict-accepted {
+  background: var(--accent-forest-tint);
+  color: var(--accent-forest);
+  border: 1px solid rgba(76, 122, 93, 0.35);
+  box-shadow: var(--shadow-clay-card);
+}
+
+.badge-verdict-wrong {
+  background: var(--accent-terracotta-tint);
+  color: var(--accent-terracotta);
+  border: 1px solid rgba(200, 90, 50, 0.35);
+  box-shadow: var(--shadow-clay-card);
+}
+
+.badge-verdict-tle {
+  background: var(--accent-amber-tint);
+  color: var(--accent-amber);
+  border: 1px solid rgba(224, 138, 60, 0.35);
+  box-shadow: var(--shadow-clay-card);
+}
+
+.badge-verdict-error {
+  background: #FCE8E6;
+  color: #B91C1C;
+  border: 1px solid rgba(185, 28, 28, 0.35);
+  box-shadow: var(--shadow-clay-card);
+}
+
+.sub-score-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.sub-trophy-icon {
+  color: var(--accent-amber);
+}
+
+.sub-score-mono {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.sub-runtime-mono {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.sub-submitted-date {
+  font-family: var(--font-serif);
+  font-size: 13.5px;
+  color: var(--text-tertiary);
+}

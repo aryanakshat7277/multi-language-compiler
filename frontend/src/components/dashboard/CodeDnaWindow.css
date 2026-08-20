@@ -1,0 +1,148 @@
+/* ==========================================================================
+   CODEFORGE PRO — WARM CLAY CODE DNA WINDOW
+   ========================================================================== */
+
+.code-dna-window-panel {
+  display: flex;
+  flex-direction: column;
+  height: 480px;
+  background-color: var(--bg-panel);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-clay-flat);
+  overflow: hidden;
+}
+
+.dna-window-header {
+  height: 42px;
+  background-color: var(--bg-surface);
+  border-bottom: 1px solid var(--border-hairline);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  user-select: none;
+  flex-shrink: 0;
+  gap: 8px;
+}
+
+.dna-header-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.text-terracotta {
+  color: var(--accent-terracotta);
+}
+
+.dna-window-title {
+  font-family: var(--font-serif);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+/* Workspace Body */
+.dna-workspace-body {
+  flex: 1;
+  display: flex;
+  border-bottom: 1px solid var(--border-hairline);
+  overflow: hidden;
+  background-color: var(--bg-surface-sunken);
+  min-height: 0;
+}
+
+.dna-code-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background-color: var(--bg-surface-sunken);
+}
+
+.dna-code-column.left {
+  border-right: 1px solid var(--border-hairline);
+}
+
+.dna-code-column.right {
+  border-left: 1px solid var(--border-hairline);
+}
+
+.col-sub-head {
+  height: 28px;
+  background-color: var(--bg-surface);
+  border-bottom: 1px solid var(--border-hairline);
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  font-family: var(--font-serif);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.editor-wrap {
+  flex: 1;
+  position: relative;
+  background-color: var(--bg-surface-sunken);
+  min-height: 0;
+}
+
+/* Metrics Table Dock Below */
+.dna-metrics-table-dock {
+  height: 140px;
+  overflow-y: auto;
+  background-color: var(--bg-panel);
+  flex-shrink: 0;
+  box-shadow: var(--shadow-inset-well);
+}
+
+.dna-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 12.5px;
+}
+
+.dna-table th {
+  background-color: var(--bg-surface-sunken);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 7px 12px;
+  border-bottom: 1px solid var(--border-strong);
+  font-family: var(--font-serif);
+}
+
+.dna-table td {
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--border-hairline);
+  color: var(--text-primary);
+  font-family: var(--font-serif);
+}
+
+.dna-table tr:hover {
+  background-color: var(--bg-surface-hover);
+}
+
+.metric-name {
+  font-weight: 700;
+  white-space: nowrap;
+  font-family: var(--font-serif);
+}
+
+.mono-val {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.mono-val.text-terracotta {
+  color: var(--accent-terracotta);
+}

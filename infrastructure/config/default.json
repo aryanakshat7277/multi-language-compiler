@@ -1,0 +1,14 @@
+{
+  "sandbox": {
+    "image": "code-sandbox:latest",
+    "timeoutMs": 10000,
+    "maxMemoryMb": 256,
+    "maxDiskMb": 64,
+    "maxCpuCores": 1,
+    "maxPids": 64
+  },
+  "worker": {
+    "concurrency": 3,
+    "redisUrl": "redis://localhost:6379"
+  }
+}

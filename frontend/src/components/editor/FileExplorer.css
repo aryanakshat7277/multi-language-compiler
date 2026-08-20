@@ -1,0 +1,183 @@
+/* ==========================================================================
+   LIGHT THEME FILE EXPLORER (§3.9 Specification)
+   ========================================================================== */
+
+.file-explorer {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: var(--bg-surface);
+  user-select: none;
+}
+
+.explorer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-hairline);
+  height: 38px;
+}
+
+.explorer-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.title-icon {
+  color: var(--accent-emerald-solid);
+}
+
+.file-count-badge {
+  font-size: 10px;
+  background-color: var(--bg-surface-sunken);
+  color: var(--text-secondary);
+  padding: 1px 6px;
+  border-radius: var(--radius-full);
+  font-family: var(--font-mono);
+}
+
+.explorer-add-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  color: var(--text-tertiary);
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+}
+
+.explorer-add-btn:hover {
+  background-color: var(--bg-surface-hover);
+  color: var(--text-secondary);
+}
+
+/* Inline Creator */
+.new-file-input-box {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  background-color: var(--bg-surface-sunken);
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.new-file-input {
+  flex: 1;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-focus);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 3px 6px;
+  border-radius: var(--radius-xs);
+  outline: none;
+}
+
+.new-file-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.confirm-btn, .cancel-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+}
+
+.confirm-btn { color: var(--accent-emerald-solid); }
+.confirm-btn:hover { background: var(--accent-emerald-tint); }
+
+.cancel-btn { color: var(--accent-red-text); }
+.cancel-btn:hover { background: var(--accent-red-tint); }
+
+/* File List */
+.file-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 6px 0;
+}
+
+.file-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+  border-left: 2px solid transparent;
+}
+
+.file-item:hover {
+  background-color: var(--bg-surface-hover);
+  color: var(--text-primary);
+}
+
+.file-item.active {
+  background-color: var(--bg-surface-sunken);
+  color: var(--text-primary);
+  border-left-color: var(--accent-emerald-solid);
+  font-weight: 600;
+}
+
+.file-emoji {
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+}
+
+.file-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dirty-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background-color: var(--accent-emerald-solid);
+}
+
+.file-delete-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: none;
+  background: transparent;
+  color: var(--text-tertiary);
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+}
+
+.file-item:hover .file-delete-btn {
+  display: flex;
+}
+
+.file-delete-btn:hover {
+  color: var(--accent-red-text);
+  background-color: var(--accent-red-tint);
+}

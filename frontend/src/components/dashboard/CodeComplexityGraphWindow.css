@@ -1,0 +1,116 @@
+/* ==========================================================================
+   CODE COMPLEXITY GRAPH WINDOW (WARM CLAY LIGHT THEME)
+   ========================================================================== */
+
+.complexity-graph-card {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-surface);
+  border: 1.5px solid #C8B6A6;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-clay-flat);
+  padding: 20px;
+  gap: 14px;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.complexity-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #E4D9CE;
+  padding-bottom: 12px;
+}
+
+.title-with-icon {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.card-title {
+  font-family: var(--font-serif);
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.card-subtext {
+  font-family: var(--font-serif);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  display: block;
+}
+
+.segmented-toggle {
+  display: flex;
+  background-color: #F5ECE3;
+  border: 1px solid #C8B6A6;
+  border-radius: 16px;
+  padding: 2px;
+}
+
+.toggle-btn {
+  border: none;
+  background: transparent;
+  padding: 4px 10px;
+  border-radius: 14px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #8B5A2B;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.toggle-btn.active {
+  background-color: #FAF4EE;
+  color: #C85A32;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+.chart-body-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+}
+
+.complexity-footer-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  border-top: 1px solid #E4D9CE;
+  padding-top: 12px;
+}
+
+.stat-pill {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #FAF4EE;
+  border: 1px solid #E4D9CE;
+  border-radius: 8px;
+  padding: 6px;
+}
+
+.stat-num {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.text-emerald { color: #2A5A3D; }
+.text-terracotta { color: #C85A32; }
+.text-sky { color: #0284C7; }
+
+.stat-tag {
+  font-size: 10px;
+  font-weight: 700;
+  color: #8B5A2B;
+  margin-top: 2px;
+}

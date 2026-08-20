@@ -1,0 +1,60 @@
+/* ==========================================================================
+   RESIZE HANDLE DIVIDER (WARM CLAY LIGHT THEME)
+   ========================================================================== */
+
+.resize-handle {
+  position: relative;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: transparent;
+  transition: background-color var(--duration-fast) var(--ease-smooth);
+}
+
+.resize-handle-vertical {
+  width: 6px;
+  margin: 0 -3px;
+  cursor: col-resize;
+  height: 100%;
+}
+
+.resize-handle-horizontal {
+  height: 6px;
+  margin: -3px 0;
+  cursor: row-resize;
+  width: 100%;
+}
+
+.resize-handle:hover,
+.resize-handle.is-dragging {
+  background-color: var(--accent-terracotta);
+}
+
+.resize-handle-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity var(--duration-fast) var(--ease-smooth);
+  pointer-events: none;
+}
+
+.resize-handle:hover .resize-handle-indicator,
+.resize-handle.is-dragging .resize-handle-indicator {
+  opacity: 1;
+}
+
+.resize-handle-vertical .resize-handle-dots {
+  width: 2px;
+  height: 24px;
+  border-left: 2px dotted #FFFFFF;
+  border-right: 2px dotted #FFFFFF;
+}
+
+.resize-handle-horizontal .resize-handle-dots {
+  height: 2px;
+  width: 24px;
+  border-top: 2px dotted #FFFFFF;
+  border-bottom: 2px dotted #FFFFFF;
+}

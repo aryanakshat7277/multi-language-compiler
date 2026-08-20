@@ -1,0 +1,83 @@
+/* ==========================================================================
+   CODEFORGE PRO — EXPANDED ANIMATED DASHBOARD GRID (WARM CLAY LIGHT THEME)
+   ========================================================================== */
+
+.clay-dashboard-page-container {
+  width: 100%;
+  height: calc(100vh - 58px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 20px 24px 40px;
+  background-color: var(--bg-canvas);
+  scroll-behavior: smooth;
+  box-sizing: border-box;
+}
+
+.dashboard-modular-wall-grid {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr 1.1fr;
+  gap: 20px;
+  max-width: 1840px;
+  margin: 0 auto;
+  align-items: stretch;
+}
+
+.grid-cell {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* Top Row - 3 Columns */
+.cell-telemetry {
+  grid-column: 1;
+}
+
+.cell-profile {
+  grid-column: 2;
+}
+
+.cell-complexity {
+  grid-column: 3;
+}
+
+/* Middle Row - Full Width Span */
+.cell-metrics-wide {
+  grid-column: 1 / span 3;
+  width: 100%;
+}
+
+/* Bottom Row - Full Width Span */
+.cell-leaderboard-wide {
+  grid-column: 1 / span 3;
+  width: 100%;
+}
+
+/* --------------------------------------------------------------------------
+   Responsive Breakpoints
+   -------------------------------------------------------------------------- */
+@media (max-width: 1400px) {
+  .dashboard-modular-wall-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .cell-telemetry { grid-column: 1; }
+  .cell-profile { grid-column: 2; }
+  .cell-complexity { grid-column: 1 / span 2; }
+  .cell-metrics-wide { grid-column: 1 / span 2; }
+  .cell-leaderboard-wide { grid-column: 1 / span 2; }
+}
+
+@media (max-width: 900px) {
+  .dashboard-modular-wall-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cell-telemetry,
+  .cell-profile,
+  .cell-complexity,
+  .cell-metrics-wide,
+  .cell-leaderboard-wide {
+    grid-column: 1;
+  }
+}

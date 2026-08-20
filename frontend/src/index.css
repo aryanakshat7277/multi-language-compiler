@@ -1,0 +1,439 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
+
+/* ==========================================================================
+   CODEFORGE PRO - UHD SKEUOMORPHIC & CLAYMORPHIC DESIGN SYSTEM
+   PRIMARY TYPOGRAPHY: PLUS JAKARTA SANS (BOLD DARK ESPRESSO) + JETBRAINS MONO
+   ========================================================================== */
+
+:root {
+  /* ------------------------------------------------------------------------
+     1. Warm Clay / Non-Blue Color Palette
+     ------------------------------------------------------------------------ */
+  --bg-canvas: #EFE6DD;          /* Soft warm biscuit application canvas */
+  --bg-panel: #FAF4EE;           /* Base panel surface (Warm light cream) */
+  --bg-surface: #FAF4EE;         /* Warm light cream surface */
+  --bg-surface-sunken: #F5ECE3;  /* Inset well / alternate panel surface */
+  --bg-surface-inset: #F7F0E8;   /* Light cream inset well */
+  --bg-sidebar: #EBE1D7;         /* Left navigation rail */
+  --bg-surface-hover: #F2E8DC;   /* Hover state */
+  --bg-surface-pressed: #E8DCCF; /* Active/pressed state */
+
+  /* Surface Elevation High: Rich wood amber/brown gradient */
+  --grad-wood: linear-gradient(135deg, #7A4222 0%, #542813 100%);
+  --grad-wood-card: linear-gradient(145deg, #824727 0%, #4D240F 100%);
+
+  /* Backward Compatibility Aliases */
+  --background-primary: var(--bg-canvas);
+  --background-secondary: var(--bg-surface);
+  --background-tertiary: var(--bg-surface-sunken);
+  --bg-base: var(--bg-canvas);
+  --bg-primary: var(--bg-surface);
+  --bg-secondary: var(--bg-surface-sunken);
+  --bg-elevated: var(--bg-surface);
+  --bg-hover: var(--bg-surface-hover);
+  --bg-active: var(--bg-surface-pressed);
+
+  --surface-0: var(--bg-canvas);
+  --surface-1: var(--bg-surface);
+  --surface-2: var(--bg-surface-sunken);
+  --surface-3: #DFD4C7;
+  --surface-elevated: var(--bg-surface);
+  --surface-hover: var(--bg-surface-hover);
+
+  /* ------------------------------------------------------------------------
+     2. Terracotta, Amber & Forest Semantic Accents
+     ------------------------------------------------------------------------ */
+  --accent-terracotta: #A63B19;   /* Deep terracotta for high-contrast text & actions */
+  --accent-terracotta-hover: #8E3013;
+  --accent-terracotta-tint: #FBECE6;
+  
+  --accent-amber: #B35E17;        /* Deep warm amber */
+  --accent-amber-hover: #9A4E10;
+  --accent-amber-tint: #FDF3E7;
+
+  --accent-forest: #2A5A3D;       /* Deep forest green */
+  --accent-forest-tint: #EBF4EF;
+
+  --accent-ochre: #663914;        /* Deep rich ochre */
+  --accent-ochre-tint: #F7EFE8;
+
+  /* Aliases for brand accents */
+  --accent-primary: var(--accent-terracotta);
+  --accent-primary-hover: var(--accent-terracotta-hover);
+  --accent-primary-tint: var(--accent-terracotta-tint);
+  --accent: var(--accent-terracotta);
+  --accent-hover: var(--accent-terracotta-hover);
+  --emerald: var(--accent-forest);
+  --success: var(--accent-forest);
+  --success-subtle: var(--accent-forest-tint);
+  --warning: var(--accent-amber);
+  --warning-subtle: var(--accent-amber-tint);
+  --accent-info: var(--accent-terracotta);
+  --accent-secondary: var(--accent-ochre);
+  --error: #C24128;
+  --error-subtle: #FDF0ED;
+  --accent-error: #C24128;
+  --accent-error-tint: #FDF0ED;
+
+  /* ------------------------------------------------------------------------
+     3. Typography (Bold Dark Espresso)
+     ------------------------------------------------------------------------ */
+  --text-primary: #150E0B;       /* Ultra-bold high-contrast dark espresso */
+  --text-secondary: #2C1D16;     /* Deep rich warm dark espresso */
+  --text-tertiary: #4A352B;      /* Solid legible dark taupe for captions */
+  --text-dim: #4A352B;
+  --text-muted: var(--text-secondary);
+  --text-on-accent: #FAF4EE;     /* Warm cream text on terracotta buttons */
+  --text-on-emerald: #FAF4EE;
+  --text-link: #A83B16;
+
+  /* Primary Font Style: Plus Jakarta Sans System */
+  --font-serif: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', Consolas, 'Courier New', monospace;
+
+  /* ------------------------------------------------------------------------
+     4. UHD Skeuomorphic & Claymorphic Elevation
+     ------------------------------------------------------------------------ */
+  --border-metal: 1px solid rgba(214, 198, 183, 0.95);
+  --border-hairline: rgba(200, 182, 166, 0.75);
+  --border-strong: #C8B6A6;
+  --border-focus: #C85A32;
+
+  --border-subtle: var(--border-hairline);
+  --border-default: var(--border-hairline);
+  --border-medium: var(--border-strong);
+  --border-hover: var(--border-strong);
+
+  /* 4K UHD Multi-Layer Shadows & Specular Highlights */
+  --shadow-clay-flat: 6px 6px 16px rgba(166, 145, 127, 0.35), -6px -6px 14px rgba(253, 248, 243, 0.95), inset 0 1px 0 rgba(253, 248, 243, 0.8);
+  --shadow-clay-raised: 9px 9px 24px rgba(166, 145, 127, 0.42), -8px -8px 20px rgba(253, 248, 243, 0.98), inset 0 1px 0 rgba(253, 248, 243, 0.9);
+  --shadow-clay-card: 4px 4px 10px rgba(166, 145, 127, 0.25), -4px -4px 10px rgba(253, 248, 243, 0.9), inset 0 1px 0 rgba(253, 248, 243, 0.8);
+  --shadow-inset-well: inset 3px 3px 6px rgba(70, 50, 40, 0.1), inset -3px -3px 6px rgba(253, 248, 243, 0.95);
+  --shadow-inset-deep: inset 4px 4px 9px rgba(70, 50, 40, 0.15), inset -4px -4px 9px rgba(253, 248, 243, 0.98);
+  
+  --shadow-level-0: none;
+  --shadow-level-1: var(--shadow-clay-card);
+  --shadow-level-2: var(--shadow-clay-raised);
+  --shadow-sm: var(--shadow-clay-card);
+  --shadow-md: var(--shadow-clay-flat);
+  --shadow-lg: var(--shadow-clay-raised);
+  --shadow-elevated: var(--shadow-clay-raised);
+  --shadow-glow: 0 0 18px rgba(166, 59, 25, 0.35);
+
+  /* ------------------------------------------------------------------------
+     5. Radii & Spacing
+     ------------------------------------------------------------------------ */
+  --radius-xs: 5px;
+  --radius-sm: 8px;
+  --radius-md: 11px;
+  --radius-lg: 14px;
+  --radius-hero: 16px;
+  --radius-full: 999px;
+
+  /* ------------------------------------------------------------------------
+     6. Motion
+     ------------------------------------------------------------------------ */
+  --duration-fast: 140ms;
+  --duration-normal: 220ms;
+  --duration-medium: 320ms;
+  --duration-chart: 700ms;
+
+  --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-smooth: cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-fast: var(--duration-fast) var(--ease-smooth);
+  --transition-base: var(--duration-normal) var(--ease-smooth);
+}
+
+/* ==========================================================================
+   Global Reset & Base Setup (UHD Rendering)
+   ========================================================================== */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: var(--font-serif);
+  background-color: var(--bg-canvas);
+  color: var(--text-primary);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Headings & Typography */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-serif);
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.015em;
+}
+
+button, .btn {
+  font-family: var(--font-sans);
+  font-weight: 800 !important;
+}
+
+p, span, div, label {
+  font-weight: 600;
+}
+
+pre, code, kbd, samp, textarea {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: #100A07;
+}
+
+pre {
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+/* Warm UHD Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-surface-sunken);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #C4B5A5;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--bg-surface-sunken);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #A89584;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent-terracotta);
+  outline-offset: 2px;
+}
+
+/* ==========================================================================
+   Claymorphic Window & Card Classes (Zero Jitter Layout)
+   ========================================================================== */
+.clay-panel {
+  background-color: var(--bg-surface);
+  border: 1px solid rgba(214, 198, 183, 0.88);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-clay-flat);
+  transition: box-shadow var(--duration-normal) var(--ease-smooth),
+              border-color var(--duration-normal) var(--ease-smooth);
+  position: relative;
+  overflow: hidden;
+}
+
+.clay-panel:hover {
+  box-shadow: var(--shadow-clay-raised);
+}
+
+.clay-well {
+  background-color: var(--bg-surface-sunken);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-inset-well);
+  border: 1px solid rgba(200, 182, 166, 0.45);
+}
+
+.wood-card {
+  background: var(--grad-wood);
+  color: #F7F0E8;
+  border-radius: var(--radius-hero);
+  box-shadow: 5px 5px 14px rgba(84, 40, 19, 0.35), -3px -3px 10px rgba(253, 248, 243, 0.7);
+  border: 1px solid rgba(253, 248, 243, 0.15);
+}
+
+/* ==========================================================================
+   Button System (Times New Roman Typography)
+   ========================================================================== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 16px;
+  font-family: var(--font-serif);
+  font-size: 14.5px;
+  font-weight: 700;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-spring);
+  text-decoration: none;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.btn:active {
+  transform: scale(0.96);
+}
+
+/* Primary Terracotta Button */
+.btn-primary {
+  background: linear-gradient(180deg, #D4663E 0%, #BA4F27 100%);
+  color: #FAF4EE;
+  border: 1px solid #A2421D;
+  box-shadow: 2px 2px 5px rgba(186, 79, 39, 0.3), inset 0 1px 0 rgba(253, 248, 243, 0.25);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: linear-gradient(180deg, #DE7048 0%, #C85A32 100%);
+  box-shadow: 3px 4px 8px rgba(186, 79, 39, 0.4), inset 0 1px 0 rgba(253, 248, 243, 0.35);
+  transform: translateY(-1px);
+}
+
+/* Secondary Button: Parchment surface */
+.btn-secondary {
+  background: linear-gradient(180deg, #FAF4EE 0%, #E8DFC8 100%);
+  color: var(--text-primary);
+  border: 1px solid var(--border-strong);
+  box-shadow: 2px 2px 4px rgba(166, 145, 127, 0.22), inset 0 1px 0 rgba(253, 248, 243, 0.9);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: linear-gradient(180deg, #FAF4EE 0%, #EFE6D8 100%);
+  border-color: #A89584;
+}
+
+/* Amber Button */
+.btn-amber {
+  background: linear-gradient(180deg, #E9974C 0%, #D47E30 100%);
+  color: #FAF4EE;
+  border: 1px solid #B86720;
+  box-shadow: 2px 2px 5px rgba(212, 126, 48, 0.3), inset 0 1px 0 rgba(253, 248, 243, 0.25);
+}
+
+/* Ghost Button */
+.btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid transparent;
+}
+
+.btn-ghost:hover:not(:disabled) {
+  background: var(--bg-surface-hover);
+  color: var(--text-primary);
+  border-color: var(--border-hairline);
+}
+
+.btn-sm {
+  padding: 5px 11px;
+  font-size: 13px;
+  border-radius: var(--radius-xs);
+}
+
+/* ==========================================================================
+   Badges & Pills
+   ========================================================================== */
+.clay-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-serif);
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  line-height: 1.2;
+}
+
+.pill-terracotta {
+  background: var(--accent-terracotta-tint);
+  color: var(--accent-terracotta);
+  border: 1px solid rgba(200, 90, 50, 0.3);
+}
+
+.pill-amber {
+  background: var(--accent-amber-tint);
+  color: var(--accent-amber);
+  border: 1px solid rgba(224, 138, 60, 0.3);
+}
+
+.pill-forest {
+  background: var(--accent-forest-tint);
+  color: var(--accent-forest);
+  border: 1px solid rgba(76, 122, 93, 0.3);
+}
+
+.pill-student {
+  font-family: var(--font-serif);
+  background: rgba(253, 248, 243, 0.2);
+  color: #F7F0E8;
+  border: 1px solid rgba(253, 248, 243, 0.4);
+  backdrop-filter: blur(4px);
+}
+
+/* ==========================================================================
+   Page Animations
+   ========================================================================== */
+@keyframes pageFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page-enter {
+  animation: pageFadeIn var(--duration-medium) var(--ease-smooth) forwards;
+}
+
+@keyframes pulseDot {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(200, 90, 50, 0.6); }
+  70% { transform: scale(1); box-shadow: 0 0 0 5px rgba(200, 90, 50, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(200, 90, 50, 0); }
+}
+
+.pulse-dot-terracotta {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: var(--accent-terracotta);
+  animation: pulseDot 2s infinite;
+}
+
+.pulse-dot-amber {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: var(--accent-amber);
+  animation: pulseDot 2s infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.spin-icon {
+  animation: spin 1s linear infinite;
+}
+:root{--text-primary:#0F0A08;--text-secondary:#241B16;--text-tertiary:#362A23;--font-serif:"Times New Roman",Times,Georgia,serif;--font-sans:"Times New Roman",Times,Georgia,serif;--font-mono:'JetBrains Mono',Consolas,monospace}
+body{font-family:var(--font-serif)!important;font-size:16px!important;font-weight:600!important;line-height:1.55!important;color:var(--text-primary)!important;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4,h5,h6{font-family:var(--font-serif)!important;font-weight:800!important;color:var(--text-primary)!important}
+p,span,label,li,td,th{font-family:var(--font-serif)!important}
+.btn,button{font-family:var(--font-serif)!important;font-size:15px!important;font-weight:800!important}
+.btn-sm{font-size:13px!important;font-weight:800!important;padding:5px 11px!important}
+input,select,textarea{font-family:var(--font-serif)!important;font-size:15px!important;font-weight:600!important;color:var(--text-primary)!important}
+table th{font-size:13px!important;font-weight:800!important;text-transform:uppercase;letter-spacing:.06em}
+table td{font-size:15px!important;font-weight:600!important;color:var(--text-primary)!important}

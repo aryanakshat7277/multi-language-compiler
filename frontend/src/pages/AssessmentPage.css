@@ -1,0 +1,395 @@
+/* ==========================================================================
+   CODEFORGE PRO — ASSESSMENTS & ONLINE EXAMS (WARM CLAY THEME)
+   ========================================================================== */
+
+.assessment-list-view {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 22px 28px 36px;
+  min-height: calc(100vh - 58px);
+  background-color: var(--bg-canvas);
+}
+
+.assessment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.assessment-main-title {
+  font-family: var(--font-serif);
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.015em;
+}
+
+.assessment-sub {
+  font-family: var(--font-serif);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+.assessments-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: 22px;
+}
+
+.assessment-card {
+  background-color: var(--bg-surface);
+  border: 1px solid rgba(214, 198, 183, 0.88);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-clay-flat);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  cursor: pointer;
+  transition: transform var(--duration-fast) var(--ease-spring), box-shadow var(--duration-fast) var(--ease-smooth);
+}
+
+.assessment-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-clay-raised);
+}
+
+.card-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.card-title-text {
+  font-family: var(--font-serif);
+  font-size: 19px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.status-pill {
+  font-family: var(--font-serif);
+  font-size: 12.5px;
+  font-weight: 800;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  letter-spacing: 0.02em;
+}
+
+.status-pill.pill-active { 
+  background: var(--accent-forest-tint); 
+  color: var(--accent-forest); 
+  border: 1px solid rgba(76, 122, 93, 0.35);
+  box-shadow: var(--shadow-clay-card);
+}
+
+.status-pill.pill-upcoming { 
+  background: var(--accent-amber-tint); 
+  color: var(--accent-amber); 
+  border: 1px solid rgba(224, 138, 60, 0.35);
+  box-shadow: var(--shadow-clay-card);
+}
+
+.status-pill.pill-completed { 
+  background: var(--bg-surface-inset); 
+  color: var(--text-tertiary); 
+  border: 1px solid var(--border-hairline);
+  box-shadow: var(--shadow-clay-card);
+}
+
+.card-desc-text {
+  font-family: var(--font-serif);
+  font-size: 15.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  line-height: 1.65;
+}
+
+.card-meta-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.meta-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-serif);
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text-primary);
+  background-color: var(--bg-surface-sunken);
+  padding: 5px 12px;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border-strong);
+  box-shadow: var(--shadow-inset-well);
+}
+
+.card-footer-action {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-hairline);
+}
+
+.date-info {
+  font-family: var(--font-serif);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+}
+
+/* --------------------------------------------------------------------------
+   Exam Detail View
+   -------------------------------------------------------------------------- */
+.assessment-detail-view {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 58px);
+  width: 100%;
+  gap: 12px;
+  padding: 14px 18px;
+  overflow: hidden;
+  background-color: var(--bg-canvas);
+}
+
+.top-exam-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 18px;
+  height: 52px;
+  background-color: var(--bg-surface);
+  border: 1px solid rgba(214, 198, 183, 0.88);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-clay-flat);
+  flex-shrink: 0;
+}
+
+.exam-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.back-exam-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 6px;
+  border-radius: var(--radius-xs);
+  transition: all var(--duration-fast) var(--ease-smooth);
+}
+
+.back-exam-btn:hover {
+  color: var(--accent-terracotta);
+  background-color: var(--bg-surface-hover);
+  border-color: var(--border-hairline);
+}
+
+.exam-title-text {
+  font-family: var(--font-serif);
+  font-size: 18.5px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.timer-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--accent-amber-tint);
+  border: 1px solid rgba(224, 138, 60, 0.4);
+  padding: 6px 18px;
+  border-radius: var(--radius-full);
+  box-shadow: var(--shadow-clay-card);
+}
+
+.timer-icon {
+  color: var(--accent-amber);
+}
+
+.timer-text {
+  font-family: var(--font-mono);
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--accent-amber);
+}
+
+/* --------------------------------------------------------------------------
+   Exam Workspace
+   -------------------------------------------------------------------------- */
+.exam-workspace {
+  flex: 1;
+  display: flex;
+  gap: 14px;
+  min-height: 0;
+}
+
+.exam-sidebar {
+  width: 290px;
+  background-color: var(--bg-surface);
+  border: 1px solid rgba(214, 198, 183, 0.88);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-clay-flat);
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.sidebar-section-title {
+  font-family: var(--font-serif);
+  font-size: 13.5px;
+  font-weight: 800;
+  color: var(--text-tertiary);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.problem-tabs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.problem-tab-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background-color: var(--bg-surface-sunken);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-xs);
+  color: var(--text-primary);
+  font-family: var(--font-serif);
+  font-size: 15.5px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-smooth);
+  box-shadow: var(--shadow-inset-well);
+}
+
+.problem-tab-item:hover {
+  background-color: var(--bg-surface-hover);
+  border-color: var(--border-strong);
+}
+
+.problem-tab-item.active {
+  background: var(--accent-terracotta-tint);
+  border-color: var(--accent-terracotta);
+  color: var(--accent-terracotta);
+  font-weight: 800;
+  box-shadow: 0 0 0 1px var(--accent-terracotta), var(--shadow-clay-card);
+}
+
+.tab-idx {
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+  font-weight: 800;
+}
+
+.tab-name {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tab-done-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--accent-forest);
+  box-shadow: 0 0 4px var(--accent-forest);
+}
+
+.exam-progress-box {
+  padding: 12px;
+  background-color: var(--bg-surface-sunken);
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border-strong);
+  box-shadow: var(--shadow-inset-well);
+  font-family: var(--font-serif);
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-align: center;
+}
+
+.exam-editor-area {
+  flex: 1;
+  background-color: var(--bg-surface);
+  border: 1px solid rgba(214, 198, 183, 0.88);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-clay-flat);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.exam-problem-desc {
+  padding: 16px 20px;
+  background-color: var(--bg-surface);
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.exam-problem-desc h3 {
+  font-family: var(--font-serif);
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+
+.exam-problem-desc p {
+  font-family: var(--font-serif);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+.exam-monaco-wrap {
+  flex: 1;
+  min-height: 0;
+  background-color: var(--bg-surface-sunken);
+  box-shadow: var(--shadow-inset-well);
+}
+
+.exam-action-bar {
+  padding: 12px 18px;
+  background-color: var(--bg-surface);
+  border-top: 1px solid var(--border-hairline);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.assessment-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  height: 100%;
+  color: var(--text-secondary);
+  font-family: var(--font-serif);
+  font-size: 15px;
+}

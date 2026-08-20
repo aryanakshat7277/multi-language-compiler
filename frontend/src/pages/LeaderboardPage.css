@@ -1,0 +1,293 @@
+/* ==========================================================================
+   CODEFORGE PRO — GLOBAL LEADERBOARD (WARM CLAY THEME)
+   ========================================================================== */
+
+.leaderboard-page {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 22px 28px;
+  min-height: calc(100vh - 58px);
+  background-color: var(--bg-canvas);
+}
+
+/* --------------------------------------------------------------------------
+   Header Row
+   -------------------------------------------------------------------------- */
+.leaderboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.header-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-icon {
+  color: var(--accent-amber);
+  filter: drop-shadow(0 2px 4px rgba(224, 138, 60, 0.3));
+}
+
+.leaderboard-header h1 {
+  font-family: var(--font-serif);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.leaderboard-header p {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  color: var(--text-secondary);
+  margin: 2px 0 0 0;
+}
+
+.leaderboard-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 42px;
+  padding: 0 14px;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-inset-well);
+  transition: border-color var(--duration-fast) var(--ease-smooth);
+}
+
+.search-box:focus-within {
+  border-color: var(--accent-terracotta);
+  box-shadow: 0 0 0 2px var(--accent-terracotta-tint);
+}
+
+.search-icon {
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+}
+
+.search-box input {
+  border: none;
+  background: transparent;
+  outline: none;
+  font-family: var(--font-serif);
+  font-size: 14.5px;
+  color: var(--text-primary);
+}
+
+.search-box input::placeholder {
+  color: var(--text-tertiary);
+}
+
+.filter-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 42px;
+  padding: 0 12px;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-clay-card);
+}
+
+.filter-icon {
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+}
+
+.filter-box select {
+  border: none;
+  background: transparent;
+  outline: none;
+  font-family: var(--font-serif);
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+/* --------------------------------------------------------------------------
+   Table Container & Rows
+   -------------------------------------------------------------------------- */
+.table-container {
+  background-color: var(--bg-surface);
+  border: 1px solid rgba(214, 198, 183, 0.88);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-clay-flat);
+}
+
+.leaderboard-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-family: var(--font-serif);
+}
+
+.leaderboard-table th {
+  background-color: var(--bg-surface-sunken);
+  color: var(--text-secondary);
+  font-family: var(--font-serif);
+  font-size: 12.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.leaderboard-table td {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-hairline);
+  color: var(--text-primary);
+  vertical-align: middle;
+  font-size: 14.5px;
+}
+
+.leaderboard-table tr {
+  transition: background-color var(--duration-fast) var(--ease-smooth);
+}
+
+.leaderboard-table tr:hover {
+  background-color: var(--bg-surface-hover);
+}
+
+.leaderboard-table tr.current-user {
+  background-color: var(--accent-terracotta-tint);
+  border-left: 3px solid var(--accent-terracotta);
+}
+
+.leaderboard-table tr:last-child td {
+  border-bottom: none;
+}
+
+.col-rank {
+  width: 70px;
+  text-align: center;
+}
+
+.rank-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 14px;
+  box-shadow: var(--shadow-clay-card);
+}
+
+.rank-badge.gold { 
+  background: linear-gradient(135deg, #FDE68A 0%, #D97706 100%); 
+  color: #78350F; 
+  border: 1px solid #D97706; 
+}
+
+.rank-badge.silver { 
+  background: linear-gradient(135deg, #F3F4F6 0%, #9CA3AF 100%); 
+  color: #1F2937; 
+  border: 1px solid #9CA3AF; 
+}
+
+.rank-badge.bronze { 
+  background: linear-gradient(135deg, #FED7AA 0%, #C2410C 100%); 
+  color: #7C2D12; 
+  border: 1px solid #C2410C; 
+}
+
+.rank-number {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--text-tertiary);
+  font-size: 14.5px;
+}
+
+.col-user {
+  min-width: 220px;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #8B5A2B 0%, #542813 100%);
+  color: #FFFFFF;
+  font-family: var(--font-serif);
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-clay-card);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.user-name {
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.you-badge {
+  font-family: var(--font-serif);
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--accent-terracotta);
+  color: #FFFFFF;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+}
+
+.col-score {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--accent-terracotta);
+}
+
+.loading-state,
+.error-state,
+.empty-state {
+  padding: 48px;
+  text-align: center;
+  color: var(--text-secondary);
+  font-family: var(--font-serif);
+  font-size: 15px;
+}
+
+.spinner {
+  display: inline-block;
+  width: 22px;
+  height: 22px;
+  border: 2px solid rgba(200, 90, 50, 0.2);
+  border-radius: 50%;
+  border-top-color: var(--accent-terracotta);
+  animation: spin 1s linear infinite;
+  margin-bottom: 10px;
+}

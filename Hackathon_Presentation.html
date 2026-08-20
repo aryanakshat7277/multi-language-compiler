@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CodeForge PRO v2.5 - Hackathon Presentation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-cream: #FAF4EE;
+      --card-bg: #F5ECE3;
+      --card-border: #E4D9CE;
+      --text-dark: #2D231E;
+      --text-muted: #8B5A2B;
+      --terracotta: #C85A32;
+      --amber: #E08A3C;
+      --emerald: #2A5A3D;
+      --font-main: 'Plus Jakarta Sans', -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --shadow-soft: 0 10px 30px rgba(45, 35, 30, 0.08);
+      --shadow-lift: 0 20px 40px rgba(200, 90, 50, 0.12);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-main);
+      background-color: var(--bg-cream);
+      color: var(--text-dark);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      overflow-x: hidden;
+    }
+
+    /* Deck Wrapper */
+    .presentation-container {
+      width: 100%;
+      max-width: 1240px;
+      aspect-ratio: 16 / 9;
+      background: #FFFFFF;
+      border: 2px solid var(--card-border);
+      border-radius: 24px;
+      box-shadow: var(--shadow-lift);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top Navigation Bar */
+    .slide-navbar {
+      height: 64px;
+      padding: 0 32px;
+      background: var(--bg-cream);
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 10;
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 800;
+      font-size: 18px;
+      color: var(--text-dark);
+    }
+    .brand-badge {
+      background: var(--terracotta);
+      color: #FFF;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-family: var(--font-mono);
+      letter-spacing: 0.05em;
+    }
+
+    .slide-tabs {
+      display: flex;
+      gap: 8px;
+    }
+    .slide-tab-btn {
+      padding: 8px 16px;
+      border-radius: 12px;
+      border: 1px solid transparent;
+      background: transparent;
+      font-family: var(--font-main);
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+    .slide-tab-btn.active {
+      background: var(--card-bg);
+      border-color: var(--terracotta);
+      color: var(--terracotta);
+    }
+
+    /* Slide Viewport */
+    .slides-viewport {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .slide-page {
+      position: absolute;
+      inset: 0;
+      padding: 40px 48px;
+      display: flex;
+      flex-direction: column;
+      opacity: 0;
+      visibility: hidden;
+      transform: scale(0.98) translateY(12px);
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .slide-page.active {
+      opacity: 1;
+      visibility: visible;
+      transform: scale(1) translateY(0);
+    }
+
+    /* Slide 1: Title & Team */
+    .hero-header {
+      margin-bottom: 28px;
+    }
+    .hero-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      background: #FDF3E7;
+      border: 1px solid var(--amber);
+      color: var(--text-muted);
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    .hero-title {
+      font-size: 38px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      color: var(--text-dark);
+    }
+    .hero-subtitle {
+      font-size: 15px;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+    .team-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-top: 8px;
+    }
+    .team-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .team-card:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-soft);
+      border-color: var(--terracotta);
+    }
+    .avatar-circle {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: var(--terracotta);
+      color: #FFF;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .team-card:nth-child(2) .avatar-circle { background: var(--amber); }
+    .team-card:nth-child(3) .avatar-circle { background: var(--emerald); }
+    .team-card:nth-child(4) .avatar-circle { background: #8B5A2B; }
+    .team-card:nth-child(5) .avatar-circle { background: #5C4D44; }
+    .team-card:nth-child(6) .avatar-circle { background: #4C7A5D; }
+
+    .member-name {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-dark);
+    }
+    .member-reg {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--terracotta);
+      font-weight: 600;
+      margin-top: 2px;
+    }
+    .member-role {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-top: 2px;
+      font-weight: 600;
+    }
+
+    /* Slide 2: Features */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+      margin-top: 16px;
+    }
+    .feature-box {
+      background: var(--bg-cream);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      position: relative;
+    }
+    .feature-icon-badge {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+    .feature-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text-dark);
+    }
+    .feature-desc {
+      font-size: 13px;
+      line-height: 1.5;
+      color: var(--text-muted);
+    }
+    .feature-list {
+      margin-top: 4px;
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .feature-list li {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-dark);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .feature-list li::before {
+      content: "✓";
+      color: var(--terracotta);
+      font-weight: 800;
+    }
+
+    /* Slide 3: Architecture & SRS */
+    .arch-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-top: 16px;
+      flex: 1;
+    }
+    .er-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+    }
+    .er-diagram-mock {
+      background: #FFFFFF;
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 16px;
+      flex: 1;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      line-height: 1.6;
+      color: var(--text-dark);
+      overflow-y: auto;
+    }
+    .entity-tag {
+      background: #FAF4EE;
+      border: 1px solid var(--amber);
+      color: var(--terracotta);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 700;
+    }
+
+    .srs-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      background: #FFF;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--card-border);
+    }
+    .srs-table th {
+      background: var(--card-bg);
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      padding: 10px 12px;
+      text-align: left;
+    }
+    .srs-table td {
+      padding: 10px 12px;
+      border-top: 1px solid var(--card-border);
+      color: var(--text-dark);
+    }
+
+    /* Slide 4: Thank You */
+    .thankyou-box {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 48px;
+    }
+    .thankyou-title {
+      font-size: 48px;
+      font-weight: 800;
+      color: var(--terracotta);
+      margin-bottom: 12px;
+    }
+    .thankyou-subtitle {
+      font-size: 18px;
+      color: var(--text-dark);
+      max-width: 600px;
+      line-height: 1.5;
+      margin-bottom: 24px;
+    }
+    .qa-pill {
+      background: var(--emerald);
+      color: #FFF;
+      padding: 10px 24px;
+      border-radius: 30px;
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: 0.05em;
+    }
+
+    /* Bottom Control Footer */
+    .slide-footer {
+      height: 56px;
+      padding: 0 32px;
+      background: var(--bg-cream);
+      border-top: 1px solid var(--card-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .control-btn {
+      padding: 8px 18px;
+      background: var(--terracotta);
+      color: #FFF;
+      border: none;
+      border-radius: 10px;
+      font-family: var(--font-main);
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .control-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .slide-counter {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="presentation-container">
+    <!-- Navbar -->
+    <div class="slide-navbar">
+      <div class="brand-logo">
+        <span>CodeForge</span>
+        <span class="brand-badge">PRO v2.5</span>
+      </div>
+      <div class="slide-tabs">
+        <button class="slide-tab-btn active" onclick="goToSlide(1)">01 Team</button>
+        <button class="slide-tab-btn" onclick="goToSlide(2)">02 Features</button>
+        <button class="slide-tab-btn" onclick="goToSlide(3)">03 SRS & ER Diagram</button>
+        <button class="slide-tab-btn" onclick="goToSlide(4)">04 Conclusion</button>
+      </div>
+    </div>
+
+    <!-- Viewport -->
+    <div class="slides-viewport">
+
+      <!-- SLIDE 1: Title & Team -->
+      <div class="slide-page active" id="slide-1">
+        <div class="hero-header">
+          <div class="hero-tag">🚀 HACKATHON PROJECT PRESENTATION</div>
+          <h1 class="hero-title">Multi Language Compiler & AI Intelligence Platform</h1>
+          <p class="hero-subtitle">High-performance polyglot code execution, Gemini 2.5 AI mentor, AST tree parser, & real-time Code DNA similarity engine.</p>
+        </div>
+
+        <div class="team-grid">
+          <div class="team-card">
+            <div class="avatar-circle">AA</div>
+            <div>
+              <div class="member-name">Akshat Aryan</div>
+              <div class="member-reg">240101120201</div>
+              <div class="member-role">Team Lead & Lead Architect</div>
+            </div>
+          </div>
+          <div class="team-card">
+            <div class="avatar-circle">AD</div>
+            <div>
+              <div class="member-name">Arun Dev</div>
+              <div class="member-reg">240101120184</div>
+              <div class="member-role">Compiler Core Engineer</div>
+            </div>
+          </div>
+          <div class="team-card">
+            <div class="avatar-circle">AH</div>
+            <div>
+              <div class="member-name">Aquib Hussain</div>
+              <div class="member-reg">240101120192</div>
+              <div class="member-role">Security & Auth Lead</div>
+            </div>
+          </div>
+          <div class="team-card">
+            <div class="avatar-circle">WK</div>
+            <div>
+              <div class="member-name">Warish Khan</div>
+              <div class="member-reg">240101120186</div>
+              <div class="member-role">Frontend UI/UX Specialist</div>
+            </div>
+          </div>
+          <div class="team-card">
+            <div class="avatar-circle">MO</div>
+            <div>
+              <div class="member-name">Mohit</div>
+              <div class="member-reg">240101120207</div>
+              <div class="member-role">Gemini AI Pipeline Engineer</div>
+            </div>
+          </div>
+          <div class="team-card">
+            <div class="avatar-circle">AB</div>
+            <div>
+              <div class="member-name">Abhay</div>
+              <div class="member-reg">240101120220</div>
+              <div class="member-role">Performance & Telemetry Engineer</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SLIDE 2: Features & Working -->
+      <div class="slide-page" id="slide-2">
+        <div class="hero-header" style="margin-bottom: 18px;">
+          <div class="hero-tag">⚡ CORE SYSTEM ARCHITECTURE & FEATURES</div>
+          <h1 class="hero-title" style="font-size: 28px;">Polyglot Compiler & AI Intelligence Modules</h1>
+        </div>
+
+        <div class="features-grid">
+          <div class="feature-box">
+            <div class="feature-icon-badge">⚡</div>
+            <div class="feature-title">Multi-Language Sandbox Compiler</div>
+            <div class="feature-desc">Dual execution engine: Local sandboxed CLI runner + Piston API fallback supporting JS, TS, Python, C++, Java, and Go.</div>
+            <ul class="feature-list">
+              <li>Sub-200ms execution latency</li>
+              <li>Real-time stdin/stdout stream handling</li>
+            </ul>
+          </div>
+
+          <div class="feature-box">
+            <div class="feature-icon-badge">🧠</div>
+            <div class="feature-title">Gemini AI Mentor Pipeline</div>
+            <div class="feature-desc">Google Gemini 2.5 Flash API integration for bespoke, code-specific analysis across 5 intelligent modes.</div>
+            <ul class="feature-list">
+              <li>Logic Explanation & Key Concepts</li>
+              <li>Error Stack Trace Debugging</li>
+              <li>Shortest Code Refactoring (Code Golf)</li>
+            </ul>
+          </div>
+
+          <div class="feature-box">
+            <div class="feature-icon-badge">🧬</div>
+            <div class="feature-title">Code DNA & Similarity Engine</div>
+            <div class="feature-desc">AST Isomorphism & Algorithmic comparator matching structural control flows between multi-file programs.</div>
+            <ul class="feature-list">
+              <li>Lexical & Semantic Match Scoring</li>
+              <li>Dual Host Runtime Output Compare</li>
+            </ul>
+          </div>
+
+          <div class="feature-box">
+            <div class="feature-icon-badge">🌳</div>
+            <div class="feature-title">AST Explorer & Compiler IR</div>
+            <div class="feature-desc">Hierarchical Abstract Syntax Tree visualizer with synchronized line highlighting in Monaco Editor.</div>
+            <ul class="feature-list">
+              <li>Gemini API AST Tree Generator</li>
+              <li>Full AST Node Filter & Inspector</li>
+            </ul>
+          </div>
+
+          <div class="feature-box">
+            <div class="feature-icon-badge">📊</div>
+            <div class="feature-title">Real-Time Code Metrics</div>
+            <div class="feature-desc">Debounced real-time analysis computing Cyclomatic Complexity, Maintainability Index, and Halstead Volume.</div>
+            <ul class="feature-list">
+              <li>6-Axis Algorithmic Balance Radar</li>
+              <li>Historical Quality Confidence Curve</li>
+            </ul>
+          </div>
+
+          <div class="feature-box">
+            <div class="feature-icon-badge">🎛️</div>
+            <div class="feature-title">Graphical Animated Dashboard</div>
+            <div class="feature-desc">3-Column animated dashboard with compiler telemetry, live user leaderboard tickers, and resizable panels.</div>
+            <ul class="feature-list">
+              <li>Clay Cream Responsive Layout</li>
+              <li>Draggable Width/Height Dividers</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- SLIDE 3: SRS & ER Diagram -->
+      <div class="slide-page" id="slide-3">
+        <div class="hero-header" style="margin-bottom: 14px;">
+          <div class="hero-tag">📐 DOCUMENTATION & SYSTEM DESIGN</div>
+          <h1 class="hero-title" style="font-size: 26px;">ER Diagram & Software Requirements Specification (SRS)</h1>
+        </div>
+
+        <div class="arch-layout">
+          <!-- ER Diagram -->
+          <div class="er-card">
+            <h3 style="font-size: 14px; font-weight: 700; color: var(--terracotta); margin-bottom: 8px;">Database ER Schema & Entity Relationships</h3>
+            <div class="er-diagram-mock">
+              <p><span class="entity-tag">USER</span> (1) ─── 🔑 has ─── (N) <span class="entity-tag">SUBMISSION</span></p>
+              <p style="color: var(--text-muted); margin-left: 16px;">├─ id, email, displayName, role, createdAt</p>
+              <br>
+              <p><span class="entity-tag">PROBLEM</span> (1) ─── 📝 tests ─── (N) <span class="entity-tag">SUBMISSION</span></p>
+              <p style="color: var(--text-muted); margin-left: 16px;">├─ id, title, difficulty, tags, starterCode</p>
+              <br>
+              <p><span class="entity-tag">SUBMISSION</span> (1) ─── ⚙️ runs ─── (1) <span class="entity-tag">EXECUTION</span></p>
+              <p style="color: var(--text-muted); margin-left: 16px;">├─ id, status, languageId, stdout, stderr, runTime</p>
+              <br>
+              <p><span class="entity-tag">CODE_ANALYSIS</span> (1) ─── 🧠 analyzes ─── (1) <span class="entity-tag">GEMINI_PROV</span></p>
+              <p style="color: var(--text-muted); margin-left: 16px;">├─ cyclomaticComplexity, maintainability, halstead, security</p>
+              <br>
+              <p><span class="entity-tag">CODE_SIMILARITY</span> ─── 🧬 compares ─── <span class="entity-tag">PROG_A / PROG_B</span></p>
+            </div>
+          </div>
+
+          <!-- SRS Specification -->
+          <div class="er-card" style="background: #FFF;">
+            <h3 style="font-size: 14px; font-weight: 700; color: var(--emerald); margin-bottom: 8px;">Software Requirements Specification (SRS)</h3>
+            <table class="srs-table">
+              <thead>
+                <tr>
+                  <th>Req ID</th>
+                  <th>Requirement Name</th>
+                  <th>Specification Detail</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style="font-family: var(--font-mono); font-weight: 700; color: var(--terracotta);">FR-01</td>
+                  <td>Polyglot Execution</td>
+                  <td>Execute JS, TS, Py, C++, Java, Go in sandboxed environment with stdin/stdout.</td>
+                </tr>
+                <tr>
+                  <td style="font-family: var(--font-mono); font-weight: 700; color: var(--terracotta);">FR-02</td>
+                  <td>Gemini AI Pipeline</td>
+                  <td>Code explanation, test generation, stack trace debugging, and shortest code golf.</td>
+                </tr>
+                <tr>
+                  <td style="font-family: var(--font-mono); font-weight: 700; color: var(--terracotta);">FR-03</td>
+                  <td>AST & Similarity</td>
+                  <td>Hierarchical AST tree parsing & multi-metric DNA similarity calculation.</td>
+                </tr>
+                <tr>
+                  <td style="font-family: var(--font-mono); font-weight: 700; color: var(--terracotta);">NFR-01</td>
+                  <td>Response Latency</td>
+                  <td>Sub-200ms local code execution; debounced 600ms AI metrics transmission.</td>
+                </tr>
+                <tr>
+                  <td style="font-family: var(--font-mono); font-weight: 700; color: var(--terracotta);">NFR-02</td>
+                  <td>API Reliability</td>
+                  <td>Automatic Gemini API model rotation (2.5-flash, 2.5-pro, 2.0-flash) on rate limit.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- SLIDE 4: Thank You -->
+      <div class="slide-page" id="slide-4">
+        <div class="thankyou-box">
+          <div class="hero-tag">🎉 HACKATHON PROJECT SUMMARY</div>
+          <h1 class="thankyou-title">Thank You!</h1>
+          <p class="thankyou-subtitle">CodeForge PRO v2.5 bridges the gap between high-speed polyglot execution and real-time Google Gemini AI code intelligence.</p>
+          <div class="qa-pill">💬 Open for Questions & Demonstration</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Footer Controls -->
+    <div class="slide-footer">
+      <button class="control-btn" id="prev-btn" onclick="prevSlide()" disabled>← Previous</button>
+      <span class="slide-counter" id="slide-counter">Slide 1 of 4</span>
+      <button class="control-btn" id="next-btn" onclick="nextSlide()">Next →</button>
+    </div>
+  </div>
+
+  <script>
+    let currentSlide = 1;
+    const totalSlides = 4;
+
+    function goToSlide(n) {
+      if (n < 1 || n > totalSlides) return;
+      currentSlide = n;
+
+      document.querySelectorAll('.slide-page').forEach((s, idx) => {
+        s.classList.toggle('active', idx + 1 === n);
+      });
+      document.querySelectorAll('.slide-tab-btn').forEach((t, idx) => {
+        t.classList.toggle('active', idx + 1 === n);
+      });
+
+      document.getElementById('prev-btn').disabled = (n === 1);
+      document.getElementById('next-btn').disabled = (n === totalSlides);
+      document.getElementById('slide-counter').textContent = `Slide ${n} of ${totalSlides}`;
+    }
+
+    function nextSlide() { goToSlide(currentSlide + 1); }
+    function prevSlide() { goToSlide(currentSlide - 1); }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight') nextSlide();
+      if (e.key === 'ArrowLeft') prevSlide();
+    });
+  </script>
+</body>
+</html>

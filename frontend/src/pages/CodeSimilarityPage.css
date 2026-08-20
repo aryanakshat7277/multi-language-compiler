@@ -1,0 +1,368 @@
+/* ==========================================================================
+   CODEFORGE PRO — CODE DNA & SIMILARITY COMPARATOR (WARM LIGHT CLAY THEME)
+   ========================================================================== */
+
+.light-similarity-page {
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 58px);
+  width: 100%;
+  overflow-y: auto;
+  background-color: var(--bg-canvas);
+  gap: 14px;
+}
+
+.similarity-top-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  background-color: var(--bg-surface);
+  border: 1.5px solid #C8B6A6;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-clay-flat);
+  flex-shrink: 0;
+}
+
+.header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.similarity-title {
+  font-family: var(--font-serif);
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.engine-status-subtext {
+  font-family: var(--font-serif);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  margin-left: 26px;
+}
+
+.header-right-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sim-lang-select {
+  background-color: var(--bg-surface-sunken);
+  border: 1px solid var(--border-strong);
+  color: var(--text-primary);
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-serif);
+  font-size: 13px;
+  font-weight: 700;
+  outline: none;
+  cursor: pointer;
+}
+
+/* Dual Program Editors Split */
+.similarity-dual-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  min-height: 240px;
+  flex-shrink: 0;
+}
+
+.program-panel {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-surface);
+  border: 1.5px solid #C8B6A6;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-clay-flat);
+  overflow: hidden;
+  height: 250px;
+}
+
+.program-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background-color: var(--bg-surface);
+  border-bottom: 1px solid #E4D9CE;
+  flex-shrink: 0;
+}
+
+.program-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.file-name {
+  font-family: var(--font-serif);
+  font-size: 13.5px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.token-count-meta {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent-terracotta);
+  background-color: var(--accent-terracotta-tint);
+  padding: 2px 8px;
+  border-radius: 12px;
+  border: 1px solid rgba(200, 90, 50, 0.25);
+}
+
+.program-editor-wrap {
+  flex: 1;
+  position: relative;
+  background-color: #FAF4EE;
+  height: calc(100% - 40px);
+}
+
+/* Stdin Option Bar */
+.sim-stdin-bar {
+  background-color: var(--bg-surface);
+  border: 1px solid #C8B6A6;
+  border-radius: var(--radius-md);
+  padding: 8px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: var(--shadow-clay-card);
+  flex-shrink: 0;
+}
+
+.sim-stdin-label {
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #C85A32;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-family: var(--font-serif);
+}
+
+.sim-stdin-input {
+  flex: 1;
+  padding: 6px 12px;
+  font-size: 12.5px;
+  border: 1px solid #C8B6A6;
+  border-radius: 6px;
+  background-color: #F5ECE3;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-weight: 600;
+  outline: none;
+}
+
+/* Bottom Stats Card — Warm Light Clay System */
+.similarity-bottom-stats-card {
+  display: flex;
+  flex-direction: column;
+  padding: 20px 24px;
+  background-color: var(--bg-surface);
+  border: 1.5px solid #C8B6A6;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-clay-flat);
+  gap: 20px;
+  flex-shrink: 0;
+}
+
+.stats-top-row {
+  display: flex;
+  width: 100%;
+  gap: 24px;
+  align-items: center;
+}
+
+.stats-score-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 380px;
+}
+
+.score-badge-circle {
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.score-badge-circle.high-risk {
+  background: #FDF0ED;
+  border: 3px solid #C85A32;
+  box-shadow: 0 0 16px rgba(200, 90, 50, 0.25);
+}
+
+.score-badge-circle.low-risk {
+  background: #EBF4EF;
+  border: 3px solid #2A5A3D;
+  box-shadow: 0 0 16px rgba(42, 90, 61, 0.25);
+}
+
+.score-huge {
+  font-family: var(--font-mono);
+  font-size: 24px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.high-risk .score-huge { color: #C85A32; }
+.low-risk .score-huge { color: #2A5A3D; }
+
+.score-label {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  font-family: var(--font-serif);
+  margin-top: 3px;
+}
+
+.high-risk .score-label { color: #C85A32; }
+.low-risk .score-label { color: #2A5A3D; }
+
+.verdict-summary h4 {
+  font-family: var(--font-serif);
+  font-size: 16.5px;
+  font-weight: 800;
+  margin: 0 0 4px 0;
+}
+
+.verdict-explanation {
+  font-family: var(--font-serif);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  line-height: 1.55;
+  margin: 0;
+}
+
+.stats-bars-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dna-bar-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.bar-label-row {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-serif);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.bar-track {
+  width: 100%;
+  height: 8px;
+  background-color: #E4D9CE;
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.bar-fill.amber-fill { background-color: #E08A3C; }
+.bar-fill.terracotta-fill { background-color: #C85A32; }
+.bar-fill.forest-fill { background-color: #2A5A3D; }
+
+/* Live Consoles Section */
+.consoles-container {
+  width: 100%;
+  border-top: 1px solid #E4D9CE;
+  padding-top: 16px;
+}
+
+.consoles-header {
+  font-size: 11.5px;
+  font-weight: 800;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.consoles-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.console-box {
+  background-color: #FAF4EE;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  box-shadow: var(--shadow-clay-card);
+}
+
+.console-box.console-a { border: 1.5px solid #C85A32; }
+.console-box.console-b { border: 1.5px solid #2A5A3D; }
+
+.console-box-title {
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 800;
+  display: flex;
+  justify-content: space-between;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.title-a { background-color: #FDF0ED; color: #C85A32; border-bottom: 1px solid #F5C6B8; }
+.title-b { background-color: #EBF4EF; color: #2A5A3D; border-bottom: 1px solid #C3E2D1; }
+
+.live-status { font-weight: 700; }
+
+.console-pre {
+  margin: 0;
+  padding: 10px 12px;
+  font-size: 12px;
+  font-family: var(--font-mono);
+  color: #2D231E;
+  max-height: 140px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  line-height: 1.55;
+  background-color: #FAF4EE;
+}
+
+.empty-sim-state {
+  padding: 20px;
+  text-align: center;
+  width: 100%;
+  color: var(--text-tertiary);
+  font-size: 13.5px;
+  font-weight: 600;
+}

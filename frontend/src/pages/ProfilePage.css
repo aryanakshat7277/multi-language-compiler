@@ -1,0 +1,274 @@
+/* ==========================================================================
+   CODEFORGE PRO — DEVELOPER PROFILE (WARM CLAY THEME)
+   ========================================================================== */
+
+.light-profile-page {
+  padding: 22px 28px 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  max-width: 1200px;
+  margin: 0 auto;
+  min-height: calc(100vh - 58px);
+  background-color: var(--bg-canvas);
+}
+
+.profile-loading, .profile-error {
+  padding: 48px;
+  text-align: center;
+  font-family: var(--font-serif);
+  font-size: 15px;
+  color: var(--text-secondary);
+}
+
+/* --------------------------------------------------------------------------
+   Header Card
+   -------------------------------------------------------------------------- */
+.profile-header-card {
+  background-color: var(--bg-surface);
+  border: 1px solid rgba(214, 198, 183, 0.88);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-clay-flat);
+  padding: 26px 30px;
+  display: flex;
+  align-items: flex-start;
+  gap: 26px;
+}
+
+.profile-avatar-circle {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--grad-wood);
+  color: #FFFFFF;
+  font-family: var(--font-serif);
+  font-size: 26px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 4px 4px 10px rgba(84, 40, 19, 0.35), -2px -2px 6px rgba(255, 255, 255, 0.8);
+  border: 2px solid rgba(255, 255, 255, 0.35);
+}
+
+.profile-details-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.profile-name-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.profile-heading-name {
+  font-family: var(--font-serif);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.badge-role-student {
+  font-family: var(--font-serif);
+  font-size: 12.5px;
+  font-weight: 700;
+  background: var(--accent-terracotta-tint);
+  color: var(--accent-terracotta);
+  border: 1px solid rgba(200, 90, 50, 0.35);
+  padding: 4px 11px;
+  border-radius: var(--radius-full);
+  box-shadow: var(--shadow-clay-card);
+}
+
+.profile-bio-text {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  color: var(--text-secondary);
+  line-height: 1.65;
+}
+
+.profile-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+
+.profile-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-serif);
+  font-size: 14px;
+  color: var(--text-tertiary);
+}
+
+.profile-edit-btn {
+  width: fit-content;
+  margin-top: 8px;
+}
+
+/* Edit Form */
+.profile-edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 520px;
+}
+
+.profile-edit-input {
+  height: 42px;
+  padding: 0 14px;
+  background-color: var(--bg-surface-sunken);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-inset-well);
+  font-family: var(--font-serif);
+  font-size: 14.5px;
+  color: var(--text-primary);
+  outline: none;
+}
+
+.profile-edit-input:focus {
+  border-color: var(--accent-terracotta);
+}
+
+.profile-edit-textarea {
+  min-height: 90px;
+  padding: 12px 14px;
+  background-color: var(--bg-surface-sunken);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-inset-well);
+  font-family: var(--font-serif);
+  font-size: 14.5px;
+  color: var(--text-primary);
+  outline: none;
+  resize: none;
+  line-height: 1.5;
+}
+
+.profile-edit-textarea:focus {
+  border-color: var(--accent-terracotta);
+}
+
+.profile-edit-actions {
+  display: flex;
+  gap: 10px;
+}
+
+/* --------------------------------------------------------------------------
+   Two Column Grid
+   -------------------------------------------------------------------------- */
+.profile-two-col-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 22px;
+}
+
+.profile-section-card {
+  background-color: var(--bg-surface);
+  border: 1px solid rgba(214, 198, 183, 0.88);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-clay-flat);
+  padding: 22px 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.section-card-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.section-card-title {
+  font-family: var(--font-serif);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.nested-wells-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.stat-well-card {
+  background-color: var(--bg-surface-sunken);
+  border: 1px solid rgba(200, 182, 166, 0.5);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-inset-well);
+  padding: 18px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+}
+
+.well-icon-circle {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-clay-card);
+}
+
+.well-icon-circle.emerald {
+  background-color: var(--accent-forest-tint);
+  color: var(--accent-forest);
+  border: 1px solid rgba(76, 122, 93, 0.3);
+}
+
+.well-icon-circle.sky {
+  background-color: var(--accent-ochre-tint);
+  color: var(--accent-ochre);
+  border: 1px solid rgba(139, 90, 43, 0.3);
+}
+
+.well-icon-circle.amber {
+  background-color: var(--accent-amber-tint);
+  color: var(--accent-amber);
+  border: 1px solid rgba(224, 138, 60, 0.3);
+}
+
+.well-stat-mono {
+  font-family: var(--font-mono);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.well-stat-label {
+  font-family: var(--font-serif);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.profile-bar-chart-container {
+  width: 100%;
+}
+
+.text-emerald { color: var(--accent-forest); }
+.text-sky { color: var(--accent-ochre); }
+
+@media (max-width: 768px) {
+  .profile-two-col-grid {
+    grid-template-columns: 1fr;
+  }
+  .nested-wells-grid {
+    grid-template-columns: 1fr;
+  }
+}

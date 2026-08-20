@@ -1,0 +1,117 @@
+/* ==========================================================================
+   LIGHT THEME TOAST NOTIFICATIONS (§2.5 / §3.4 Specification)
+   ========================================================================== */
+
+.toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+  max-width: 380px;
+  width: calc(100% - 48px);
+}
+
+.toast-card {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-level-2);
+  animation: toastSlideIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all var(--duration-fast) var(--ease-out);
+}
+
+@keyframes toastSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.toast-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.toast-icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.toast-icon.success { color: var(--accent-emerald-solid); }
+.toast-icon.error { color: var(--accent-red-text); }
+.toast-icon.warning { color: var(--accent-amber-text); }
+.toast-icon.info { color: var(--accent-sky-solid); }
+
+.toast-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.toast-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+  font-family: var(--font-sans);
+}
+
+.toast-message {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  word-break: break-word;
+  font-family: var(--font-sans);
+}
+
+.toast-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: transparent;
+  color: var(--text-tertiary);
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all var(--duration-fast) var(--ease-out);
+}
+
+.toast-close:hover {
+  background: var(--bg-surface-hover);
+  color: var(--text-primary);
+}
+
+.toast-success {
+  border-left: 3px solid var(--accent-emerald-solid);
+}
+
+.toast-error {
+  border-left: 3px solid var(--accent-red-text);
+}
+
+.toast-warning {
+  border-left: 3px solid var(--accent-amber-text);
+}
+
+.toast-info {
+  border-left: 3px solid var(--accent-sky-solid);
+}

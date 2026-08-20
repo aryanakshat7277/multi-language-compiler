@@ -1,0 +1,257 @@
+/* ==========================================================================
+   CODEFORGE PRO — ABSTRACT SYNTAX TREE COMPILER IR (WARM CLAY THEME)
+   ========================================================================== */
+
+.light-ast-page {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 58px);
+  width: 100%;
+  background-color: var(--bg-canvas);
+  overflow: hidden;
+}
+
+.ast-top-toolbar {
+  height: 50px;
+  background-color: var(--bg-surface);
+  border-bottom: 1px solid var(--border-hairline);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 18px;
+  gap: 16px;
+  user-select: none;
+  box-shadow: 0 1px 3px rgba(166, 145, 127, 0.08);
+  flex-shrink: 0;
+  z-index: 5;
+}
+
+.toolbar-left-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ast-title-text {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--text-primary);
+}
+
+.ast-filter-search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: var(--bg-surface-sunken);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-xs);
+  box-shadow: var(--shadow-inset-well);
+  padding: 6px 12px;
+  width: 260px;
+}
+
+.search-field {
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-family: var(--font-serif);
+  font-size: 14px;
+  outline: none;
+  width: 100%;
+}
+
+.search-field::placeholder {
+  color: var(--text-tertiary);
+}
+
+.toolbar-right-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ast-lang-select {
+  background-color: var(--bg-surface-sunken);
+  border: 1px solid var(--border-hairline);
+  color: var(--text-primary);
+  padding: 6px 12px;
+  border-radius: var(--radius-xs);
+  box-shadow: var(--shadow-inset-well);
+  font-family: var(--font-serif);
+  font-size: 14px;
+  font-weight: 600;
+  outline: none;
+  cursor: pointer;
+}
+
+/* --------------------------------------------------------------------------
+   Split View
+   -------------------------------------------------------------------------- */
+.ast-main-split {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+.ast-pane {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  background-color: var(--bg-surface);
+}
+
+.left-pane {
+  border-right: 1px solid var(--border-hairline);
+  background-color: var(--bg-surface-sunken);
+}
+
+.right-pane {
+  background-color: var(--bg-canvas);
+}
+
+.pane-header {
+  height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 18px;
+  background-color: var(--bg-surface);
+  border-bottom: 1px solid var(--border-hairline);
+  font-family: var(--font-serif);
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.editor-fill {
+  flex: 1;
+  position: relative;
+  background-color: var(--bg-surface-sunken);
+  box-shadow: var(--shadow-inset-well);
+}
+
+.ast-tree-scroll-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ast-tree-branch {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ast-tree-branch.filter-dim {
+  opacity: 0.3;
+}
+
+.ast-node-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px;
+  background-color: var(--bg-surface);
+  border: 1px solid rgba(214, 198, 183, 0.88);
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-smooth);
+  width: fit-content;
+  box-shadow: var(--shadow-clay-card);
+}
+
+.ast-node-pill:hover {
+  background-color: var(--bg-surface-hover);
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-clay-flat);
+}
+
+.ast-node-pill.selected {
+  background-color: var(--accent-terracotta-tint);
+  border-color: var(--accent-terracotta);
+  color: var(--accent-terracotta);
+  box-shadow: 0 0 0 1px var(--accent-terracotta), var(--shadow-clay-card);
+}
+
+.ast-indent-icon {
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+}
+
+.ast-node-type {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--accent-ochre);
+  font-family: var(--font-mono);
+}
+
+.ast-node-pill.selected .ast-node-type {
+  color: var(--accent-terracotta);
+}
+
+.ast-node-val {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+}
+
+.ast-node-loc {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+  background-color: var(--bg-surface-sunken);
+  padding: 2px 6px;
+  border-radius: 3px;
+  margin-left: auto;
+}
+
+/* Node Detail Dock */
+.node-detail-dock {
+  padding: 14px 18px;
+  background-color: var(--bg-surface);
+  border-top: 1px solid var(--border-hairline);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-family: var(--font-serif);
+  font-size: 13.5px;
+  flex-shrink: 0;
+  box-shadow: 0 -1px 3px rgba(166, 145, 127, 0.08);
+}
+
+.detail-node-name strong {
+  color: var(--accent-terracotta);
+  font-family: var(--font-mono);
+}
+
+.detail-node-meta {
+  display: flex;
+  gap: 18px;
+  color: var(--text-secondary);
+}
+
+.detail-node-meta code {
+  color: var(--accent-terracotta);
+  background-color: var(--accent-terracotta-tint);
+  padding: 2px 8px;
+  border-radius: var(--radius-xs);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  border: 1px solid rgba(200, 90, 50, 0.25);
+}
+
+.monaco-ast-light-highlight {
+  background: rgba(200, 90, 50, 0.15) !important;
+  border-bottom: 2px solid var(--accent-terracotta);
+}
+
+.text-emerald { color: var(--accent-forest); }
+.text-sky { color: var(--accent-ochre); }

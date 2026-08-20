@@ -1,0 +1,44 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "🚀 Full Stack (Backend + Frontend)",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "console": "integratedTerminal",
+      "presentation": {
+        "panel": "new",
+        "group": "fullstack"
+      }
+    },
+    {
+      "name": "⚙️ Backend Dev Server (Port 3001)",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/backend",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "console": "integratedTerminal",
+      "presentation": {
+        "panel": "new",
+        "group": "backend"
+      }
+    },
+    {
+      "name": "🌐 Frontend Dev Server (Port 5173)",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/frontend",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "console": "integratedTerminal",
+      "presentation": {
+        "panel": "new",
+        "group": "frontend"
+      }
+    }
+  ]
+}

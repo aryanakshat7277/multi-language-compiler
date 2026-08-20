@@ -1,0 +1,229 @@
+/* ==========================================================================
+   CODEFORGE PRO — WARM CLAY PROJECTS & COLLABORATION WINDOW
+   ========================================================================== */
+
+.projects-collab-window-panel {
+  display: flex;
+  flex-direction: column;
+  height: 225px;
+  background-color: var(--bg-panel);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-clay-flat);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.projects-window-header {
+  height: 38px;
+  background-color: var(--bg-surface);
+  border-bottom: 1px solid var(--border-hairline);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.projects-header-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.text-terracotta {
+  color: var(--accent-terracotta);
+}
+
+.projects-window-title {
+  font-family: var(--font-serif);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.view-all-link {
+  font-family: var(--font-serif);
+  font-size: 11px;
+  color: var(--accent-terracotta);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 6px;
+  border-radius: var(--radius-xs);
+  transition: all var(--duration-fast) var(--ease-smooth);
+}
+
+.view-all-link:hover {
+  color: var(--accent-ochre);
+  background-color: var(--bg-surface-hover);
+}
+
+/* Content Grid */
+.projects-content-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.2fr;
+  gap: 8px;
+  padding: 8px 10px;
+  background-color: var(--bg-surface-sunken);
+  box-shadow: var(--shadow-inset-well);
+  overflow: hidden;
+  min-height: 0;
+}
+
+.project-card {
+  background-color: var(--bg-panel);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+  box-shadow: var(--shadow-clay-card);
+  transition: border-color var(--duration-fast) var(--ease-smooth);
+}
+
+.project-card:hover {
+  border-color: var(--border-strong);
+}
+
+.p-title {
+  font-family: var(--font-serif);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.p-subtext {
+  font-family: var(--font-serif);
+  font-size: 10px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.p-merge-label {
+  font-family: var(--font-serif);
+  font-size: 10px;
+  color: var(--text-primary);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+}
+
+.p-avatars-row {
+  display: flex;
+  align-items: center;
+  gap: -4px;
+  margin-top: auto;
+  padding-top: 4px;
+}
+
+.p-avatar-img {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1.5px solid var(--bg-panel);
+  object-fit: cover;
+  margin-right: -4px;
+}
+
+.p-avatar-more {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: var(--bg-surface-inset);
+  border: 1.5px solid var(--bg-panel);
+  color: var(--text-secondary);
+  font-size: 8.5px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 2px;
+}
+
+/* Notifications Well */
+.notifications-well-card {
+  background-color: var(--bg-panel);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow: hidden;
+  box-shadow: var(--shadow-clay-card);
+}
+
+.notif-heading {
+  font-family: var(--font-serif);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.notif-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.notif-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  background-color: var(--bg-surface-sunken);
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border-hairline);
+  transition: background-color var(--duration-fast) var(--ease-smooth);
+}
+
+.notif-item:hover {
+  background-color: var(--bg-surface-hover);
+}
+
+.notif-ico-box {
+  width: 20px;
+  height: 20px;
+  border-radius: var(--radius-xs);
+  background-color: var(--accent-terracotta-tint);
+  color: var(--accent-terracotta);
+  border: 1px solid var(--border-hairline);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.notif-text-col {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+  overflow: hidden;
+}
+
+.notif-name {
+  font-family: var(--font-serif);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.notif-time {
+  font-size: 8.5px;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}

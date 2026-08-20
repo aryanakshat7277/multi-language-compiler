@@ -1,0 +1,278 @@
+/* ==========================================================================
+   CODEFORGE PRO — REFINED PROFILE & STATS WINDOW
+   ========================================================================== */
+
+.profile-stats-window-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-height: 490px;
+}
+
+/* Wood Grain Hero Profile Card */
+.wood-grain-profile-card {
+  background: linear-gradient(140deg, #844828 0%, #572A14 60%, #3D1C0B 100%);
+  color: #FAF4EE;
+  border-radius: var(--radius-hero);
+  box-shadow: 6px 6px 18px rgba(61, 28, 11, 0.42), -3px -3px 10px rgba(253, 248, 243, 0.7), inset 0 1px 0 rgba(253, 248, 243, 0.35);
+  border: 1px solid rgba(253, 248, 243, 0.22);
+  padding: 18px 24px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  position: relative;
+  overflow: hidden;
+  min-height: 135px;
+  flex-shrink: 0;
+}
+
+.profile-avatar-box {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  border: 2px solid rgba(253, 248, 243, 0.85);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-content-col {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.profile-top-name-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.user-name-hero {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: #FAF4EE;
+  white-space: nowrap;
+}
+
+.pill-student {
+  font-family: var(--font-serif);
+  font-size: 11.5px;
+  font-weight: 800;
+  background: rgba(253, 248, 243, 0.18);
+  color: #FAF4EE;
+  border: 1px solid rgba(253, 248, 243, 0.45);
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  backdrop-filter: blur(4px);
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.user-motto-quote {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.92);
+  line-height: 1.45;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.user-meta-sub-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 2px;
+}
+
+.u-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.85);
+  white-space: nowrap;
+}
+
+/* --------------------------------------------------------------------------
+   Modular Stats Grid (5 Cards) — Distinct Visual Separations
+   -------------------------------------------------------------------------- */
+.stats-modules-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: 1fr 1fr;
+  gap: 16px;
+  min-height: 0;
+}
+
+.stat-tile-card {
+  padding: 16px 18px;
+  background-color: var(--bg-surface);
+  border: 1px solid rgba(214, 198, 183, 0.9);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-clay-card);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+  gap: 6px;
+}
+
+.tile-title {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: 0.01em;
+}
+
+.tile-number-big {
+  font-family: var(--font-mono);
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.text-ochre { color: var(--accent-amber); }
+.text-charcoal { color: var(--text-primary); }
+
+.tile-sublabel-caption {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-tertiary);
+  font-family: var(--font-sans);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Problems Tile */
+.problems-tile {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.tile-mini-barchart {
+  width: 100%;
+  height: 32px;
+  margin-top: 4px;
+}
+
+/* Speedometer Tile */
+.speedometer-tile {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.speedometer-inner-layout {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.speedometer-gauge-wrapper {
+  flex-shrink: 0;
+}
+
+.speedometer-val-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.speedometer-pct {
+  font-family: var(--font-mono);
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.speedometer-sub {
+  font-size: 9px;
+  font-weight: 800;
+  color: var(--accent-terracotta);
+  margin-top: 3px;
+  letter-spacing: 0.06em;
+}
+
+/* Rank Tile */
+.rank-tile {
+  grid-column: 3;
+  grid-row: 1;
+}
+
+/* Bronze Shield Crest Tile */
+.assessment-crest-tile {
+  grid-column: 1 / span 2;
+  grid-row: 2;
+  flex-direction: row;
+  align-items: center;
+  gap: 16px;
+  background: linear-gradient(135deg, #FAF4ED 0%, #EFE4D6 100%);
+}
+
+.bronze-shield-icon-box {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, #A86036 0%, #6E3A18 100%);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 2px 2px 6px rgba(110, 58, 24, 0.35);
+  flex-shrink: 0;
+}
+
+.crest-details-col {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.crest-title {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.crest-count-big {
+  font-family: var(--font-mono);
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1.1;
+}
+
+.crest-sub {
+  font-size: 9.5px;
+  font-weight: 800;
+  color: var(--accent-terracotta);
+  letter-spacing: 0.05em;
+}
+
+/* Leaderboard Pos Tile */
+.leaderboard-pos-tile {
+  grid-column: 3;
+  grid-row: 2;
+}

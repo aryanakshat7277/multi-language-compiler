@@ -1,0 +1,33 @@
+{
+  "name": "multi-language-compiler",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Multi-Language Code Compiler and Evaluation Platform",
+  "workspaces": [
+    "frontend",
+    "backend",
+    "worker"
+  ],
+  "scripts": {
+    "dev": "npx concurrently \"npm run dev:backend\" \"npm run dev:worker\" \"npm run dev:frontend\"",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:worker": "cd worker && npm run dev",
+    "build": "npx concurrently \"npm run build:frontend\" \"npm run build:backend\" \"npm run build:worker\"",
+    "build:frontend": "cd frontend && npm run build",
+    "build:backend": "cd backend && npm run build",
+    "build:worker": "cd worker && npm run build",
+    "db:migrate": "cd backend && npx prisma migrate dev",
+    "db:seed": "cd backend && npx prisma db seed",
+    "db:studio": "cd backend && npx prisma studio",
+    "test": "npx concurrently \"npm run test:backend\" \"npm run test:frontend\"",
+    "test:backend": "cd backend && npm test",
+    "test:frontend": "cd frontend && npm test",
+    "docker:up": "docker compose -f infrastructure/docker/docker-compose.yml up -d",
+    "docker:down": "docker compose -f infrastructure/docker/docker-compose.yml down",
+    "docker:build-sandbox": "docker build -t code-sandbox -f infrastructure/docker/sandbox/Dockerfile ."
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.4"
+  }
+}

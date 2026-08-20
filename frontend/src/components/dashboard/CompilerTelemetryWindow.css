@@ -1,0 +1,214 @@
+/* ==========================================================================
+   COMPILER TELEMETRY WINDOW (WARM CLAY LIGHT THEME)
+   ========================================================================== */
+
+.telemetry-window-card {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-surface);
+  border: 1.5px solid #C8B6A6;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-clay-flat);
+  padding: 20px;
+  gap: 16px;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.telemetry-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #E4D9CE;
+  padding-bottom: 12px;
+}
+
+.telemetry-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.telemetry-icon {
+  color: #C85A32;
+}
+
+.pulse-glow {
+  animation: telemetryPulse 2s infinite ease-in-out;
+}
+
+@keyframes telemetryPulse {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.1); opacity: 0.8; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.telemetry-title {
+  font-family: var(--font-serif);
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.telemetry-subtext {
+  font-family: var(--font-serif);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  display: block;
+}
+
+.live-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #EBF4EF;
+  border: 1px solid #C3E2D1;
+  color: #2A5A3D;
+  padding: 3px 10px;
+  border-radius: 14px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.live-dot-pulse {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: #2A5A3D;
+  box-shadow: 0 0 8px #2A5A3D;
+  animation: liveDotBlink 1.5s infinite;
+}
+
+@keyframes liveDotBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* Gauges Grid */
+.gauges-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.gauge-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background-color: #FAF4EE;
+  border: 1px solid #E4D9CE;
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  box-shadow: var(--shadow-clay-card);
+}
+
+.gauge-icon-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.gauge-icon-circle.terracotta { background-color: #FDF0ED; color: #C85A32; border: 1px solid #F5C6B8; }
+.gauge-icon-circle.emerald { background-color: #EBF4EF; color: #2A5A3D; border: 1px solid #C3E2D1; }
+.gauge-icon-circle.amber { background-color: #FDF3E7; color: #E08A3C; border: 1px solid #F7E4CE; }
+
+.gauge-val {
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 900;
+  color: #2D231E;
+  line-height: 1;
+}
+
+.gauge-lbl {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #8B5A2B;
+  margin-top: 2px;
+}
+
+/* Runtimes Section */
+.runtimes-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.runtimes-header {
+  font-size: 11px;
+  font-weight: 800;
+  color: #8B5A2B;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.runtimes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.runtime-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background-color: #FAF4EE;
+  border: 1px solid #E4D9CE;
+  border-radius: 6px;
+}
+
+.runtime-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.runtime-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.runtime-name {
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #2D231E;
+}
+
+.runtime-lang {
+  font-size: 11px;
+  color: #8B5A2B;
+  font-weight: 600;
+}
+
+.runtime-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.runtime-badge {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #2A5A3D;
+  background-color: #EBF4EF;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.runtime-load {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #C85A32;
+}

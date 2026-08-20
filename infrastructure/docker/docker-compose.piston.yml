@@ -1,0 +1,39 @@
+version: '3.8'
+
+# Piston Code Execution Engine
+# Self-hosted, isolated code execution service
+#
+# Usage:
+#   docker compose -f docker-compose.piston.yml up -d
+#   Then install runtimes via setup-piston.ps1
+
+services:
+  piston:
+    image: ghcr.io/engineer-man/piston
+    container_name: piston
+    restart: unless-stopped
+    ports:
+      # Bind to localhost ONLY — never expose publicly
+      - "127.0.0.1:2000:2000"
+    volumes:
+      - piston-packages:/piston/packages
+    tmpfs:
+      - /piston/jobs:exec,uid=1000,gid=1000
+    privileged: true
+    environment:
+      - PISTON_RUN_TIMEOUT=10000
+      - PISTON_COMPILE_TIMEOUT=10000
+      - PISTON_OUTPUT_MAX_SIZE=1048576
+      - PISTON_MAX_PROCESS_COUNT=64
+      - PISTON_MAX_OPEN_FILES=2048
+      - PISTON_MAX_FILE_SIZE=10485760
+    networks:
+      - piston-net
+
+networks:
+  piston-net:
+    driver: bridge
+
+volumes:
+  piston-packages:
+    name: piston-packages

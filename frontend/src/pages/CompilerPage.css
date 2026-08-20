@@ -1,0 +1,155 @@
+/* ==========================================================================
+   CODEFORGE PRO — COMPILER IDE PAGE (WARM CLAY THEME)
+   ========================================================================== */
+
+.compiler-page {
+  display: flex;
+  height: calc(100vh - 58px);
+  width: 100%;
+  background-color: var(--bg-canvas);
+  overflow: hidden;
+  position: relative;
+}
+
+/* --------------------------------------------------------------------------
+   Sidebar / Explorer
+   -------------------------------------------------------------------------- */
+.compiler-sidebar {
+  width: 250px;
+  background-color: var(--bg-surface);
+  border-right: 1px solid var(--border-hairline);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex-shrink: 0;
+  box-shadow: var(--shadow-clay-card);
+  z-index: 5;
+}
+
+.compiler-sidebar.collapsed {
+  width: 0;
+  margin-left: -1px;
+  border-right: none;
+}
+
+/* --------------------------------------------------------------------------
+   Main Workspace
+   -------------------------------------------------------------------------- */
+.compiler-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  height: 100%;
+  background-color: var(--bg-surface-sunken);
+  position: relative;
+  overflow: hidden;
+}
+
+.compiler-top {
+  display: flex;
+  background-color: var(--bg-surface);
+  border-bottom: 1px solid var(--border-hairline);
+  box-shadow: 0 1px 3px rgba(166, 145, 127, 0.12);
+  z-index: 4;
+}
+
+.sidebar-toggle-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+  border-right: 1px solid var(--border-hairline);
+  background-color: var(--bg-surface);
+}
+
+.sidebar-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-secondary);
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-smooth);
+}
+
+.sidebar-toggle-btn:hover {
+  background-color: var(--bg-surface-hover);
+  color: var(--accent-terracotta);
+  border-color: var(--border-hairline);
+  box-shadow: var(--shadow-clay-card);
+}
+
+.compiler-top-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Monaco Editor Container (Sunken Well)
+   -------------------------------------------------------------------------- */
+.compiler-editor {
+  flex: 1;
+  min-height: 150px;
+  position: relative;
+  background-color: var(--bg-surface-sunken);
+  box-shadow: var(--shadow-inset-well);
+  overflow: hidden;
+}
+
+.compiler-editor.shrink {
+  flex: 0 0 160px;
+}
+
+/* --------------------------------------------------------------------------
+   Bottom Terminal Panel
+   -------------------------------------------------------------------------- */
+.compiler-bottom {
+  height: 280px;
+  border-top: 1px solid var(--border-strong);
+  background-color: var(--bg-surface);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  transition: height var(--duration-normal) var(--ease-spring);
+  z-index: 10;
+  box-shadow: 0 -4px 16px rgba(166, 145, 127, 0.2);
+}
+
+.compiler-bottom.expanded {
+  height: 75%;
+}
+
+.terminal-resize-bar {
+  position: absolute;
+  top: 8px;
+  right: 130px;
+  z-index: 20;
+}
+
+.terminal-expand-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--border-hairline);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-smooth);
+  box-shadow: var(--shadow-clay-card);
+}
+
+.terminal-expand-btn:hover {
+  background-color: var(--bg-surface-hover);
+  color: var(--accent-terracotta);
+  border-color: var(--border-strong);
+}

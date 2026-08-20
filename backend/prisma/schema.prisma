@@ -1,0 +1,322 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT
+  INSTRUCTOR
+  ADMIN
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum SubmissionStatus {
+  PENDING
+  QUEUED
+  COMPILING
+  RUNNING
+  COMPLETED
+  ACCEPTED
+  WRONG_ANSWER
+  COMPILATION_ERROR
+  RUNTIME_ERROR
+  TIMEOUT
+  TIME_LIMIT_EXCEEDED
+  MEMORY_LIMIT
+  MEMORY_LIMIT_EXCEEDED
+  SYSTEM_ERROR
+}
+
+enum TestCaseStatus {
+  PASS
+  FAIL
+  ERROR
+  TIMEOUT
+  MEMORY_LIMIT
+}
+
+enum JobType {
+  EXECUTION
+  EVALUATION
+}
+
+enum JobStatus {
+  QUEUED
+  STARTING
+  COMPILING
+  RUNNING
+  COMPLETED
+  COMPILATION_ERROR
+  RUNTIME_ERROR
+  TIMEOUT
+  MEMORY_LIMIT
+  SYSTEM_ERROR
+  CANCELLED
+}
+
+enum AiAnalysisType {
+  REVIEW
+  EXPLAIN
+  GENERATE_TESTS
+  DETECT_AI
+  DEBUG
+}
+
+model User {
+  id             String      @id @default(uuid())
+  email          String      @unique
+  passwordHash   String
+  displayName    String
+  role           Role        @default(STUDENT)
+  avatarUrl      String?
+  bio            String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  problems       Problem[]
+  submissions    Submission[]
+  executionJobs  ExecutionJob[]
+  codeAnalyses   CodeAnalysis[]
+  astAnalyses    AstAnalysis[]
+  similarityRep  SimilarityReport[]
+  aiAnalyses     AiAnalysis[]
+  assessments    Assessment[]
+  assessmentSub  AssessmentSubmission[]
+  progress       UserProgress?
+}
+
+model Language {
+  id              String         @id
+  displayName     String
+  extension       String
+  compileCmd      String?
+  runCmd          String
+  compileRequired Boolean
+  version         String
+  memoryLimitMb   Int
+  timeLimitMs     Int
+  enabled         Boolean        @default(true)
+
+  submissions     Submission[]
+  executionJobs   ExecutionJob[]
+  codeAnalyses    CodeAnalysis[]
+  astAnalyses     AstAnalysis[]
+  similarityRep   SimilarityReport[]
+  aiAnalyses      AiAnalysis[]
+}
+
+model Problem {
+  id             String             @id @default(uuid())
+  title          String
+  slug           String             @unique
+  description    String
+  difficulty     Difficulty
+  constraints    String?
+  inputFormat    String?
+  outputFormat   String?
+  timeLimit      Int
+  memoryLimit    Int
+  tags           String      @default("[]")
+  createdById    String
+  createdBy      User               @relation(fields: [createdById], references: [id])
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  testCases      ProblemTestCase[]
+  submissions    Submission[]
+  assessmentQs   AssessmentQuestion[]
+}
+
+model ProblemTestCase {
+  id             String             @id @default(uuid())
+  problemId      String
+  problem        Problem            @relation(fields: [problemId], references: [id])
+  input          String
+  expectedOutput String
+  isHidden       Boolean            @default(false)
+  points         Int                @default(10)
+  orderIndex     Int
+
+  results        SubmissionTestResult[]
+}
+
+model Submission {
+  id             String             @id @default(uuid())
+  userId         String
+  user           User               @relation(fields: [userId], references: [id])
+  problemId      String
+  problem        Problem            @relation(fields: [problemId], references: [id])
+  languageId     String
+  language       Language           @relation(fields: [languageId], references: [id])
+  status         SubmissionStatus   @default(PENDING)
+  score          Int                @default(0)
+  totalScore     Int                @default(0)
+  executionTimeMs Int?
+  memoryUsedMb   Int?
+  createdAt      DateTime           @default(now())
+
+  files          SubmissionFile[]
+  testResults    SubmissionTestResult[]
+}
+
+model SubmissionFile {
+  id             String       @id @default(uuid())
+  submissionId   String
+  submission     Submission   @relation(fields: [submissionId], references: [id])
+  filename       String
+  content        String
+}
+
+model SubmissionTestResult {
+  id             String             @id @default(uuid())
+  submissionId   String
+  submission     Submission         @relation(fields: [submissionId], references: [id])
+  testCaseId     String
+  testCase       ProblemTestCase    @relation(fields: [testCaseId], references: [id])
+  status         TestCaseStatus
+  actualOutput   String?
+  executionTimeMs Int?
+  memoryUsedMb   Int?
+}
+
+model ExecutionJob {
+  id             String       @id @default(uuid())
+  userId         String?
+  user           User?        @relation(fields: [userId], references: [id])
+  type           JobType
+  status         JobStatus    @default(QUEUED)
+  languageId     String
+  language       Language     @relation(fields: [languageId], references: [id])
+  stdin          String?
+  stdout         String?
+  stderr         String?
+  exitCode       Int?
+  executionTimeMs Int?
+  memoryUsedMb   Int?
+  errorMessage   String?
+  createdAt      DateTime     @default(now())
+  startedAt      DateTime?
+  completedAt    DateTime?
+
+  files          ExecutionJobFile[]
+}
+
+model ExecutionJobFile {
+  id             String       @id @default(uuid())
+  jobId          String
+  job            ExecutionJob @relation(fields: [jobId], references: [id])
+  filename       String
+  content        String
+}
+
+model CodeAnalysis {
+  id             String       @id @default(uuid())
+  userId         String?
+  user           User?        @relation(fields: [userId], references: [id])
+  languageId     String
+  language       Language     @relation(fields: [languageId], references: [id])
+  sourceCode     String
+  tokenData      Json?
+  complexityData Json?
+  qualityData    Json?
+  performanceData Json?
+  createdAt      DateTime     @default(now())
+}
+
+model AstAnalysis {
+  id             String       @id @default(uuid())
+  userId         String?
+  user           User?        @relation(fields: [userId], references: [id])
+  languageId     String
+  language       Language     @relation(fields: [languageId], references: [id])
+  sourceCode     String
+  astJson        Json?
+  createdAt      DateTime     @default(now())
+}
+
+model SimilarityReport {
+  id             String       @id @default(uuid())
+  userId         String?
+  user           User?        @relation(fields: [userId], references: [id])
+  sourceCodeA    String
+  sourceCodeB    String
+  languageId     String
+  language       Language     @relation(fields: [languageId], references: [id])
+  lexicalScore   Float
+  structuralScore Float
+  astScore       Float
+  semanticScore  Float
+  algorithmScore Float
+  overallScore   Float
+  explanation    String?
+  details        Json?
+  createdAt      DateTime     @default(now())
+}
+
+model AiAnalysis {
+  id             String         @id @default(uuid())
+  userId         String?
+  user           User?          @relation(fields: [userId], references: [id])
+  type           AiAnalysisType
+  sourceCode     String
+  languageId     String
+  language       Language       @relation(fields: [languageId], references: [id])
+  result         Json?
+  createdAt      DateTime       @default(now())
+}
+
+model Assessment {
+  id             String       @id @default(uuid())
+  title          String
+  description    String?
+  createdById    String
+  createdBy      User         @relation(fields: [createdById], references: [id])
+  startTime      DateTime
+  endTime        DateTime
+  durationMinutes Int
+  createdAt      DateTime     @default(now())
+
+  questions      AssessmentQuestion[]
+  submissions    AssessmentSubmission[]
+}
+
+model AssessmentQuestion {
+  id             String       @id @default(uuid())
+  assessmentId   String
+  assessment     Assessment   @relation(fields: [assessmentId], references: [id])
+  problemId      String
+  problem        Problem      @relation(fields: [problemId], references: [id])
+  points         Int
+  orderIndex     Int
+}
+
+model AssessmentSubmission {
+  id             String       @id @default(uuid())
+  assessmentId   String
+  assessment     Assessment   @relation(fields: [assessmentId], references: [id])
+  userId         String
+  user           User         @relation(fields: [userId], references: [id])
+  totalScore     Int
+  maxScore       Int
+  submittedAt    DateTime     @default(now())
+}
+
+model UserProgress {
+  id               String       @id @default(uuid())
+  userId           String       @unique
+  user             User         @relation(fields: [userId], references: [id])
+  problemsSolved   Int          @default(0)
+  totalSubmissions Int          @default(0)
+  successRate      Float        @default(0)
+  avgScore         Float        @default(0)
+  codeQuality      Float        @default(0)
+}

@@ -1,0 +1,273 @@
+/* ==========================================================================
+   CODEFORGE PRO — POLISHED CLAYMORPHIC TOP BAR
+   ========================================================================== */
+
+.clay-top-bar {
+  height: 58px;
+  background-color: var(--bg-canvas);
+  border-bottom: 1px solid rgba(214, 198, 183, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 18px;
+  user-select: none;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(166, 145, 127, 0.12);
+  gap: 12px;
+}
+
+/* Left Brand */
+.top-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.brand-identity-lockup {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  cursor: pointer;
+}
+
+.brand-wood-square {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, #B85B28 0%, #7A3512 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 2px 3px 7px rgba(122, 53, 18, 0.42), inset 0 1px 0 rgba(253, 248, 243, 0.35);
+  border: 1px solid rgba(253, 248, 243, 0.22);
+  flex-shrink: 0;
+}
+
+.brand-glyph {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 800;
+  color: #FAF4EE;
+  line-height: 1;
+}
+
+.brand-text-col {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+
+.brand-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.brand-name {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.brand-pro-tag {
+  font-size: 10px;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  color: var(--accent-terracotta);
+  background-color: var(--accent-terracotta-tint);
+  border: 1px solid rgba(200, 90, 50, 0.3);
+  padding: 1.5px 6px;
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+}
+
+.breadcrumb-path {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-top: 1px;
+  white-space: nowrap;
+}
+
+.collapse-toggle-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-xs);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-hairline);
+  box-shadow: 1px 1px 3px rgba(166, 145, 127, 0.2);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-spring);
+  flex-shrink: 0;
+}
+
+.collapse-toggle-btn:hover {
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
+.collapse-toggle-btn.is-collapsed {
+  transform: rotate(180deg);
+}
+
+/* Center Search Bar */
+.top-bar-center {
+  flex: 1;
+  max-width: 440px;
+  min-width: 180px;
+}
+
+.clay-search-bar {
+  width: 100%;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px;
+  background-color: var(--bg-surface-sunken);
+  border: 1px solid rgba(190, 172, 155, 0.85);
+  box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.06), inset -2px -2px 4px rgba(255, 255, 255, 0.85);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-smooth);
+  text-align: left;
+}
+
+.clay-search-bar:hover {
+  background-color: #E4D9CE;
+}
+
+.search-ico {
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.search-ph {
+  font-size: 13.5px;
+  color: var(--text-secondary);
+  flex: 1;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cmd-k-badge {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  background-color: var(--bg-surface);
+  padding: 2px 6px;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border-strong);
+  flex-shrink: 0;
+}
+
+/* Right Status Pills */
+.top-bar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.floating-status-pill {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 12px;
+  border-radius: var(--radius-full);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-hairline);
+  box-shadow: 2px 2px 6px rgba(166, 145, 127, 0.2), -1px -1px 4px rgba(255, 255, 255, 0.8);
+  transition: all var(--duration-fast) var(--ease-spring);
+  white-space: nowrap;
+}
+
+.floating-status-pill:hover {
+  transform: translateY(-1px);
+}
+
+.fullscreen-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: var(--radius-full);
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  background-color: var(--bg-surface);
+  color: var(--accent-terracotta);
+  border: 1px solid rgba(200, 90, 50, 0.4);
+  box-shadow: 2px 2px 6px rgba(166, 145, 127, 0.2), -1px -1px 4px rgba(255, 255, 255, 0.8);
+  transition: all var(--duration-fast) var(--ease-spring);
+  white-space: nowrap;
+}
+
+.fullscreen-toggle-btn:hover {
+  transform: translateY(-1px);
+  background-color: var(--accent-terracotta-tint);
+  border-color: var(--accent-terracotta);
+}
+
+.fullscreen-toggle-btn.active {
+  background-color: var(--accent-terracotta);
+  color: #FAF4EE;
+  border-color: var(--accent-terracotta);
+}
+
+.fs-btn-text {
+  font-family: var(--font-main);
+  letter-spacing: -0.01em;
+}
+
+.pill-engine { color: var(--accent-terracotta); }
+.pill-ai { color: var(--accent-amber); }
+.sparkle-ico { color: var(--accent-amber); }
+
+.bell-ghost-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-hairline);
+  box-shadow: 1px 1px 4px rgba(166, 145, 127, 0.18), -1px -1px 3px rgba(255, 255, 255, 0.8);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  transition: all var(--duration-fast) var(--ease-spring);
+  flex-shrink: 0;
+}
+
+.bell-ghost-btn:hover {
+  color: var(--text-primary);
+}
+
+.bell-badge-dot {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background-color: var(--accent-terracotta);
+}
+
+@media (max-width: 900px) {
+  .top-bar-center { display: none; }
+}

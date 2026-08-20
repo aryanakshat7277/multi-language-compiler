@@ -1,0 +1,338 @@
+/* ==========================================================================
+   CODEFORGE PRO — REFINED CLOUD IDE COMPILER WINDOW
+   ========================================================================== */
+
+.ide-window-panel {
+  display: flex;
+  flex-direction: column;
+  height: 490px;
+  background-color: var(--bg-surface);
+  border: 1px solid rgba(214, 198, 183, 0.85);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-clay-flat);
+  overflow: hidden;
+}
+
+.ide-window-header {
+  height: 42px;
+  background-color: var(--bg-surface);
+  border-bottom: 1px solid rgba(214, 198, 183, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  user-select: none;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.header-left-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.window-title-text {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.text-ochre {
+  color: var(--accent-ochre);
+}
+
+.header-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: nowrap;
+}
+
+.clay-lang-select {
+  height: 28px;
+  padding: 0 18px 0 8px;
+  background-color: var(--bg-surface-sunken);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-xs);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%237C6E65' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 5px center;
+  white-space: nowrap;
+}
+
+.btn-tooltip-toggle {
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radius-xs);
+  background: var(--bg-surface-sunken);
+  border: 1px solid var(--border-hairline);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.btn-tooltip-toggle.active {
+  background-color: var(--accent-terracotta-tint);
+  color: var(--accent-terracotta);
+  border-color: var(--accent-terracotta);
+}
+
+/* --------------------------------------------------------------------------
+   Workspace Body
+   -------------------------------------------------------------------------- */
+.ide-workspace-body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* File Tree Rail */
+.ide-file-tree-rail {
+  width: 125px;
+  background-color: var(--bg-sidebar);
+  border-right: 1px solid rgba(214, 198, 183, 0.7);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.file-tree-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px;
+  font-size: 9.5px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  border-bottom: 1px solid rgba(214, 198, 183, 0.5);
+  font-family: var(--font-mono);
+}
+
+.add-file-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1px;
+}
+
+.file-tree-list {
+  padding: 4px 2px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.tree-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 6px;
+  border-radius: var(--radius-xs);
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--text-secondary);
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tree-item:hover {
+  background-color: var(--bg-surface-hover);
+  color: var(--text-primary);
+}
+
+.tree-item.active {
+  background-color: var(--bg-surface-sunken);
+  color: var(--accent-terracotta);
+  font-weight: 700;
+}
+
+.tree-sub-group {
+  padding-left: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.chevron-ico { color: var(--text-tertiary); flex-shrink: 0; }
+.folder-ico { color: var(--accent-amber); flex-shrink: 0; }
+.file-ico { color: var(--accent-ochre); flex-shrink: 0; }
+
+/* Editor Area */
+.ide-editor-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background-color: var(--bg-surface-sunken);
+}
+
+.ide-tabs-bar {
+  display: flex;
+  align-items: center;
+  height: 34px;
+  background-color: var(--bg-surface);
+  border-bottom: 1px solid rgba(214, 198, 183, 0.7);
+  padding: 0 6px;
+  gap: 4px;
+  overflow-x: auto;
+  flex-shrink: 0;
+}
+
+.ide-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 12px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-xs);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.ide-tab.active {
+  background-color: var(--bg-surface-sunken);
+  border-color: rgba(200, 182, 166, 0.8);
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.tab-dirty-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background-color: var(--accent-terracotta);
+}
+
+/* Editor Wrap */
+.editor-relative-wrap {
+  flex: 1;
+  position: relative;
+  min-height: 180px;
+  background-color: #FAF4EE;
+}
+
+/* Floating Tooltip */
+.monaco-floating-tooltip {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  width: 220px;
+  background: #FAF4EE;
+  border: 1px solid #C8B6A6;
+  border-radius: var(--radius-sm);
+  box-shadow: 2px 4px 12px rgba(122, 90, 70, 0.25);
+  padding: 8px 10px;
+  z-index: 10;
+  animation: pageFadeIn 0.2s ease-out;
+}
+
+.tooltip-badge {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--accent-terracotta);
+  background-color: var(--accent-terracotta-tint);
+  padding: 1px 4px;
+  border-radius: var(--radius-xs);
+  width: fit-content;
+  margin-bottom: 2px;
+}
+
+.tooltip-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+}
+
+.tooltip-desc {
+  font-size: 10.5px;
+  color: var(--text-secondary);
+  line-height: 1.35;
+  margin-top: 2px;
+}
+
+.tooltip-close {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  background: transparent;
+  border: none;
+  font-size: 12px;
+  color: var(--text-tertiary);
+  cursor: pointer;
+}
+
+/* Console Dock */
+.ide-console-dock {
+  background-color: var(--bg-surface-inset);
+  border-top: 1px solid rgba(214, 198, 183, 0.8);
+  display: flex;
+  flex-direction: column;
+  height: 95px;
+  flex-shrink: 0;
+}
+
+.console-tabs-row {
+  display: flex;
+  gap: 2px;
+  padding: 2px 6px;
+  background-color: var(--bg-surface);
+  border-bottom: 1px solid rgba(214, 198, 183, 0.6);
+}
+
+.c-tab {
+  padding: 4px 10px;
+  font-size: 12.5px;
+  font-weight: 700;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-xs);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.c-tab.active {
+  background-color: var(--bg-surface-sunken);
+  color: var(--text-primary);
+}
+
+.console-body {
+  padding: 6px 10px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.c-output-text {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  line-height: 1.4;
+  margin: 0;
+}

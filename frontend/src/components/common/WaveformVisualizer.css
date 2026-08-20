@@ -1,0 +1,32 @@
+.waveform-container {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.waveform-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.waveform-horizon-line {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(0, 240, 255, 0.4) 30%,
+    rgba(217, 70, 239, 0.7) 50%,
+    rgba(0, 240, 255, 0.4) 70%,
+    transparent 100%
+  );
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.6);
+}

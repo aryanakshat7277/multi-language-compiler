@@ -1,0 +1,28 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Start All Services (npm run dev)",
+      "type": "shell",
+      "command": "npm run dev",
+      "isBackground": true,
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Build All Workspaces",
+      "type": "shell",
+      "command": "npm run build",
+      "problemMatcher": ["$tsc"]
+    },
+    {
+      "label": "Prisma Migrate DB",
+      "type": "shell",
+      "command": "npm run db:migrate",
+      "problemMatcher": []
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
+dist/
+build/
+*.js.map
+
+# Environment (Keep secret keys safe)
+.env
+.env.local
+.env.production
+!.env.example
+
+# Database
+*.db
+*.sqlite
+dev.db
+
+# IDE & Editor Configuration
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Testing
+coverage/
+
+# Prisma local DB
+backend/prisma/*.db
+backend/prisma/dev.db
+
+# Docker volumes
+data/

@@ -1,0 +1,313 @@
+/* ==========================================================================
+   CODEFORGE PRO — ALGORITHM PROBLEM ARCHIVE (WARM CLAY THEME)
+   ========================================================================== */
+
+.light-problems-page {
+  padding: 22px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 1440px;
+  margin: 0 auto;
+  min-height: calc(100vh - 58px);
+  background-color: var(--bg-canvas);
+}
+
+/* --------------------------------------------------------------------------
+   Header Row
+   -------------------------------------------------------------------------- */
+.problems-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.problems-title-col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.problems-heading-title {
+  font-family: var(--font-serif);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.problems-heading-subtitle {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  color: var(--text-secondary);
+}
+
+.difficulty-summary-pills-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.badge-diff-easy {
+  background: var(--accent-forest-tint);
+  color: var(--accent-forest);
+  border: 1px solid rgba(76, 122, 93, 0.35);
+  font-family: var(--font-serif);
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  box-shadow: var(--shadow-clay-card);
+}
+
+.badge-diff-medium {
+  background: var(--accent-amber-tint);
+  color: var(--accent-amber);
+  border: 1px solid rgba(224, 138, 60, 0.35);
+  font-family: var(--font-serif);
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  box-shadow: var(--shadow-clay-card);
+}
+
+.badge-diff-hard {
+  background: var(--accent-terracotta-tint);
+  color: var(--accent-terracotta);
+  border: 1px solid rgba(200, 90, 50, 0.35);
+  font-family: var(--font-serif);
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  box-shadow: var(--shadow-clay-card);
+}
+
+/* --------------------------------------------------------------------------
+   Filter Bar
+   -------------------------------------------------------------------------- */
+.problems-filter-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.problems-search-input-shell {
+  flex: 1;
+  max-width: 460px;
+  height: 42px;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-inset-well);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 16px;
+  transition: border-color var(--duration-fast) var(--ease-smooth), box-shadow var(--duration-fast) var(--ease-smooth);
+}
+
+.problems-search-input-shell:focus-within {
+  border-color: var(--accent-terracotta);
+  box-shadow: 0 0 0 2px var(--accent-terracotta-tint);
+}
+
+.search-filter-icon {
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+}
+
+.problems-search-field {
+  width: 100%;
+  background: transparent;
+  border: none;
+  font-size: 14.5px;
+  color: var(--text-primary);
+  outline: none;
+  font-family: var(--font-serif);
+}
+
+.problems-search-field::placeholder {
+  color: var(--text-tertiary);
+}
+
+.dropdown-filters-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.select-wrapper {
+  position: relative;
+}
+
+.light-select-field {
+  height: 42px;
+  padding: 0 36px 0 14px;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-clay-card);
+  font-family: var(--font-serif);
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236B5D54' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  transition: border-color var(--duration-fast) var(--ease-smooth);
+}
+
+.light-select-field:focus {
+  border-color: var(--accent-terracotta);
+  box-shadow: 0 0 0 2px var(--accent-terracotta-tint);
+}
+
+/* --------------------------------------------------------------------------
+   Table Card & Data Table
+   -------------------------------------------------------------------------- */
+.table-card-container {
+  background-color: var(--bg-surface);
+  border: 1px solid rgba(214, 198, 183, 0.88);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-clay-flat);
+  overflow: hidden;
+}
+
+.light-data-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.light-data-table th {
+  background-color: var(--bg-surface-sunken);
+  color: var(--text-secondary);
+  font-family: var(--font-serif);
+  font-size: 12.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.light-data-table td {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-hairline);
+  color: var(--text-primary);
+  vertical-align: middle;
+  font-family: var(--font-serif);
+  font-size: 14.5px;
+}
+
+.light-data-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.clickable-table-row {
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-smooth);
+}
+
+.clickable-table-row:hover {
+  background-color: var(--bg-surface-hover);
+}
+
+.status-solved-icon {
+  color: var(--accent-forest);
+}
+
+.status-unsolved-ring {
+  color: var(--border-strong);
+}
+
+.problem-title-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.problem-main-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  transition: color var(--duration-fast) var(--ease-smooth);
+}
+
+.clickable-table-row:hover .problem-main-name {
+  color: var(--accent-terracotta);
+}
+
+.problem-category-text {
+  font-size: 13.5px;
+  color: var(--text-secondary);
+}
+
+.acceptance-cell-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.acceptance-track {
+  width: 76px;
+  height: 7px;
+  background-color: var(--bg-surface-inset);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.acceptance-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-amber) 0%, var(--accent-forest) 100%);
+  border-radius: var(--radius-full);
+}
+
+.acceptance-num-mono {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.points-cell-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.points-trophy-icon {
+  color: var(--accent-amber);
+}
+
+.points-value-mono {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.btn-solve-row {
+  padding: 7px 15px;
+  font-size: 14px;
+  transition: all var(--duration-fast) var(--ease-smooth);
+}
+
+.btn-solve-row:hover .solve-chevron-arrow {
+  transform: translateX(3px);
+}
+
+.solve-chevron-arrow {
+  transition: transform var(--duration-fast) var(--ease-smooth);
+}

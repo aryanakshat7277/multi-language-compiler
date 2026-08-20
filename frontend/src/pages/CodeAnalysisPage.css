@@ -1,0 +1,436 @@
+/* ==========================================================================
+   CODEFORGE PRO — GRAPHICAL & ANIMATED CODE METRICS ANALYSIS (WARM CLAY)
+   ========================================================================== */
+
+.clay-analysis-page {
+  display: flex;
+  min-height: calc(100vh - 58px);
+  width: 100%;
+  background-color: var(--bg-canvas);
+  padding: 16px 20px;
+  gap: 16px;
+}
+
+/* --------------------------------------------------------------------------
+   Left Code Editor Panel
+   -------------------------------------------------------------------------- */
+.analysis-left-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-surface);
+  border: 1px solid rgba(214, 198, 183, 0.85);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-clay-flat);
+  overflow: hidden;
+  min-width: 380px;
+}
+
+.panel-top-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  height: 48px;
+  background-color: var(--bg-surface);
+  border-bottom: 1px solid rgba(214, 198, 183, 0.8);
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.title-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.panel-title-text {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.analysis-editor-wrap {
+  flex: 1;
+  position: relative;
+  background-color: #FAF4EE;
+  min-height: 380px;
+}
+
+.analysis-panel-footer {
+  padding: 12px 16px;
+  background-color: var(--bg-surface);
+  border-top: 1px solid rgba(214, 198, 183, 0.8);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.scanning-step-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-family: var(--font-mono);
+  color: var(--accent-terracotta);
+  animation: pageFadeIn 0.2s ease-out;
+}
+
+.btn-run-metrics {
+  width: 100%;
+  padding: 11px 16px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+/* --------------------------------------------------------------------------
+   Right Metrics Panel
+   -------------------------------------------------------------------------- */
+.analysis-right-panel {
+  flex: 1.25;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-surface);
+  border: 1px solid rgba(214, 198, 183, 0.85);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-clay-flat);
+  overflow: hidden;
+  min-width: 440px;
+}
+
+.header-chips-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.metrics-body-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 18px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* --------------------------------------------------------------------------
+   1. Interactive 4 Metric Gauge Tiles
+   -------------------------------------------------------------------------- */
+.interactive-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.metric-gauge-tile {
+  padding: 14px 14px 12px;
+  background-color: var(--bg-surface);
+  border: 1px solid rgba(214, 198, 183, 0.85);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-clay-card);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  position: relative;
+  overflow: hidden;
+  transition: transform var(--duration-fast) var(--ease-spring), box-shadow var(--duration-fast) var(--ease-smooth);
+}
+
+.metric-gauge-tile.active {
+  border-color: var(--accent-terracotta);
+  background: linear-gradient(135deg, #FAF4ED 0%, #EFE4D6 100%);
+  box-shadow: 0 0 0 1px var(--accent-terracotta), var(--shadow-clay-raised);
+}
+
+.gauge-header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.gauge-title {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+  white-space: normal;
+  line-height: 1.3;
+  word-break: normal;
+  overflow-wrap: normal;
+  hyphens: none;
+}
+
+.gauge-val-mono {
+  font-size: 22px;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  line-height: 1.1;
+  white-space: nowrap;
+  margin-top: 2px;
+}
+
+.gauge-status-sub {
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  white-space: normal;
+  line-height: 1.3;
+  word-break: normal;
+  overflow-wrap: normal;
+  hyphens: none;
+  margin-top: 2px;
+}
+
+.gauge-bar-track {
+  width: 100%;
+  height: 5px;
+  background-color: var(--bg-surface-inset);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  margin-top: 2px;
+}
+
+.g-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+}
+
+/* --------------------------------------------------------------------------
+   2. Middle Split: Deep Explanation + Multi-Axis Radar Graph
+   -------------------------------------------------------------------------- */
+.metrics-middle-split-row {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 14px;
+}
+
+.metric-explanation-detail-card {
+  padding: 16px 18px;
+  background-color: var(--bg-surface-sunken);
+  border: 1px solid rgba(214, 198, 183, 0.8);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-inset-well);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.detail-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.detail-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.detail-title {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.detail-fields-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.detail-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.df-label {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--text-tertiary);
+  letter-spacing: 0.05em;
+  font-family: var(--font-mono);
+}
+
+.df-text {
+  font-size: 13.5px;
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+
+.df-code-loc code {
+  font-size: 12px;
+  font-family: var(--font-mono);
+  color: var(--accent-terracotta);
+  background-color: var(--accent-terracotta-tint);
+  border: 1px solid rgba(200, 90, 50, 0.25);
+  padding: 3px 8px;
+  border-radius: var(--radius-xs);
+  display: inline-block;
+}
+
+/* Radar Card */
+.metric-radar-card {
+  padding: 14px 16px;
+  background-color: var(--bg-surface-sunken);
+  border: 1px solid rgba(214, 198, 183, 0.8);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-inset-well);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.radar-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  margin-bottom: 6px;
+}
+
+.radar-title {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.radar-chart-wrap {
+  width: 100%;
+  height: 230px;
+  overflow: visible;
+}
+
+/* --------------------------------------------------------------------------
+   3. Quality Trend Curve
+   -------------------------------------------------------------------------- */
+.trend-chart-card {
+  padding: 14px 18px;
+  background-color: var(--bg-surface-sunken);
+  border: 1px solid rgba(214, 198, 183, 0.8);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-inset-well);
+}
+
+.trend-chart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.chart-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.trend-chart-svg {
+  width: 100%;
+}
+
+/* --------------------------------------------------------------------------
+   4. Lexical Token Barometer Distribution
+   -------------------------------------------------------------------------- */
+.token-breakdown-card {
+  padding: 14px 18px;
+  background-color: var(--bg-surface-sunken);
+  border: 1px solid rgba(214, 198, 183, 0.8);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-inset-well);
+}
+
+.token-card-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.token-total-count {
+  font-size: 12px;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.tokens-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.token-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  background-color: var(--bg-surface);
+  border: 1px solid rgba(214, 198, 183, 0.6);
+  border-radius: var(--radius-xs);
+}
+
+.token-tile-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.token-type-lbl {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.token-val-mono {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--accent-terracotta);
+  font-family: var(--font-mono);
+}
+
+.token-bar-track {
+  width: 100%;
+  height: 4px;
+  background-color: var(--bg-surface-inset);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.token-bar-fill {
+  height: 100%;
+  background-color: var(--accent-terracotta);
+  border-radius: var(--radius-full);
+}
+
+/* --------------------------------------------------------------------------
+   Responsive
+   -------------------------------------------------------------------------- */
+@media (max-width: 1200px) {
+  .clay-analysis-page {
+    flex-direction: column;
+  }
+  .analysis-left-panel, .analysis-right-panel {
+    min-width: 100%;
+  }
+  .metrics-middle-split-row {
+    grid-template-columns: 1fr;
+  }
+}
