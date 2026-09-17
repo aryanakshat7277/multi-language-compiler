@@ -18,9 +18,18 @@ import * as compilerController from '../controllers/compilerController';
 import { parseCode } from '../services/astService';
 import { LocalExecutorService } from '../services/localExecutorService';
 import { executionRateLimiter, authRateLimiter, analysisRateLimiter } from '../middleware/rateLimiter';
+import v1CompilationRoutes from './v1/compilationRoutes';
+import * as compilationControllerV1 from '../controllers/compilationControllerV1';
 import * as os from 'os';
 
 const router = Router();
+
+// Phase 1 Architecture: Liveness & Readiness Probes
+router.get('/health/live', compilationControllerV1.getLiveness);
+router.get('/health/ready', compilationControllerV1.getReadiness);
+
+// Phase 1 Unified Compilation Architecture (v1)
+router.use('/v1', v1CompilationRoutes);
 
 // Production System Telemetry & Health Monitoring
 router.get('/health/telemetry', (req, res) => {

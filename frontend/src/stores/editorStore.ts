@@ -38,6 +38,16 @@ export type ExecutionStatus =
   | 'cancelled'
   | 'service_unavailable';
 
+export interface CompilationTraceMetadata {
+  compilationId?: string;
+  status?: string;
+  stage?: string;
+  queuePosition?: number;
+  durationMs?: number;
+  diagnostics?: Array<{ severity: string; message: string; code?: string }>;
+  statistics?: { linesOfCode?: number; sourceSizeBytes?: number; peakMemoryMb?: number };
+}
+
 export interface CompileOutput {
   stdout: string;
   stderr: string;
@@ -104,6 +114,7 @@ interface EditorState {
   analysisResults: any;
   compileOutput: CompileOutput | null;
   statusMessage: string;
+  compilationMeta: CompilationTraceMetadata | null;
   
   addFile: (name: string) => void;
   removeFile: (id: string) => void;
@@ -117,6 +128,7 @@ interface EditorState {
   setExecutionStatus: (status: ExecutionStatus, jobId?: string) => void;
   setStatusMessage: (msg: string) => void;
   setCompileOutput: (output: CompileOutput | null) => void;
+  setCompilationMeta: (meta: CompilationTraceMetadata | null) => void;
   setFullResult: (result: {
     status: ExecutionStatus;
     stdout?: string;
@@ -125,6 +137,7 @@ interface EditorState {
     executionTime?: number;
     compileOutput?: CompileOutput | null;
     statusMessage?: string;
+    compilationMeta?: CompilationTraceMetadata | null;
   }) => void;
   resetOutput: () => void;
   resetEditor: () => void;
@@ -153,6 +166,7 @@ export const useEditorStore = create<EditorState>((set) => ({
   analysisResults: null,
   compileOutput: null,
   statusMessage: '',
+  compilationMeta: null,
 
   addFile: (name) => set((state) => {
     const ext = name.split('.').pop() || 'txt';
@@ -235,6 +249,8 @@ export const useEditorStore = create<EditorState>((set) => ({
 
   setCompileOutput: (output) => set({ compileOutput: output }),
 
+  setCompilationMeta: (meta) => set({ compilationMeta: meta }),
+
   setFullResult: (result) => set({
     executionStatus: result.status,
     stdout: result.stdout ?? '',
@@ -243,6 +259,7 @@ export const useEditorStore = create<EditorState>((set) => ({
     executionTime: result.executionTime ?? null,
     compileOutput: result.compileOutput ?? null,
     statusMessage: result.statusMessage ?? '',
+    compilationMeta: result.compilationMeta !== undefined ? result.compilationMeta : null
   }),
 
   resetOutput: () => set({
