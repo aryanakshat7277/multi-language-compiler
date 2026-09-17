@@ -15,9 +15,9 @@ interface WsMessage {
   jobId?: string;
 }
 
-// Global event bus for job status updates
+// Global event bus for job status updates (unlimited listeners for high concurrency)
 export const statusBus = new EventEmitter();
-statusBus.setMaxListeners(100);
+statusBus.setMaxListeners(0);
 
 export const setupWebSocket = (server: Server) => {
   const wss = new WebSocketServer({ server });

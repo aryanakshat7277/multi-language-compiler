@@ -11,7 +11,7 @@ export class LocalExecutorService {
   // High-Concurrency Production Semaphore
   private static activeJobs = 0;
   private static readonly MAX_CONCURRENT = Math.max(4, (os.cpus()?.length || 4) * 2);
-  private static readonly MAX_QUEUE_DEPTH = 500;
+  private static readonly MAX_QUEUE_DEPTH = 2000;
   private static waitQueue: Array<{
     resolve: () => void;
     reject: (err: Error) => void;

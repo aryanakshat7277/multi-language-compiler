@@ -16,8 +16,12 @@ const prisma = new PrismaClient({
     await prisma.$executeRawUnsafe('PRAGMA synchronous = NORMAL;');
     // Cache size = 10,000 pages (~40MB RAM cache for instant reads)
     await prisma.$executeRawUnsafe('PRAGMA cache_size = 10000;');
+    // In-memory temp store for sort/group-by operations
+    await prisma.$executeRawUnsafe('PRAGMA temp_store = MEMORY;');
+    // Memory-mapped I/O (up to 30GB) for zero-copy kernel reads
+    await prisma.$executeRawUnsafe('PRAGMA mmap_size = 30000000000;');
     await prisma.$executeRawUnsafe('PRAGMA foreign_keys = ON;');
-    logger.info('Database initialized with High-Concurrency WAL mode (busy_timeout=10s)');
+    logger.info('Database initialized with High-Concurrency WAL mode (busy_timeout=10s, mmap enabled)');
   } catch (err: any) {
     logger.warn(`SQLite PRAGMA tuning notice: ${err.message}`);
   }

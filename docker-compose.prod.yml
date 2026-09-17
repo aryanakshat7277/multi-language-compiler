@@ -1,4 +1,4 @@
-﻿version: '3.8'
+version: '3.8'
 
 services:
   codeforge:
@@ -8,19 +8,25 @@ services:
     container_name: codeforge-platform
     restart: always
     ports:
-      - " 3001:3001\
- environment:
- - NODE_ENV=production
- - PORT=3001
- - DATABASE_URL=file:./dev.db
- - JWT_SECRET=production_super_secret_jwt_key_codeforge_2026
- volumes:
- - codeforge_data:/app/backend/prisma
- healthcheck:
- test: [\CMD\, \curl\, \-f\, \http://localhost:3001/api/health/telemetry\]
- interval: 15s
- timeout: 5s
- retries: 3
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - DATABASE_URL=file:./dev.db
+      - JWT_SECRET=production_super_secret_jwt_key_codeforge_2026
+      - RATE_LIMIT_WINDOW_MS=60000
+      - RATE_LIMIT_MAX=3000
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
+    volumes:
+      - codeforge_data:/app/backend/prisma
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/api/health/telemetry"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
 
 volumes:
- codeforge_data:
+  codeforge_data:
