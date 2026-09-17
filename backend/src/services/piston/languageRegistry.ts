@@ -90,41 +90,47 @@ const getLanguages = async (): Promise<LanguageDefinition[]> => {
       }
     }
 
-    cachedLanguages = mapped;
-    lastFetchTime = now;
-    logger.info(`Successfully cached ${mapped.length} Piston languages`);
-    
-    return mapped;
-  } catch (error) {
-    logger.warn('Failed to fetch Piston runtimes, falling back to database languages', error);
-    if (cachedLanguages && cachedLanguages.length > 0) return cachedLanguages;
-    
-    // Fallback to database languages
-    try {
-      const prisma = (await import('../../config/database')).default;
-      const dbLangs = await prisma.language.findMany({ where: { enabled: true } });
-      if (dbLangs && dbLangs.length > 0) {
-        const fallbackMapped: LanguageDefinition[] = dbLangs.map((l: any) => ({
-          id: l.id,
-          pistonLanguage: APP_TO_PISTON_MAP[l.id] || l.id,
-          pistonVersion: l.version || '*',
-          displayName: l.displayName,
-          fileExtension: `.${l.extension}`,
-          defaultFilename: getDefaultFilename(l.id),
-          supportsCompilation: l.compileRequired,
-          supportsStdin: true,
-          defaultCompileTimeout: l.timeLimitMs || 10000,
-          defaultRunTimeout: l.timeLimitMs || 10000,
-          enabled: true
-        }));
-        return fallbackMapped;
-      }
-    } catch {
-      // ignore
+    if (mapped.length > 0) {
+      cachedLanguages = mapped;
+      lastFetchTime = now;
+      logger.info(`Successfully cached ${mapped.length} Piston languages`);
+      return mapped;
     }
-
-    return DEFAULT_OFFLINE_LANGUAGES;
+  } catch (error) {
+    logger.warn('Failed to fetch Piston runtimes, falling back to local registry', error);
   }
+
+  if (cachedLanguages && cachedLanguages.length > 0) return cachedLanguages;
+  
+  // Fallback to database languages
+  try {
+    const prisma = (await import('../../config/database')).default;
+    const dbLangs = await prisma.language.findMany({ where: { enabled: true } });
+    if (dbLangs && dbLangs.length > 0) {
+      const fallbackMapped: LanguageDefinition[] = dbLangs.map((l: any) => ({
+        id: l.id,
+        pistonLanguage: APP_TO_PISTON_MAP[l.id] || l.id,
+        pistonVersion: l.version || '*',
+        displayName: l.displayName,
+        fileExtension: `.${l.extension}`,
+        defaultFilename: getDefaultFilename(l.id),
+        supportsCompilation: l.compileRequired,
+        supportsStdin: true,
+        defaultCompileTimeout: l.timeLimitMs || 10000,
+        defaultRunTimeout: l.timeLimitMs || 10000,
+        enabled: true
+      }));
+      cachedLanguages = fallbackMapped;
+      lastFetchTime = now;
+      return fallbackMapped;
+    }
+  } catch {
+    // ignore
+  }
+
+  cachedLanguages = DEFAULT_OFFLINE_LANGUAGES;
+  lastFetchTime = now;
+  return DEFAULT_OFFLINE_LANGUAGES;
 };
 
 const getLanguageByPistonId = async (pistonLang: string, pistonVersion?: string): Promise<LanguageDefinition | null> => {
