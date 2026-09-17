@@ -26,24 +26,50 @@ export class CompilerService {
       CompilerValidator.validateFileExtension(file.name, request.language);
     }
 
-    // 3. Create DB Job
-    const job = await prisma.executionJob.create({
-      data: {
-        userId: userId || null,
-        type: 'EXECUTION',
-        status: 'QUEUED',
-        languageId: langDef.id,
-        stdin: request.stdin,
-        files: {
-          create: request.files.map(f => ({
-            filename: f.name,
-            content: f.content
-          }))
+    // Ensure Language row exists in DB for foreign key constraint
+    try {
+      await prisma.language.upsert({
+        where: { id: langDef.id },
+        update: {},
+        create: {
+          id: langDef.id,
+          displayName: langDef.displayName,
+          extension: langDef.fileExtension.replace('.', ''),
+          runCmd: langDef.id,
+          compileRequired: langDef.supportsCompilation,
+          version: langDef.pistonVersion,
+          memoryLimitMb: 256,
+          timeLimitMs: 10000,
+          enabled: true
         }
-      }
-    });
+      });
+    } catch (err: any) {
+      logger.warn(`Language upsert warning for ${langDef.id}: ${err.message}`);
+    }
 
-    const executionId = job.id;
+    // 3. Create DB Job
+    let job: any = null;
+    try {
+      job = await prisma.executionJob.create({
+        data: {
+          userId: userId || null,
+          type: 'EXECUTION',
+          status: 'QUEUED',
+          languageId: langDef.id,
+          stdin: request.stdin,
+          files: {
+            create: request.files.map(f => ({
+              filename: f.name,
+              content: f.content
+            }))
+          }
+        }
+      });
+    } catch (err: any) {
+      logger.warn(`ExecutionJob DB create warning: ${err.message}`);
+    }
+
+    const executionId = job?.id || `job-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
     const startTime = Date.now();
     let status: CompilerStatus = 'SUBMITTED';
 
@@ -137,16 +163,22 @@ export class CompilerService {
     const rawExitCode = runResult?.code ?? compileResult?.code;
     const safeExitCode = typeof rawExitCode === 'number' ? (rawExitCode | 0) : null;
 
-    await prisma.executionJob.update({
-      where: { id: executionId },
-      data: {
-        status: mapToJobStatus(status),
-        stdout: runResult?.stdout || compileResult?.stdout || null,
-        stderr: runResult?.stderr || compileResult?.stderr || null,
-        exitCode: safeExitCode,
-        executionTimeMs
+    if (job?.id) {
+      try {
+        await prisma.executionJob.update({
+          where: { id: executionId },
+          data: {
+            status: mapToJobStatus(status),
+            stdout: runResult?.stdout || compileResult?.stdout || null,
+            stderr: runResult?.stderr || compileResult?.stderr || null,
+            exitCode: safeExitCode,
+            executionTimeMs
+          }
+        });
+      } catch (dbErr: any) {
+        logger.warn(`ExecutionJob DB update warning: ${dbErr.message}`);
       }
-    });
+    }
 
     // 7. Broadcast COMPLETED (or final status)
     broadcastJobStatus(executionId, status === 'SUCCESS' ? 'COMPLETED' : status);

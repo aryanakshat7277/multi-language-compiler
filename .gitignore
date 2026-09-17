@@ -17,6 +17,8 @@ build/
 # Database
 *.db
 *.sqlite
+*.db-wal
+*.db-shm
 dev.db
 
 # IDE & Editor Configuration
