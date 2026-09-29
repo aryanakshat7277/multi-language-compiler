@@ -44,16 +44,21 @@ async function bootstrap() {
   // 2. CORS Policy
   const allowedOrigins = process.env.ALLOWED_ORIGINS
     ? process.env.ALLOWED_ORIGINS.split(',').map(s => s.trim())
-    : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000', 'http://localhost:3001'];
+    : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000', 'http://localhost:3001', 'https://codeforge-pro.onrender.com'];
 
   app.use(
     cors({
       origin: (origin, callback) => {
         // Allow requests with no origin (like mobile apps, curl, or same-origin)
-        if (!origin || allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production') {
+        if (
+          !origin || 
+          allowedOrigins.includes(origin) || 
+          (origin && origin.endsWith('.onrender.com')) || 
+          process.env.NODE_ENV !== 'production'
+        ) {
           return callback(null, true);
         }
-        return callback(new Error('CORS policy: Access denied for this origin.'));
+        return callback(new Error(`CORS policy: Access denied for origin ${origin}`));
       },
       credentials: true
     })
