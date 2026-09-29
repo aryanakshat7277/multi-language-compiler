@@ -103,7 +103,7 @@ export default function SubmissionsPage() {
               filtered.map((s, idx) => (
                 <tr key={s.id || idx}>
                   <td>
-                    <span className="sub-id-mono">#{s.id.substring(0, 8)}</span>
+                    <span className="sub-id-mono">#{idx + 1}</span>
                   </td>
                   <td>
                     <span className="sub-problem-title">{s.problemTitle}</span>

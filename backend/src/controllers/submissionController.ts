@@ -68,8 +68,14 @@ export const getSubmissions = async (req: AuthRequest, res: Response, next: Next
     const pageSize = parseInt(req.query.pageSize as string) || 30;
 
     const where: any = {};
-    if (req.user && req.user.role !== 'ADMIN') {
-      where.userId = req.user.id;
+    if (req.user) {
+      if (req.user.role !== 'ADMIN') {
+        where.userId = req.user.id;
+      }
+    } else {
+      // Guests don't have submissions yet
+      res.status(200).json({ data: [], total: 0, page, pageSize });
+      return;
     }
 
     const [submissions, total] = await Promise.all([
@@ -91,9 +97,9 @@ export const getSubmissions = async (req: AuthRequest, res: Response, next: Next
       id: s.id,
       problemId: s.problemId,
       problemTitle: s.problem?.title || 'Coding Problem',
-      language: s.languageId,
+      language: (s.languageId || 'code').toUpperCase(),
       verdict: s.status,
-      score: s.status === 'ACCEPTED' ? 100 : s.status === 'PENDING' ? 0 : 40,
+      score: typeof s.score === 'number' ? s.score : (s.status === 'ACCEPTED' ? 100 : 0),
       runtimeMs: s.executionTimeMs || 0,
       memoryKb: s.memoryUsedMb ? s.memoryUsedMb * 1024 : 0,
       submittedAt: s.createdAt.toISOString(),
