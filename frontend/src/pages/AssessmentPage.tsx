@@ -262,6 +262,7 @@ export default function AssessmentPage() {
   // AI Generator Modal state
   const [showGenModal, setShowGenModal] = useState(false);
   const [genTopic, setGenTopic] = useState('Dynamic Programming & Graphs');
+  const [genLanguage, setGenLanguage] = useState('javascript');
   const [topicSearch, setTopicSearch] = useState('');
   const [genDifficulty, setGenDifficulty] = useState('Intermediate');
   const [genNumQuestions, setGenNumQuestions] = useState(3);
@@ -367,8 +368,9 @@ export default function AssessmentPage() {
   const handleGenerateAiExam = async () => {
     setGenerating(true);
     try {
-      const aiExam = await generateAiAssessment(genTopic, genDifficulty, genNumQuestions);
+      const aiExam = await generateAiAssessment(genTopic, genDifficulty, genNumQuestions, genLanguage);
       if (aiExam && aiExam.questions && aiExam.questions.length > 0) {
+        setLanguage(genLanguage);
         const newExam: Assessment = {
           id: aiExam.id || `ai-exam-${Date.now()}`,
           title: aiExam.title || `${genTopic} AI Exam`,
@@ -525,35 +527,58 @@ export default function AssessmentPage() {
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                 <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
                     <label style={{ fontSize: 12, fontWeight: 700, color: '#8B5A2B' }}>
-                      Exam Topic / Subject ({POPULAR_EXAM_TOPICS.length}+ Curated)
+                      Exam Topic / Subject
                     </label>
-                    {genTopic && (
-                      <span 
-                        style={{ fontSize: 11, color: '#C85A32', fontWeight: 700, maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} 
-                        title={genTopic}
-                      >
-                        ✓ {genTopic}
-                      </span>
-                    )}
+                    <span style={{ fontSize: 11, color: '#C85A32', fontWeight: 600 }}>
+                      Type custom or pick from below
+                    </span>
                   </div>
 
-                  {/* Search Bar Input */}
-                  <div style={{ position: 'relative', marginBottom: 8 }}>
-                    <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#8B5A2B' }} />
+                  {/* Direct editable Topic Input so user can type any custom topic */}
+                  <input
+                    type="text"
+                    value={genTopic}
+                    onChange={e => setGenTopic(e.target.value)}
+                    placeholder="Enter custom topic (e.g. React 19 Server Actions, Rust WebAssembly, Kafka)..."
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      borderRadius: 6,
+                      border: '1.5px solid #C85A32',
+                      background: '#FFF',
+                      fontSize: 13,
+                      fontWeight: 600,
+                      color: '#2D231E',
+                      boxSizing: 'border-box',
+                      outline: 'none',
+                      marginBottom: 10
+                    }}
+                  />
+
+                  {/* Curated list header with search */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: '#8B5A2B', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      Or Quick-Pick From {POPULAR_EXAM_TOPICS.length}+ Curated Topics:
+                    </span>
+                  </div>
+
+                  {/* Search Bar Input for Filtering Curated Topics */}
+                  <div style={{ position: 'relative', marginBottom: 6 }}>
+                    <Search size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#8B5A2B' }} />
                     <input
                       type="text"
-                      placeholder="Search 100+ topics (e.g. DP, Trie, React, Rust, Concurrency)..."
+                      placeholder="Filter topics (e.g. DP, Trie, React, Rust, Concurrency)..."
                       value={topicSearch}
                       onChange={e => setTopicSearch(e.target.value)}
                       style={{
                         width: '100%',
-                        padding: '8px 30px 8px 32px',
+                        padding: '6px 28px 6px 30px',
                         borderRadius: 6,
                         border: '1px solid #C8B6A6',
-                        background: '#FFF',
-                        fontSize: 12.5,
+                        background: '#FAF4EE',
+                        fontSize: 12,
                         color: '#2D231E',
                         boxSizing: 'border-box',
                         outline: 'none'
@@ -565,14 +590,14 @@ export default function AssessmentPage() {
                         onClick={() => setTopicSearch('')}
                         style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#8B5A2B' }}
                       >
-                        <X size={13} />
+                        <X size={12} />
                       </button>
                     )}
                   </div>
 
-                  {/* Scrollable list of 100+ topics */}
+                  {/* Scrollable list of curated topics */}
                   <div style={{
-                    maxHeight: 160,
+                    maxHeight: 110,
                     overflowY: 'auto',
                     border: '1px solid #C8B6A6',
                     borderRadius: 6,
@@ -589,9 +614,9 @@ export default function AssessmentPage() {
                           key={top}
                           onClick={() => setGenTopic(top)}
                           style={{
-                            padding: '6px 10px',
+                            padding: '5px 8px',
                             borderRadius: 4,
-                            fontSize: 12.5,
+                            fontSize: 12,
                             cursor: 'pointer',
                             background: isSelected ? '#C85A32' : 'transparent',
                             color: isSelected ? '#FFF' : '#2D231E',
@@ -603,37 +628,43 @@ export default function AssessmentPage() {
                           }}
                         >
                           <span>{top}</span>
-                          {isSelected && <Check size={13} />}
+                          {isSelected && <Check size={12} />}
                         </div>
                       );
                     })}
-                    {POPULAR_EXAM_TOPICS.filter(t => t.toLowerCase().includes(topicSearch.toLowerCase())).length === 0 && (
-                      <div style={{ padding: '14px', textAlign: 'center', fontSize: 12, color: '#8B5A2B' }}>
-                        <div>No predefined topic found for "{topicSearch}".</div>
-                        <button 
-                          type="button"
-                          onClick={() => setGenTopic(topicSearch)}
-                          style={{ marginTop: 8, padding: '5px 12px', fontSize: 11.5, background: '#C85A32', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer', fontWeight: 600 }}
-                        >
-                          Use "{topicSearch}" as Custom Topic
-                        </button>
-                      </div>
-                    )}
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                {/* 3-Column Config Row: Language, Difficulty, Number of Questions */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', gap: 10 }}>
                   <div>
-                    <label style={{ fontSize: 12, fontWeight: 700, color: '#8B5A2B', display: 'block', marginBottom: 4 }}>Difficulty Level</label>
-                    <select value={genDifficulty} onChange={e => setGenDifficulty(e.target.value)} style={{ width: '100%', padding: '8px 10px', borderRadius: 6, border: '1px solid #C8B6A6', background: '#F5ECE3', fontSize: 13, color: '#2D231E' }}>
+                    <label style={{ fontSize: 12, fontWeight: 700, color: '#8B5A2B', display: 'block', marginBottom: 4 }}>Language</label>
+                    <select value={genLanguage} onChange={e => setGenLanguage(e.target.value)} style={{ width: '100%', padding: '8px 8px', borderRadius: 6, border: '1px solid #C8B6A6', background: '#F5ECE3', fontSize: 12.5, color: '#2D231E' }}>
+                      <option value="python">Python</option>
+                      <option value="cpp">C++</option>
+                      <option value="c">C</option>
+                      <option value="java">Java</option>
+                      <option value="javascript">JavaScript</option>
+                      <option value="typescript">TypeScript</option>
+                      <option value="go">Go</option>
+                      <option value="rust">Rust</option>
+                      <option value="php">PHP</option>
+                      <option value="ruby">Ruby</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 700, color: '#8B5A2B', display: 'block', marginBottom: 4 }}>Difficulty</label>
+                    <select value={genDifficulty} onChange={e => setGenDifficulty(e.target.value)} style={{ width: '100%', padding: '8px 8px', borderRadius: 6, border: '1px solid #C8B6A6', background: '#F5ECE3', fontSize: 12.5, color: '#2D231E' }}>
                       <option value="Beginner">Beginner</option>
                       <option value="Intermediate">Intermediate</option>
                       <option value="Advanced">Advanced (Hard)</option>
                     </select>
                   </div>
+
                   <div>
-                    <label style={{ fontSize: 12, fontWeight: 700, color: '#8B5A2B', display: 'block', marginBottom: 4 }}>Number of Questions</label>
-                    <select value={genNumQuestions} onChange={e => setGenNumQuestions(Number(e.target.value))} style={{ width: '100%', padding: '8px 10px', borderRadius: 6, border: '1px solid #C8B6A6', background: '#F5ECE3', fontSize: 13, color: '#2D231E' }}>
+                    <label style={{ fontSize: 12, fontWeight: 700, color: '#8B5A2B', display: 'block', marginBottom: 4 }}>Questions</label>
+                    <select value={genNumQuestions} onChange={e => setGenNumQuestions(Number(e.target.value))} style={{ width: '100%', padding: '8px 8px', borderRadius: 6, border: '1px solid #C8B6A6', background: '#F5ECE3', fontSize: 12.5, color: '#2D231E' }}>
                       <option value={2}>2 Questions</option>
                       <option value={3}>3 Questions</option>
                       <option value={4}>4 Questions</option>

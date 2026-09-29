@@ -302,8 +302,8 @@ export interface AssessmentGradeReport {
   }>;
 }
 
-export async function generateAiAssessment(topic: string, difficulty: string, numQuestions = 3): Promise<any> {
-  return api.post('/assessments/generate-ai', { topic, difficulty, numQuestions });
+export async function generateAiAssessment(topic: string, difficulty: string, numQuestions = 3, language = 'javascript'): Promise<any> {
+  return api.post('/assessments/generate-ai', { topic, difficulty, numQuestions, language });
 }
 
 export async function submitAssessmentReport(assessmentId: string, title: string, questions: any[], answers: Record<string, string>): Promise<AssessmentGradeReport> {

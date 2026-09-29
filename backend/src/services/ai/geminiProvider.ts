@@ -382,9 +382,10 @@ ${errorOutput || 'No error provided — perform a thorough static code analysis 
     };
   }
 
-  async generateAssessment(topic: string, difficulty: string, numQuestions = 3): Promise<GeneratedAssessment> {
-    const prompt = `You are a computer science professor creating an exam on "${topic}" with difficulty level "${difficulty}".
-Generate ${numQuestions} coding questions.
+  async generateAssessment(topic: string, difficulty: string, numQuestions = 3, language = 'javascript'): Promise<GeneratedAssessment> {
+    const targetLang = language || 'javascript';
+    const prompt = `You are a computer science professor creating an exam on "${topic}" with difficulty level "${difficulty}" using programming language "${targetLang}".
+Generate ${numQuestions} coding questions. Ensure the "starterCode" provided for each question is valid, idiomatic ${targetLang} code.
 Return ONLY JSON matching schema:
 {
   "id": "string",
@@ -393,13 +394,14 @@ Return ONLY JSON matching schema:
   "durationMinutes": number,
   "topic": "${topic}",
   "difficulty": "${difficulty}",
+  "language": "${targetLang}",
   "questions": [
     {
       "id": "string",
       "title": "string",
       "description": "string",
       "difficulty": "Easy|Medium|Hard",
-      "starterCode": "string",
+      "starterCode": "string (idiomatic starter function in ${targetLang})",
       "sampleInput": "string",
       "expectedOutput": "string",
       "points": number

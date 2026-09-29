@@ -17,11 +17,12 @@ export const createAssessment = async (req: AuthRequest, res: Response, next: Ne
 
 export const generateAiAssessment = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { topic, difficulty, numQuestions } = req.body;
+    const { topic, difficulty, numQuestions, language } = req.body;
     const assessment = await aiProvider.generateAssessment(
       topic || 'Data Structures & Algorithms',
       difficulty || 'Intermediate',
-      numQuestions || 3
+      numQuestions || 3,
+      language || 'javascript'
     );
     res.status(200).json(assessment);
   } catch (error) { next(error); }

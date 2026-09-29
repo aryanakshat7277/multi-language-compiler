@@ -137,7 +137,7 @@ export interface AIProvider {
   generateTests(problem: string, code: string, language: string): Promise<GeneratedTests>;
   detectAiGenerated(code: string, language: string): Promise<AiDetectionResult>;
   debugCode(code: string, errorOutput: string, language: string): Promise<DebugResult>;
-  generateAssessment(topic: string, difficulty: string, numQuestions?: number): Promise<GeneratedAssessment>;
+  generateAssessment(topic: string, difficulty: string, numQuestions?: number, language?: string): Promise<GeneratedAssessment>;
   gradeAssessment(title: string, questions: any[], answers: Record<string, string>): Promise<AssessmentGradeResult>;
   analyzeCodeMetrics(code: string, language: string): Promise<CodeMetricsResult>;
   generateShortestCode(code: string, language: string, expectedOutput?: string): Promise<ShortestCodeResult>;
