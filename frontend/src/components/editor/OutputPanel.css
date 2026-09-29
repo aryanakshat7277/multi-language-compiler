@@ -644,3 +644,470 @@
   border-radius: var(--radius-xs);
   border: 1px solid rgba(200, 90, 50, 0.2);
 }
+
+/* --------------------------------------------------------------------------
+   Diagnose & Fix Tab Button & Badges
+   -------------------------------------------------------------------------- */
+.diagnose-fix-tab-btn {
+  background: linear-gradient(135deg, rgba(166, 59, 25, 0.08) 0%, rgba(179, 94, 23, 0.12) 100%);
+  border: 1px solid rgba(166, 59, 25, 0.35) !important;
+  color: var(--accent-terracotta) !important;
+  font-weight: 700 !important;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.diagnose-fix-tab-btn:hover {
+  background: linear-gradient(135deg, rgba(166, 59, 25, 0.15) 0%, rgba(179, 94, 23, 0.22) 100%) !important;
+  border-color: var(--accent-terracotta) !important;
+  color: var(--accent-terracotta-hover) !important;
+}
+
+.diagnose-fix-tab-btn.active {
+  background: var(--accent-terracotta) !important;
+  color: #FAF4EE !important;
+  border-color: var(--accent-terracotta) !important;
+}
+
+.diagnose-fix-tab-btn.active .diagnose-icon {
+  color: #FAF4EE !important;
+}
+
+.diagnose-icon {
+  color: var(--accent-terracotta);
+}
+
+.diagnose-pulse-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: var(--accent-terracotta);
+  box-shadow: 0 0 0 rgba(166, 59, 25, 0.7);
+  animation: diagnosePulse 1.6s infinite;
+}
+
+@keyframes diagnosePulse {
+  0% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(166, 59, 25, 0.7); }
+  70% { transform: scale(1.15); box-shadow: 0 0 0 6px rgba(166, 59, 25, 0); }
+  100% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(166, 59, 25, 0); }
+}
+
+.diagnose-resolved-pill {
+  font-size: 9.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background-color: rgba(42, 90, 61, 0.15);
+  color: var(--accent-forest);
+  border: 1px solid rgba(42, 90, 61, 0.3);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+.diagnose-fix-tab-btn.active .diagnose-resolved-pill {
+  background-color: rgba(255, 255, 255, 0.25);
+  color: #FAF4EE;
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+/* --------------------------------------------------------------------------
+   In-Terminal Quick Fix Banner Card
+   -------------------------------------------------------------------------- */
+.terminal-diagnose-card {
+  margin: 12px 0 6px 0;
+  padding: 10px 14px;
+  background: linear-gradient(135deg, #FDF3E7 0%, #FBECE6 100%);
+  border: 1.5px solid rgba(166, 59, 25, 0.35);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  box-shadow: 0 2px 6px rgba(166, 59, 25, 0.06);
+}
+
+.diagnose-card-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.diagnose-card-icon-box {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background-color: var(--accent-terracotta);
+  color: #FAF4EE;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.diagnose-card-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.diagnose-card-title {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.diagnose-card-desc {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.diagnose-card-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background-color: var(--accent-terracotta);
+  color: #FAF4EE;
+  border: 1px solid var(--accent-terracotta-hover);
+  border-radius: 6px;
+  font-size: 12.5px;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 2px 4px rgba(166, 59, 25, 0.25);
+  transition: all 0.15s ease;
+}
+
+.diagnose-card-btn:hover:not(:disabled) {
+  background-color: var(--accent-terracotta-hover);
+  transform: translateY(-1px);
+}
+
+.diagnose-card-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* --------------------------------------------------------------------------
+   Diagnosis Full View (§ Pointwise breakdowns)
+   -------------------------------------------------------------------------- */
+.diagnosis-view {
+  padding: 16px;
+  height: 100%;
+  overflow-y: auto;
+  background-color: var(--bg-surface-sunken);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.diagnosis-empty,
+.diagnosis-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  text-align: center;
+  gap: 10px;
+  color: var(--text-secondary);
+  padding: 24px;
+}
+
+.diagnosis-empty h4,
+.diagnosis-loading h4 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.diagnosis-empty p,
+.diagnosis-loading p {
+  margin: 0;
+  max-width: 520px;
+  font-size: 13.5px;
+  color: var(--text-secondary);
+}
+
+.btn-diagnose-primary {
+  margin-top: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 16px;
+  background: var(--accent-terracotta);
+  color: #FAF4EE;
+  border: 1px solid var(--accent-terracotta-hover);
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.btn-diagnose-primary:hover {
+  background: var(--accent-terracotta-hover);
+}
+
+.diagnosis-content {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Hero Status Banner */
+.diagnosis-hero-banner {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-hairline);
+  border-radius: 8px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.hero-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.hero-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: var(--accent-forest-tint);
+  color: var(--accent-forest);
+  border: 1px solid rgba(42, 90, 61, 0.3);
+  padding: 4px 10px;
+  border-radius: 5px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.hero-lines-pill {
+  display: inline-flex;
+  align-items: center;
+  background-color: var(--accent-amber-tint);
+  color: var(--accent-amber);
+  border: 1px solid rgba(179, 94, 23, 0.3);
+  padding: 4px 10px;
+  border-radius: 5px;
+  font-size: 12.5px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+
+.hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.diagnosis-sub-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 11px;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.diagnosis-sub-btn:hover {
+  background-color: var(--bg-surface-hover);
+  border-color: var(--text-tertiary);
+}
+
+.diagnosis-sub-btn.re-run {
+  background-color: var(--accent-forest);
+  color: #FAF4EE;
+  border-color: var(--accent-forest);
+}
+
+.diagnosis-sub-btn.re-run:hover {
+  filter: brightness(1.1);
+}
+
+/* Pointwise Section Cards */
+.diagnosis-section-card {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-hairline);
+  border-radius: 8px;
+  padding: 14px 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.card-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  border-bottom: 1px solid rgba(200, 182, 166, 0.4);
+  padding-bottom: 8px;
+}
+
+.header-title-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.header-title-box h5 {
+  margin: 0;
+  font-size: 14.5px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.card-badge-error {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background-color: var(--accent-error-tint);
+  color: var(--accent-error);
+  border: 1px solid rgba(194, 65, 40, 0.25);
+}
+
+.card-badge-success {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background-color: var(--accent-forest-tint);
+  color: var(--accent-forest);
+  border: 1px solid rgba(42, 90, 61, 0.25);
+}
+
+.card-badge-amber {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background-color: var(--accent-amber-tint);
+  color: var(--accent-amber);
+  border: 1px solid rgba(179, 94, 23, 0.25);
+}
+
+.card-summary-line {
+  margin: 0 0 10px 0;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+/* Strict Pointwise Lists */
+.pointwise-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pointwise-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 6px 10px;
+  background-color: var(--bg-surface-sunken);
+  border-radius: 6px;
+  border: 1px solid rgba(200, 182, 166, 0.4);
+}
+
+.item-bullet-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 800;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.item-bullet-num.error {
+  background-color: var(--accent-error-tint);
+  color: var(--accent-error);
+  border: 1px solid rgba(194, 65, 40, 0.4);
+}
+
+.item-bullet-num.success {
+  background-color: var(--accent-forest-tint);
+  color: var(--accent-forest);
+  border: 1px solid rgba(42, 90, 61, 0.4);
+}
+
+.item-bullet-num.amber {
+  background-color: var(--accent-amber-tint);
+  color: var(--accent-amber);
+  border: 1px solid rgba(179, 94, 23, 0.4);
+}
+
+.pointwise-text {
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--text-primary);
+  flex: 1;
+}
+
+/* Highlighted line tags */
+.highlighted-lines-note {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed rgba(200, 182, 166, 0.6);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.line-tags-container {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.line-tag-btn {
+  background: var(--accent-forest-tint);
+  color: var(--accent-forest);
+  border: 1px solid rgba(42, 90, 61, 0.35);
+  border-radius: 4px;
+  padding: 2px 7px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.line-tag-btn:hover {
+  background: var(--accent-forest);
+  color: #FAF4EE;
+}
+

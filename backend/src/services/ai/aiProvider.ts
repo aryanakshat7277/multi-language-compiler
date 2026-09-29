@@ -28,6 +28,10 @@ export interface DebugResult {
   rootCause: string;
   hints: string[];
   fix: string;
+  errorPoints?: string[];
+  fixPoints?: string[];
+  changesMade?: string[];
+  changedLineNumbers?: number[];
 }
 
 export interface HoverExplanationResult {

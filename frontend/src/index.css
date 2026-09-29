@@ -437,3 +437,35 @@ p,span,label,li,td,th{font-family:var(--font-serif)!important}
 input,select,textarea{font-family:var(--font-serif)!important;font-size:15px!important;font-weight:600!important;color:var(--text-primary)!important}
 table th{font-size:13px!important;font-weight:800!important;text-transform:uppercase;letter-spacing:.06em}
 table td{font-size:15px!important;font-weight:600!important;color:var(--text-primary)!important}
+
+/* ==========================================================================
+   Monaco Line Highlights: Compilation Errors & Diagnose and Fix
+   ========================================================================== */
+.monaco-error-line-bg {
+  background-color: rgba(194, 65, 40, 0.16) !important;
+  border-left: 4px solid #c24128 !important;
+}
+
+.monaco-error-line-dec {
+  background-color: #c24128;
+  width: 4px !important;
+  margin-left: 3px;
+}
+
+.monaco-fixed-line-bg {
+  background-color: rgba(42, 90, 61, 0.22) !important;
+  border-left: 4px solid #2a5a3d !important;
+  animation: pulseFixedBg 2s ease-in-out infinite alternate;
+}
+
+.monaco-fixed-line-dec {
+  background-color: #2a5a3d;
+  width: 4px !important;
+  margin-left: 3px;
+}
+
+@keyframes pulseFixedBg {
+  from { background-color: rgba(42, 90, 61, 0.16); }
+  to { background-color: rgba(42, 90, 61, 0.32); }
+}
+

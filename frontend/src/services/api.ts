@@ -345,3 +345,18 @@ export async function getSystemTelemetry(): Promise<SystemTelemetry> {
   return api.get('/system/telemetry');
 }
 
+// ─── AI Diagnose & Fix ────────────────────────────────────────────────────────
+export interface DebugResult {
+  rootCause: string;
+  hints: string[];
+  fix: string;
+  errorPoints?: string[];
+  fixPoints?: string[];
+  changesMade?: string[];
+  changedLineNumbers?: number[];
+}
+
+export async function debugCode(code: string, errorOutput: string, languageId: string): Promise<DebugResult> {
+  return api.post('/ai-review/debug', { sourceCode: code, errorOutput, languageId });
+}
+

@@ -4,15 +4,37 @@ import { useEditorStore } from '../../stores/editorStore';
 import { registerMonacoThemes } from '../../utils/monacoThemes';
 
 const CodeEditor: React.FC = () => {
-  const { files, activeFileId, updateFileContent, stderr, compileOutput, executionStatus } = useEditorStore();
+  const { files, activeFileId, updateFileContent, stderr, compileOutput, executionStatus, fixedLinesHighlight } = useEditorStore();
   const activeFile = files.find(f => f.id === activeFileId);
   const editorRef = useRef<any>(null);
   const monaco = useMonaco();
   const decorationsRef = useRef<string[]>([]);
 
+  // Highlight diagnosed & fixed lines in Monaco
+  useEffect(() => {
+    if (!editorRef.current || !monaco) return;
+
+    if (fixedLinesHighlight && fixedLinesHighlight.length > 0) {
+      const newDecs = fixedLinesHighlight.map(lineNum => ({
+        range: new monaco.Range(lineNum, 1, lineNum, 100),
+        options: {
+          isWholeLine: true,
+          className: 'monaco-fixed-line-bg',
+          glyphMarginClassName: 'monaco-fixed-glyph',
+          linesDecorationsClassName: 'monaco-fixed-line-dec',
+        }
+      }));
+      decorationsRef.current = editorRef.current.deltaDecorations(decorationsRef.current, newDecs);
+      editorRef.current.revealLineInCenter(fixedLinesHighlight[0]);
+      return;
+    }
+  }, [fixedLinesHighlight, monaco]);
+
   // Highlight compiler error lines in Monaco
   useEffect(() => {
     if (!editorRef.current || !monaco) return;
+
+    if (fixedLinesHighlight && fixedLinesHighlight.length > 0) return;
 
     const errorText = compileOutput?.stderr || stderr || '';
     if ((executionStatus === 'error' || executionStatus === 'compilation_error') && errorText) {
@@ -50,7 +72,7 @@ const CodeEditor: React.FC = () => {
 
     // Clear decorations on successful execution or reset
     decorationsRef.current = editorRef.current.deltaDecorations(decorationsRef.current, []);
-  }, [stderr, compileOutput, executionStatus, monaco]);
+  }, [stderr, compileOutput, executionStatus, monaco, fixedLinesHighlight]);
 
   if (!activeFile) {
     return (

@@ -125,6 +125,8 @@ interface EditorState {
   compileOutput: CompileOutput | null;
   statusMessage: string;
   compilationMeta: CompilationTraceMetadata | null;
+  fixedLinesHighlight: number[];
+  setFixedLinesHighlight: (lines: number[]) => void;
   
   addFile: (name: string) => void;
   removeFile: (id: string) => void;
@@ -177,6 +179,8 @@ export const useEditorStore = create<EditorState>((set) => ({
   compileOutput: null,
   statusMessage: '',
   compilationMeta: null,
+  fixedLinesHighlight: [],
+  setFixedLinesHighlight: (lines) => set({ fixedLinesHighlight: lines }),
 
   addFile: (name) => set((state) => {
     const ext = name.split('.').pop() || 'txt';

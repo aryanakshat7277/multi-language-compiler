@@ -1,6 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useEditorStore } from '../../stores/editorStore';
-import { Terminal, Copy, Trash2, Check, AlertCircle, CheckCircle2, Clock, Loader2 } from 'lucide-react';
+import { 
+  Terminal, Copy, Trash2, Check, AlertCircle, 
+  CheckCircle2, Clock, Loader2, Sparkles, RotateCcw, 
+  Play, Wrench 
+} from 'lucide-react';
+import { debugCode, DebugResult } from '../../services/api';
+import { useToast } from '../../contexts/ToastContext';
 import './OutputPanel.css';
 
 const OutputPanel: React.FC = () => {
@@ -8,11 +14,19 @@ const OutputPanel: React.FC = () => {
     stdout, stderr, stdin, setStdin,
     executionTime, memoryUsed, exitCode,
     executionStatus, compileOutput, statusMessage,
-    language, resetOutput, jobId, compilationMeta
+    language, resetOutput, jobId, compilationMeta,
+    files, activeFileId, updateFileContent,
+    fixedLinesHighlight, setFixedLinesHighlight
   } = useEditorStore();
 
-  const [activeTab, setActiveTab] = useState<'terminal' | 'input' | 'compile' | 'pipeline'>('terminal');
+  const { showToast } = useToast();
+
+  const [activeTab, setActiveTab] = useState<'terminal' | 'input' | 'compile' | 'pipeline' | 'diagnosis'>('terminal');
   const [copied, setCopied] = useState(false);
+  const [isDiagnosing, setIsDiagnosing] = useState(false);
+  const [diagnosisResult, setDiagnosisResult] = useState<DebugResult | null>(null);
+  const [originalCodeBackup, setOriginalCodeBackup] = useState<string | null>(null);
+
   const terminalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -21,19 +35,31 @@ const OutputPanel: React.FC = () => {
     }
   }, [stdout, stderr, statusMessage, executionStatus]);
 
-  useEffect(() => {
-    if (executionStatus !== 'idle') {
-      setActiveTab('terminal');
-    }
-  }, [executionStatus]);
+  const isRunning = executionStatus === 'submitted' || executionStatus === 'compiling' || executionStatus === 'running';
 
   useEffect(() => {
-    if (executionStatus === 'compilation_error' && compileOutput) {
+    if (executionStatus !== 'idle' && !isDiagnosing && activeTab !== 'diagnosis') {
+      setActiveTab('terminal');
+    }
+  }, [executionStatus, isDiagnosing]);
+
+  useEffect(() => {
+    if (executionStatus === 'compilation_error' && compileOutput && activeTab !== 'diagnosis') {
       setActiveTab('compile');
     }
   }, [executionStatus, compileOutput]);
 
-  const isRunning = executionStatus === 'submitted' || executionStatus === 'compiling' || executionStatus === 'running';
+  // Clear decorations on fresh code run
+  useEffect(() => {
+    if (isRunning) {
+      setFixedLinesHighlight([]);
+    }
+  }, [isRunning, setFixedLinesHighlight]);
+
+  const hasError = executionStatus === 'error' || 
+                   executionStatus === 'compilation_error' || 
+                   (Boolean(stderr) && stderr.trim().length > 0) || 
+                   (exitCode !== null && exitCode !== 0);
 
   const handleCopy = async () => {
     const textToCopy = stdout || stderr || '';
@@ -45,6 +71,83 @@ const OutputPanel: React.FC = () => {
     } catch {
       // ignore
     }
+  };
+
+  const handleDiagnoseAndFix = async () => {
+    const activeFile = files.find(f => f.id === activeFileId);
+    if (!activeFile || !activeFile.content.trim()) {
+      showToast('No active code found in the editor to diagnose.', 'warning');
+      return;
+    }
+
+    const currentCode = activeFile.content;
+    const errorOutput = [
+      compileOutput?.stderr || '',
+      stderr || '',
+      exitCode !== null && exitCode !== 0 ? `Process exited with code ${exitCode}` : '',
+      stdout || ''
+    ].filter(Boolean).join('\n');
+
+    setIsDiagnosing(true);
+    setOriginalCodeBackup(currentCode);
+
+    try {
+      showToast('Diagnosing error and applying automatic repair...', 'info', 'Diagnose & Fix', 2500);
+      const res = await debugCode(currentCode, errorOutput, language);
+
+      // Determine changed lines
+      let changedLines: number[] = res.changedLineNumbers || [];
+      if (!changedLines || changedLines.length === 0) {
+        const oldLines = currentCode.split('\n');
+        const newLines = (res.fix || currentCode).split('\n');
+        const computed: number[] = [];
+        newLines.forEach((line, idx) => {
+          if (oldLines[idx] !== line) {
+            computed.push(idx + 1);
+          }
+        });
+        changedLines = computed.length > 0 ? computed : [1];
+      }
+
+      // Apply the fixed code to the editor
+      if (res.fix && res.fix.trim() !== currentCode.trim()) {
+        updateFileContent(activeFile.id, res.fix);
+      }
+
+      // Highlight the fixed lines in Monaco
+      setFixedLinesHighlight(changedLines);
+
+      // Save diagnosis result and switch to diagnosis tab
+      setDiagnosisResult(res);
+      setActiveTab('diagnosis');
+
+      showToast(`Applied fix and highlighted ${changedLines.length} line(s) in editor.`, 'success', 'Code Repaired');
+    } catch (err: any) {
+      console.error('Diagnosis failed:', err);
+      showToast(err?.response?.data?.message || err?.message || 'Failed to diagnose and fix code.', 'error', 'Diagnosis Error');
+    } finally {
+      setIsDiagnosing(false);
+    }
+  };
+
+  const handleRevert = () => {
+    const activeFile = files.find(f => f.id === activeFileId);
+    if (activeFile && originalCodeBackup) {
+      updateFileContent(activeFile.id, originalCodeBackup);
+      setFixedLinesHighlight([]);
+      showToast('Reverted editor back to your original code.', 'info', 'Reverted');
+    }
+  };
+
+  const handleReRun = () => {
+    const runBtn = document.querySelector('.btn-run') as HTMLButtonElement;
+    if (runBtn) {
+      runBtn.click();
+    }
+  };
+
+  const handleJumpToLine = (lineNum: number) => {
+    setFixedLinesHighlight([lineNum]);
   };
 
   const getShellCommand = () => {
@@ -106,6 +209,35 @@ const OutputPanel: React.FC = () => {
             {isRunning && <span className="pipeline-running-badge">●</span>}
           </button>
 
+          {(hasError || diagnosisResult) && (
+            <button
+              className={`output-tab-btn diagnose-fix-tab-btn ${activeTab === 'diagnosis' ? 'active' : ''} ${isDiagnosing ? 'diagnosing' : ''}`}
+              onClick={() => {
+                if (diagnosisResult) {
+                  setActiveTab('diagnosis');
+                } else {
+                  handleDiagnoseAndFix();
+                }
+              }}
+              disabled={isDiagnosing}
+              title="Diagnose error, automatically apply fix, highlight code changes and explain"
+            >
+              {isDiagnosing ? (
+                <>
+                  <Loader2 size={13} className="spin-icon" />
+                  <span>Diagnosing...</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles size={13} className="diagnose-icon" />
+                  <span>Diagnose &amp; Fix</span>
+                  {hasError && !diagnosisResult && <span className="diagnose-pulse-dot" />}
+                  {diagnosisResult && <span className="diagnose-resolved-pill">Fixed</span>}
+                </>
+              )}
+            </button>
+          )}
+
           {compileOutput && (
             <button
               className={`output-tab-btn ${activeTab === 'compile' ? 'active' : ''}`}
@@ -149,7 +281,10 @@ const OutputPanel: React.FC = () => {
 
           <button 
             className="action-btn" 
-            onClick={resetOutput} 
+            onClick={() => {
+              resetOutput();
+              setDiagnosisResult(null);
+            }} 
             title="Clear Console"
             disabled={isRunning || (!stdout && !stderr && executionStatus === 'idle')}
           >
@@ -206,6 +341,38 @@ const OutputPanel: React.FC = () => {
                   </div>
                 )}
 
+                {/* Quick Diagnose & Fix Banner when error occurs */}
+                {hasError && (
+                  <div className="terminal-diagnose-card">
+                    <div className="diagnose-card-left">
+                      <div className="diagnose-card-icon-box">
+                        <Sparkles size={16} />
+                      </div>
+                      <div className="diagnose-card-text">
+                        <span className="diagnose-card-title">Execution encountered an error</span>
+                        <span className="diagnose-card-desc">Click Diagnose &amp; Fix to auto-repair the code, highlight changed lines, and view pointwise explanations.</span>
+                      </div>
+                    </div>
+                    <button 
+                      className="diagnose-card-btn"
+                      onClick={handleDiagnoseAndFix}
+                      disabled={isDiagnosing}
+                    >
+                      {isDiagnosing ? (
+                        <>
+                          <Loader2 size={13} className="spin-icon" />
+                          <span>Diagnosing...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles size={13} />
+                          <span>Diagnose &amp; Fix</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                )}
+
                 {/* Execution Metrics Bar */}
                 {!isRunning && executionStatus !== 'idle' && (
                   <div className="terminal-summary">
@@ -235,6 +402,148 @@ const OutputPanel: React.FC = () => {
           </div>
         )}
 
+        {/* Diagnosis & Fix Tab View */}
+        {activeTab === 'diagnosis' && (
+          <div className="diagnosis-view">
+            {!diagnosisResult && !isDiagnosing ? (
+              <div className="diagnosis-empty">
+                <Sparkles size={30} className="text-amber" />
+                <h4>No Diagnosis Run Yet</h4>
+                <p>Click Diagnose &amp; Fix to analyze error logs, fix bugs automatically, and highlight code changes.</p>
+                <button className="btn-diagnose-primary" onClick={handleDiagnoseAndFix}>
+                  <Sparkles size={14} />
+                  <span>Start Diagnose &amp; Fix</span>
+                </button>
+              </div>
+            ) : isDiagnosing ? (
+              <div className="diagnosis-loading">
+                <Loader2 size={32} className="spin-icon text-amber" />
+                <h4>Diagnosing &amp; Synthesizing Fix...</h4>
+                <p>Analyzing compiler error stack traces, identifying bug locations, and generating a validated repair...</p>
+              </div>
+            ) : diagnosisResult ? (
+              <div className="diagnosis-content">
+                {/* Top Hero Status Banner */}
+                <div className="diagnosis-hero-banner">
+                  <div className="hero-status">
+                    <span className="hero-status-pill">
+                      <CheckCircle2 size={14} />
+                      <span>Fix Applied Successfully</span>
+                    </span>
+                    {diagnosisResult.changedLineNumbers && diagnosisResult.changedLineNumbers.length > 0 && (
+                      <span className="hero-lines-pill">
+                        Lines Modified: {diagnosisResult.changedLineNumbers.map(n => `L${n}`).join(', ')}
+                      </span>
+                    )}
+                  </div>
+                  <div className="hero-actions">
+                    {originalCodeBackup && (
+                      <button className="diagnosis-sub-btn" onClick={handleRevert} title="Revert to code before fix was applied">
+                        <RotateCcw size={13} />
+                        <span>Revert Changes</span>
+                      </button>
+                    )}
+                    <button className="diagnosis-sub-btn re-run" onClick={handleReRun} title="Run repaired code">
+                      <Play size={13} />
+                      <span>Run Fixed Code</span>
+                    </button>
+                    <button className="diagnosis-sub-btn" onClick={handleDiagnoseAndFix} title="Re-run diagnosis">
+                      <Sparkles size={13} />
+                      <span>Re-diagnose</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Section 1: Error Diagnosis (Pointwise) */}
+                <div className="diagnosis-section-card error-card">
+                  <div className="card-header-row">
+                    <div className="header-title-box">
+                      <AlertCircle size={15} className="text-error" />
+                      <h5>1. Error Diagnosis &amp; Root Cause (Pointwise)</h5>
+                    </div>
+                    <span className="card-badge-error">Issue Detected</span>
+                  </div>
+                  <p className="card-summary-line">{diagnosisResult.rootCause}</p>
+                  <ul className="pointwise-list">
+                    {(diagnosisResult.errorPoints && diagnosisResult.errorPoints.length > 0
+                      ? diagnosisResult.errorPoints
+                      : [diagnosisResult.rootCause]
+                    ).map((point, i) => (
+                      <li key={i} className="pointwise-item">
+                        <span className="item-bullet-num error">{i + 1}</span>
+                        <span className="pointwise-text">{point}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Section 2: How It Was Fixed (Pointwise) */}
+                <div className="diagnosis-section-card fix-card">
+                  <div className="card-header-row">
+                    <div className="header-title-box">
+                      <CheckCircle2 size={15} className="text-forest" />
+                      <h5>2. How The Error Was Fixed (Pointwise)</h5>
+                    </div>
+                    <span className="card-badge-success">Resolved</span>
+                  </div>
+                  <ul className="pointwise-list">
+                    {(diagnosisResult.fixPoints && diagnosisResult.fixPoints.length > 0
+                      ? diagnosisResult.fixPoints
+                      : diagnosisResult.hints || ['Syntax and execution constraints resolved.']
+                    ).map((point, i) => (
+                      <li key={i} className="pointwise-item">
+                        <span className="item-bullet-num success">{i + 1}</span>
+                        <span className="pointwise-text">{point}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Section 3: Exact Changes Made (Pointwise) */}
+                <div className="diagnosis-section-card changes-card">
+                  <div className="card-header-row">
+                    <div className="header-title-box">
+                      <Wrench size={15} className="text-amber" />
+                      <h5>3. What Changes Were Made to Your Code (Pointwise)</h5>
+                    </div>
+                    <span className="card-badge-amber">Editor Updated</span>
+                  </div>
+                  <ul className="pointwise-list">
+                    {(diagnosisResult.changesMade && diagnosisResult.changesMade.length > 0
+                      ? diagnosisResult.changesMade
+                      : ['Applied corrective syntax updates to editor file.']
+                    ).map((point, i) => (
+                      <li key={i} className="pointwise-item">
+                        <span className="item-bullet-num amber">{i + 1}</span>
+                        <span className="pointwise-text">{point}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  {diagnosisResult.changedLineNumbers && diagnosisResult.changedLineNumbers.length > 0 && (
+                    <div className="highlighted-lines-note">
+                      <span>Highlighted in Code Editor:</span>
+                      <div className="line-tags-container">
+                        {diagnosisResult.changedLineNumbers.map((lineNum) => (
+                          <button 
+                            key={lineNum} 
+                            className="line-tag-btn"
+                            onClick={() => handleJumpToLine(lineNum)}
+                            title={`Click to focus on line ${lineNum}`}
+                          >
+                            Line {lineNum}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : null}
+          </div>
+        )}
+
+        {/* Execution Lifecycle Timeline */}
         {activeTab === 'pipeline' && (
           <div className="pipeline-view">
             <div className="pipeline-title">Execution Lifecycle Timeline</div>
@@ -275,6 +584,7 @@ const OutputPanel: React.FC = () => {
           </div>
         )}
 
+        {/* Input (stdin) Tab */}
         {activeTab === 'input' && (
           <div className="stdin-view">
             <div className="stdin-toolbar">
@@ -321,6 +631,7 @@ const OutputPanel: React.FC = () => {
           </div>
         )}
 
+        {/* Compiler Tab */}
         {activeTab === 'compile' && compileOutput && (
           <div className="compile-view">
             <div className="compile-header">
