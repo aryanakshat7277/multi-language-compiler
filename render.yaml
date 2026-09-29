@@ -11,7 +11,7 @@ services:
       - key: PORT
         value: 3001
       - key: DATABASE_URL
-        value: file:./prisma/dev.db
+        value: file:/app/backend/prisma/dev.db
       - key: JWT_SECRET
         generateValue: true
       - key: JWT_EXPIRES_IN

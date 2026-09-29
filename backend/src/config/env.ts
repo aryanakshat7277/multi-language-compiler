@@ -5,7 +5,7 @@ export const config = {
   port: parseInt(process.env.PORT || '3000', 10),
   jwtSecret: process.env.JWT_SECRET || 'super-secret-key-change-in-production',
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '24h',
-  databaseUrl: process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/compiler_db',
+  databaseUrl: process.env.DATABASE_URL || 'file:./prisma/dev.db',
   redisUrl: process.env.REDIS_URL || 'redis://localhost:6379',
   geminiApiKey: process.env.GEMINI_API_KEY || '',
   geminiApiKeyFallback: process.env.GEMINI_API_KEY_FALLBACK || '',
