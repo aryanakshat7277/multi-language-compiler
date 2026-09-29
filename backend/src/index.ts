@@ -16,13 +16,21 @@ async function bootstrap() {
   const app = express();
   const server = http.createServer(app);
 
-  // 1. Security Headers (Monaco Editor & WebSocket friendly CSP)
+  // 1. Security Headers (Monaco Editor, OAuth Popup & WebSocket friendly CSP)
   app.use(
     helmet({
       contentSecurityPolicy: {
         directives: {
           defaultSrc: ["'self'"],
-          scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", 'blob:', 'https://apis.google.com'],
+          scriptSrc: [
+            "'self'", 
+            "'unsafe-inline'", 
+            "'unsafe-eval'", 
+            'blob:', 
+            'https://apis.google.com',
+            'https://*.firebaseapp.com',
+            'https://*.googleapis.com'
+          ],
           workerSrc: ["'self'", 'blob:'],
           styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
           fontSrc: ["'self'", 'https://fonts.gstatic.com', 'data:'],
@@ -32,12 +40,23 @@ async function bootstrap() {
             'ws:', 
             'wss:', 
             'https:', 
-            'http://localhost:*'
+            'http://localhost:*',
+            'https://identitytoolkit.googleapis.com',
+            'https://securetoken.googleapis.com',
+            'https://*.firebaseio.com',
+            'https://*.firebaseapp.com'
           ],
-          frameSrc: ["'self'", 'https://*.firebaseapp.com', 'https://accounts.google.com']
+          frameSrc: [
+            "'self'", 
+            'https://*.firebaseapp.com', 
+            'https://accounts.google.com',
+            'https://*.google.com'
+          ]
         }
       },
-      crossOriginEmbedderPolicy: false
+      crossOriginEmbedderPolicy: false,
+      crossOriginOpenerPolicy: false,
+      crossOriginResourcePolicy: false
     })
   );
 
