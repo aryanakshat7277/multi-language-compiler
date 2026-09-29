@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  Search, Filter, ChevronRight, Award, Circle, CheckCircle2, SlidersHorizontal
+  Search, Filter, ChevronRight, Award, Circle, CheckCircle2, SlidersHorizontal, Sparkles, RefreshCw
 } from 'lucide-react';
 import { api } from '../services/api';
 import './ProblemsPage.css';
@@ -31,23 +31,50 @@ const FALLBACK_PROBLEMS: Problem[] = [
 
 export default function ProblemsPage() {
   const [problems, setProblems] = useState<Problem[]>(FALLBACK_PROBLEMS);
+  const [dailyProblems, setDailyProblems] = useState<Problem[]>([]);
+  const [dailyLoading, setDailyLoading] = useState(false);
+  const [practiceContext, setPracticeContext] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [difficultyFilter, setDifficultyFilter] = useState('ALL');
   const [categoryFilter, setCategoryFilter] = useState('ALL');
   const navigate = useNavigate();
 
+  const fetchDailyProblems = async (regenerate = false) => {
+    setDailyLoading(true);
+    try {
+      const res: any = await api.get(`/problems/daily${regenerate ? '?regenerate=true' : ''}`);
+      if (res && Array.isArray(res.problems) && res.problems.length > 0) {
+        setDailyProblems(res.problems);
+        if (res.practiceContext) {
+          setPracticeContext(res.practiceContext);
+        }
+        setProblems(prev => {
+          const ids = new Set(prev.map(p => p.id));
+          const newItems = res.problems.filter((p: any) => !ids.has(p.id));
+          return [...newItems, ...prev];
+        });
+      }
+    } catch (err) {
+      console.error('Failed to load daily problems:', err);
+    } finally {
+      setDailyLoading(false);
+    }
+  };
+
   useEffect(() => {
     const fetchProblems = async () => {
       try {
-        const res = await api.get('/problems');
-        if (Array.isArray(res.data) && res.data.length > 0) {
-          setProblems(res.data);
+        const res: any = await api.get('/problems');
+        const list = Array.isArray(res) ? res : (Array.isArray(res?.data) ? res.data : []);
+        if (list.length > 0) {
+          setProblems(list);
         }
       } catch {
         // keep fallback
       }
     };
     fetchProblems();
+    fetchDailyProblems();
   }, []);
 
   const categories = ['ALL', 'Arrays & Hashing', 'Linked Lists & Hash', 'Binary Search', 'Two Pointers & Stack', 'Hash Table', 'Heap / Priority Queue', 'Stack', 'Graphs & BFS'];
@@ -78,6 +105,68 @@ export default function ProblemsPage() {
           <span className="badge-diff-medium">Medium: {mediumCount}</span>
           <span className="badge-diff-hard">Hard: {hardCount}</span>
         </div>
+      </div>
+
+      {/* Daily Adaptive Practice Card */}
+      <div className="daily-practice-card">
+        <div className="daily-practice-header">
+          <div className="daily-title-wrap">
+            <div className="daily-badge-row">
+              <Sparkles size={16} style={{ color: '#C85A32' }} />
+              <span className="daily-pill">AI Daily Adaptive Practice</span>
+              <span className="daily-date-pill">5 Personalized Daily Challenges</span>
+            </div>
+            <h2 className="daily-main-title">Compiler-Informed Daily Problem Set</h2>
+            <p className="daily-subtitle">
+              {practiceContext 
+                ? `Synthesized based on your recent compiler coding activity: ${practiceContext}`
+                : 'Adaptive problems tailored daily for your account based on the algorithms, data structures, and languages you practice in the compiler.'}
+            </p>
+          </div>
+
+          <button 
+            className="btn btn-secondary btn-sm btn-refresh-daily"
+            onClick={() => fetchDailyProblems(true)}
+            disabled={dailyLoading}
+            title="Generate a fresh set of 5 daily problems based on compiler practice"
+          >
+            <RefreshCw size={13} className={dailyLoading ? 'spin-icon' : ''} />
+            <span>{dailyLoading ? 'Synthesizing...' : 'Regenerate Daily Set'}</span>
+          </button>
+        </div>
+
+        {dailyLoading && dailyProblems.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '24px', color: 'var(--text-secondary)', fontSize: 13 }}>
+            Synthesizing 5 personalized challenges from your compiler practice history...
+          </div>
+        ) : (
+          <div className="daily-cards-grid">
+            {dailyProblems.map((p, idx) => (
+              <div 
+                key={p.id || idx} 
+                className="daily-problem-card"
+                onClick={() => navigate(`/problems/${p.id}`)}
+              >
+                <div className="d-card-top">
+                  <span className="d-num">Day Challenge #{idx + 1}</span>
+                  <span className={`d-diff-tag ${p.difficulty.toLowerCase()}`}>
+                    {p.difficulty}
+                  </span>
+                </div>
+                <h4 className="d-problem-name">{p.title}</h4>
+                <span className="d-category">{p.category || 'Algorithms'}</span>
+                
+                <div className="d-card-footer">
+                  <span className="d-points">{p.points || (p.difficulty === 'EASY' ? 100 : p.difficulty === 'MEDIUM' ? 200 : 350)} pts</span>
+                  <button className="d-solve-btn">
+                    <span>Solve</span>
+                    <ChevronRight size={13} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Filter Controls Bar (§3.8) */}

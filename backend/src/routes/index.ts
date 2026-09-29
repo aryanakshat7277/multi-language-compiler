@@ -82,6 +82,7 @@ router.get('/executions/:id', authenticate, executionController.getExecutionStat
 router.post('/executions/:id/cancel', authenticate, executionController.cancelExecution);
 
 router.get('/problems', problemController.getProblems);
+router.get('/problems/daily', optionalAuth, problemController.getDailyProblems);
 router.get('/problems/:id', problemController.getProblemById);
 router.post('/problems', authenticate, requireRole('INSTRUCTOR', 'ADMIN'), problemController.createProblem);
 router.put('/problems/:id', authenticate, requireRole('INSTRUCTOR', 'ADMIN'), problemController.updateProblem);

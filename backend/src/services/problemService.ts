@@ -17,7 +17,7 @@ export class ProblemService {
         where,
         skip: (page - 1) * pageSize,
         take: pageSize,
-        select: { id: true, title: true, slug: true, difficulty: true, tags: true }
+        select: { id: true, title: true, slug: true, difficulty: true, tags: true, inputFormat: true, timeLimit: true, memoryLimit: true }
       }),
       prisma.problem.count({ where })
     ]);

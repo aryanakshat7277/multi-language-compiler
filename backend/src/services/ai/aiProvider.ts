@@ -48,6 +48,24 @@ export interface GeneratedQuestion {
   points: number;
 }
 
+export interface GeneratedDailyProblem {
+  title: string;
+  slug: string;
+  description: string;
+  difficulty: 'EASY' | 'MEDIUM' | 'HARD';
+  category: string;
+  timeLimit: number;
+  memoryLimit: number;
+  points: number;
+  acceptanceRate: number;
+  inputFormat?: string;
+  outputFormat?: string;
+  constraints?: string;
+  starterCode?: string;
+  testCases: Array<{ input: string; expectedOutput: string }>;
+  tags: string[];
+}
+
 export interface GeneratedAssessment {
   id: string;
   title: string;
@@ -138,6 +156,7 @@ export interface AIProvider {
   detectAiGenerated(code: string, language: string): Promise<AiDetectionResult>;
   debugCode(code: string, errorOutput: string, language: string): Promise<DebugResult>;
   generateAssessment(topic: string, difficulty: string, numQuestions?: number, language?: string): Promise<GeneratedAssessment>;
+  generateDailyProblems(practiceContext: string, preferredLanguage?: string): Promise<GeneratedDailyProblem[]>;
   gradeAssessment(title: string, questions: any[], answers: Record<string, string>): Promise<AssessmentGradeResult>;
   analyzeCodeMetrics(code: string, language: string): Promise<CodeMetricsResult>;
   generateShortestCode(code: string, language: string, expectedOutput?: string): Promise<ShortestCodeResult>;
