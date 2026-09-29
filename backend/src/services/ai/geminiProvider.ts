@@ -26,8 +26,10 @@ export class GeminiProvider implements AIProvider {
   }
 
   private async generateJSON<T>(prompt: string, schema?: any): Promise<T | null> {
+    const finalPrompt = prompt + '\n\nCRITICAL FORMATTING INSTRUCTION: For any detailed text fields (like explanation, analysis, rootCause), ALWAYS format the content as a pointwise bulleted list using "- " for each point. Do NOT output dense paragraphs.';
+    
     // 1. In-Memory Cache Lookup (0ms latency, zero API calls)
-    const cacheKey = crypto.createHash('sha256').update(prompt).digest('hex');
+    const cacheKey = crypto.createHash('sha256').update(finalPrompt).digest('hex');
     const cached = GeminiProvider.responseCache.get(cacheKey);
     if (cached && cached.expiresAt > Date.now()) {
       return cached.data as T;

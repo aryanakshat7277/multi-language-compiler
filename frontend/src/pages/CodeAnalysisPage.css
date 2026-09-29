@@ -257,7 +257,7 @@
   font-family: var(--font-mono);
 }
 
-.df-text {
+.df-text { white-space: pre-wrap;
   font-size: 13.5px;
   color: var(--text-secondary);
   line-height: 1.45;

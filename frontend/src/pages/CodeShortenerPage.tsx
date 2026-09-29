@@ -290,7 +290,7 @@ export default function CodeShortenerPage() {
 
             {/* Explanation paragraph */}
             {result.explanation && (
-              <div style={{ background: '#FAF4EE', border: '1px solid #E4D9CE', borderRadius: 8, padding: 12, fontSize: 13, color: '#2D231E', lineHeight: 1.55 }}>
+              <div style={{ background: '#FAF4EE', border: '1px solid #E4D9CE', borderRadius: 8, padding: 12, fontSize: 13, color: '#2D231E', lineHeight: 1.55, whiteSpace: 'pre-wrap' }}>
                 <strong>Optimization Insight:</strong> {result.explanation}
               </div>
             )}

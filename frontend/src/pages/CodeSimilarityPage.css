@@ -246,7 +246,7 @@
   margin: 0 0 4px 0;
 }
 
-.verdict-explanation {
+.verdict-explanation { white-space: pre-wrap;
   font-family: var(--font-serif);
   font-size: 13.5px;
   font-weight: 600;
