@@ -1,5 +1,18 @@
-const RAW_BASE_URL = import.meta.env.VITE_API_URL || '/api';
-const BASE_URL = RAW_BASE_URL.endsWith('/') ? RAW_BASE_URL.slice(0, -1) : RAW_BASE_URL;
+// Dynamically resolve API URL:
+// In production or when hosted on any remote domain (like Render), ALWAYS use '/api'
+// to communicate with the co-hosted backend and prevent connection-refused/mixed-content blocks.
+const getBaseUrl = (): string => {
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname;
+    if (host && host !== 'localhost' && host !== '127.0.0.1') {
+      return '/api';
+    }
+  }
+  const raw = import.meta.env.VITE_API_URL || '/api';
+  return raw.endsWith('/') ? raw.slice(0, -1) : raw;
+};
+
+const BASE_URL = getBaseUrl();
 
 async function fetchWrapper<T = any>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const token = localStorage.getItem('token');

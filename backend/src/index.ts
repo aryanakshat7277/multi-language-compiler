@@ -21,7 +21,7 @@ async function bootstrap() {
     helmet({
       contentSecurityPolicy: {
         directives: {
-          defaultSrc: ["'self'"],
+          defaultSrc: ["'self'", 'https:', 'data:', 'blob:'],
           scriptSrc: [
             "'self'", 
             "'unsafe-inline'", 
@@ -29,12 +29,34 @@ async function bootstrap() {
             'blob:', 
             'https://apis.google.com',
             'https://*.firebaseapp.com',
-            'https://*.googleapis.com'
+            'https://*.googleapis.com',
+            'https://cdn.jsdelivr.net',
+            'https://cdnjs.cloudflare.com',
+            'https://unpkg.com'
           ],
-          workerSrc: ["'self'", 'blob:'],
-          styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
-          fontSrc: ["'self'", 'https://fonts.gstatic.com', 'data:'],
-          imgSrc: ["'self'", 'data:', 'https:', 'blob:', 'https://lh3.googleusercontent.com', 'https://avatars.githubusercontent.com'],
+          workerSrc: ["'self'", 'blob:', 'https://cdn.jsdelivr.net'],
+          styleSrc: [
+            "'self'", 
+            "'unsafe-inline'", 
+            'https://fonts.googleapis.com',
+            'https://cdn.jsdelivr.net',
+            'https://cdnjs.cloudflare.com'
+          ],
+          fontSrc: [
+            "'self'", 
+            'https://fonts.gstatic.com', 
+            'data:', 
+            'https://cdn.jsdelivr.net',
+            'https://cdnjs.cloudflare.com'
+          ],
+          imgSrc: [
+            "'self'", 
+            'data:', 
+            'https:', 
+            'blob:', 
+            'https://lh3.googleusercontent.com', 
+            'https://avatars.githubusercontent.com'
+          ],
           connectSrc: [
             "'self'", 
             'ws:', 
@@ -44,7 +66,8 @@ async function bootstrap() {
             'https://identitytoolkit.googleapis.com',
             'https://securetoken.googleapis.com',
             'https://*.firebaseio.com',
-            'https://*.firebaseapp.com'
+            'https://*.firebaseapp.com',
+            'https://cdn.jsdelivr.net'
           ],
           frameSrc: [
             "'self'", 
