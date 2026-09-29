@@ -15,6 +15,22 @@ export default function RegisterPage() {
   const { register, loginWithGoogle, loginWithGithub } = useAuth();
   const navigate = useNavigate();
 
+  const formatAuthError = (err: any) => {
+    const code = err?.code || '';
+    const msg = err?.message || '';
+    if (code === 'auth/unauthorized-domain' || msg.includes('unauthorized-domain')) {
+      const host = window.location.hostname;
+      if (host === '127.0.0.1') {
+        return `Domain "127.0.0.1" is not authorized in Firebase. Firebase requires "localhost" instead.`;
+      }
+      return `Domain "${host}" is not authorized for OAuth in Firebase. Please add "${host}" to Firebase Console (codeforge-a) > Authentication > Settings > Authorized domains.`;
+    }
+    if (code === 'auth/popup-closed-by-user') {
+      return 'Sign-up popup was closed before completing. Please try again.';
+    }
+    return msg || 'Authentication failed';
+  };
+
   const handleGoogleSignUp = async () => {
     setError('');
     setLoading(true);
@@ -22,7 +38,7 @@ export default function RegisterPage() {
       await loginWithGoogle();
       navigate('/');
     } catch (err: any) {
-      setError(err.message || 'Google sign-up failed');
+      setError(formatAuthError(err));
     } finally {
       setLoading(false);
     }
@@ -35,7 +51,7 @@ export default function RegisterPage() {
       await loginWithGithub();
       navigate('/');
     } catch (err: any) {
-      setError(err.message || 'GitHub sign-up failed');
+      setError(formatAuthError(err));
     } finally {
       setLoading(false);
     }
@@ -78,6 +94,8 @@ export default function RegisterPage() {
     }
   };
 
+  const isLocalIp = window.location.hostname === '127.0.0.1';
+
   return (
     <div className="register-page">
       <div className="register-card">
@@ -87,7 +105,33 @@ export default function RegisterPage() {
           <p>Create a new account</p>
         </div>
         
-        {error && <div className="register-error">{error}</div>}
+        {error && (
+          <div className="register-error">
+            <div>{error}</div>
+            {isLocalIp && (
+              <div style={{ marginTop: '8px' }}>
+                <a 
+                  href={`http://localhost:${window.location.port || '5173'}${window.location.pathname}`}
+                  style={{ color: '#A63B19', fontWeight: 800, textDecoration: 'underline' }}
+                >
+                  ➜ Click here to open via http://localhost:{window.location.port || '5173'}
+                </a>
+              </div>
+            )}
+            {!isLocalIp && error.includes('Authorized domains') && (
+              <div style={{ marginTop: '8px' }}>
+                <a 
+                  href="https://console.firebase.google.com/project/codeforge-a/authentication/settings" 
+                  target="_blank" 
+                  rel="noreferrer"
+                  style={{ color: '#A63B19', fontWeight: 800, textDecoration: 'underline' }}
+                >
+                  ➜ Open Firebase Console Authorized Domains Settings
+                </a>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Social Authentication */}
         <div className="social-auth-buttons">
