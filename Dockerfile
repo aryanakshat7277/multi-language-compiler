@@ -7,7 +7,6 @@
 FROM node:20-slim AS builder
 WORKDIR /app
 
-ENV NODE_ENV=production
 ENV DATABASE_URL="file:/app/backend/prisma/dev.db"
 
 # Install build tools & openssl for Prisma
