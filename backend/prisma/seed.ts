@@ -10,18 +10,18 @@ async function main() {
   const passwordHash = await bcrypt.hash('password123', 10);
   
   const admin = await prisma.user.upsert({
-    where: { email: 'admin@test.com' },
-    update: {},
+    where: { email: 'aryanakshat7277@gmail.com' },
+    update: { role: Role.ADMIN },
     create: {
-      email: 'admin@test.com',
+      email: 'aryanakshat7277@gmail.com',
       passwordHash,
-      displayName: 'System Administrator',
+      displayName: 'Akshat Aryan',
       role: Role.ADMIN,
       progress: { create: {} }
     }
   });
 
-  console.log('Seeded genuine administrator account.');
+  console.log('Seeded genuine administrator account (aryanakshat7277@gmail.com).');
 
   // 2. Languages
   const languages = [

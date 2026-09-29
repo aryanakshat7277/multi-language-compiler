@@ -8,7 +8,13 @@ export const requireRole = (...roles: string[]) => {
       return;
     }
     
-    if (!roles.includes(req.user.role)) {
+    if (roles.includes('ADMIN')) {
+      const isMasterAdmin = req.user.email?.toLowerCase() === 'aryanakshat7277@gmail.com' && req.user.role === 'ADMIN';
+      if (!isMasterAdmin) {
+        res.status(403).json({ error: 'Forbidden: Administrator access restricted to authorized administrator account.' });
+        return;
+      }
+    } else if (!roles.includes(req.user.role)) {
       res.status(403).json({ error: 'Forbidden: Insufficient permissions' });
       return;
     }

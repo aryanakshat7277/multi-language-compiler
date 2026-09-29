@@ -155,6 +155,10 @@ export default function AdminPage() {
   // Handle authentic Administrator login submission
   const handleAdminLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (adminEmail.trim().toLowerCase() !== 'aryanakshat7277@gmail.com') {
+      showToast('Access restricted strictly to platform administrator (aryanakshat7277@gmail.com)', 'error', 'Access Denied');
+      return;
+    }
     setIsAuthenticating(true);
     try {
       await login(adminEmail, adminPassword);
@@ -215,7 +219,7 @@ export default function AdminPage() {
               <AlertCircle size={18} style={{ flexShrink: 0, marginTop: 2 }} />
               <div>
                 Signed in as <strong>{user.displayName}</strong> ({user.email}). 
-                Your role (<span className="role-tag">{user.role}</span>) does not possess administrator privileges.
+                Your account does not possess administrator privileges. Administrator access is restricted strictly to <code>aryanakshat7277@gmail.com</code>.
               </div>
             </div>
           )}
@@ -225,7 +229,7 @@ export default function AdminPage() {
               <label>Administrator Email</label>
               <input 
                 type="email" 
-                placeholder="admin@test.com" 
+                placeholder="aryanakshat7277@gmail.com" 
                 value={adminEmail} 
                 onChange={(e) => setAdminEmail(e.target.value)}
                 required

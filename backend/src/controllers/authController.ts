@@ -73,14 +73,14 @@ export const firebaseAuth = async (req: Request, res: Response, next: NextFuncti
     }
 
     let user = await prisma.user.findUnique({ where: { email } });
+    const isMasterAdmin = email.toLowerCase() === 'aryanakshat7277@gmail.com';
     if (!user) {
-      const isRoleAdmin = email.toLowerCase() === 'admin@test.com';
       user = await prisma.user.create({
         data: {
           email,
           passwordHash: 'FIREBASE_MANAGED_' + Math.random().toString(36).substring(2),
           displayName: decoded.name || email.split('@')[0],
-          role: isRoleAdmin ? 'ADMIN' : 'STUDENT',
+          role: isMasterAdmin ? 'ADMIN' : 'STUDENT',
           avatarUrl: decoded.picture || undefined
         }
       });
@@ -90,6 +90,11 @@ export const firebaseAuth = async (req: Request, res: Response, next: NextFuncti
         displayName: user.displayName,
         role: user.role,
         createdAt: new Date().toISOString()
+      });
+    } else if (isMasterAdmin && user.role !== 'ADMIN') {
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: { role: 'ADMIN' }
       });
     }
 

@@ -5,11 +5,13 @@ import { config } from '../config/env';
 
 export class AuthService {
   static async register(email: string, passwordHash: string, displayName: string) {
+    const isMasterAdmin = email.toLowerCase() === 'aryanakshat7277@gmail.com';
     const user = await prisma.user.create({
       data: {
         email,
         passwordHash,
         displayName,
+        role: isMasterAdmin ? 'ADMIN' : 'STUDENT',
         progress: { create: {} }
       }
     });
@@ -17,11 +19,18 @@ export class AuthService {
   }
 
   static async login(email: string, passwordHash: string) {
-    const user = await prisma.user.findUnique({ where: { email } });
+    let user = await prisma.user.findUnique({ where: { email } });
     if (!user) throw new Error('Invalid credentials');
     
-    const valid = await bcrypt.compare(passwordHash, user.passwordHash); // NOTE: controller should pass unhashed or this needs adjustment. Actually, controller passes raw password to service.
+    const valid = await bcrypt.compare(passwordHash, user.passwordHash);
     if (!valid) throw new Error('Invalid credentials');
+
+    if (user.email.toLowerCase() === 'aryanakshat7277@gmail.com' && user.role !== 'ADMIN') {
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: { role: 'ADMIN' }
+      });
+    }
     
     return this.generateToken(user);
   }

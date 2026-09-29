@@ -99,13 +99,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const role = user?.role?.toUpperCase() || '';
+  const isMasterAdmin = user?.email?.toLowerCase() === 'aryanakshat7277@gmail.com';
 
   return (
     <AuthContext.Provider value={{
       isAuthenticated: !!user,
       user,
-      isAdmin: role === 'ADMIN',
-      isInstructor: role === 'INSTRUCTOR' || role === 'ADMIN',
+      isAdmin: isMasterAdmin,
+      isInstructor: isMasterAdmin || role === 'INSTRUCTOR' || role === 'ADMIN',
       isFirebaseReady: isFirebaseConfigured,
       login,
       register,

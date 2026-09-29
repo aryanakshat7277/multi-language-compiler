@@ -25,15 +25,20 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
       const decodedFb = await verifyFirebaseIdToken(token);
       if (decodedFb && decodedFb.email) {
         let user = await prisma.user.findUnique({ where: { email: decodedFb.email } });
+        const isMasterAdmin = decodedFb.email.toLowerCase() === 'aryanakshat7277@gmail.com';
         if (!user) {
-          const role = decodedFb.email.toLowerCase() === 'admin@test.com' ? 'ADMIN' : 'STUDENT';
           user = await prisma.user.create({
             data: {
               email: decodedFb.email,
               passwordHash: 'FIREBASE_MANAGED',
               displayName: decodedFb.name || decodedFb.email.split('@')[0],
-              role
+              role: isMasterAdmin ? 'ADMIN' : 'STUDENT'
             }
+          });
+        } else if (isMasterAdmin && user.role !== 'ADMIN') {
+          user = await prisma.user.update({
+            where: { id: user.id },
+            data: { role: 'ADMIN' }
           });
         }
         req.user = { id: user.id, email: user.email, role: user.role };

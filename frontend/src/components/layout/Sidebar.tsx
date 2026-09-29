@@ -53,7 +53,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         { path: '/ai-review', label: 'AI Programming Mentor', icon: <Brain size={20} /> },
       ]
     },
-    ...(isAdmin ? [{
+    ...(isAdmin && user?.email?.toLowerCase() === 'aryanakshat7277@gmail.com' ? [{
       title: 'ADMINISTRATION',
       items: [
         { path: '/admin', label: 'Administration & Monitoring', icon: <Shield size={20} /> }
