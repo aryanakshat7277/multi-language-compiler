@@ -53,13 +53,12 @@ const Sidebar: React.FC<SidebarProps> = ({
         { path: '/ai-review', label: 'AI Programming Mentor', icon: <Brain size={20} /> },
       ]
     },
-    {
-      title: 'DEVELOPER',
+    ...(isAdmin ? [{
+      title: 'ADMINISTRATION',
       items: [
-        { path: '/profile', label: 'Developer Profile', icon: <User size={20} /> },
-        ...(isAdmin ? [{ path: '/admin', label: 'Administration & Monitoring', icon: <Shield size={20} /> }] : [])
+        { path: '/admin', label: 'Administration & Monitoring', icon: <Shield size={20} /> }
       ]
-    }
+    }] : [])
   ];
 
   return (
@@ -94,12 +93,16 @@ const Sidebar: React.FC<SidebarProps> = ({
         {user ? (
           <div className="user-clay-card">
             <div className="user-avatar-pill" style={{ overflow: 'hidden' }}>
-              <img src={user?.avatarUrl || "/akshat_aryan.jpg"} alt="AKSHAT ARYAN" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <img 
+                src={user?.avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(user?.displayName || 'User')}&backgroundColor=c85a32,2a5a3d,b35e17`} 
+                alt={user?.displayName || 'User'} 
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+              />
             </div>
             {!collapsed && (
               <div className="user-text-col">
-                <span className="user-name">{user.displayName || 'AKSHAT ARYAN'}</span>
-                <span className="user-role-tag">{user.role?.toUpperCase() || 'LEAD ARCHITECT'}</span>
+                <span className="user-name">{user.displayName || 'Developer'}</span>
+                <span className="user-role-tag">{user.role?.toUpperCase() || 'STUDENT'}</span>
               </div>
             )}
             <button className="user-signout-btn" onClick={handleLogout} title="Sign Out">
