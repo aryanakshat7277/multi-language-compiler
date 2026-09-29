@@ -18,7 +18,7 @@ export default function ProfileStatsWindow() {
 
   useEffect(() => {
     const timeout = setTimeout(() => {
-      setNeedleAngle(68);
+      setNeedleAngle(-90);
     }, 300);
 
     const token = localStorage.getItem('token');
@@ -31,11 +31,11 @@ export default function ProfileStatsWindow() {
     return () => clearTimeout(timeout);
   }, []);
 
-  const displayName = user?.displayName || 'AKSHAT ARYAN';
-  const role = user?.role || 'LEAD ARCHITECT';
-  const email = user?.email || 'akshat.aryan@codeforge.io';
-  const bio = user?.bio || 'Building high-performance multi-language compilers, AST parsers, and Gemini AI analysis engines.';
-  const memberDate = user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : '9/12/2023';
+  const displayName = user?.displayName || (user ? 'Developer' : 'Loading Profile...');
+  const role = user?.role || 'Developer';
+  const email = user?.email || 'No email provided';
+  const bio = user?.bio || 'Welcome to CodeForge PRO.';
+  const memberDate = user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A';
 
   return (
     <div className="profile-stats-window-container">
@@ -45,7 +45,7 @@ export default function ProfileStatsWindow() {
       <div className="wood-grain-profile-card">
         <div className="profile-avatar-box">
           <img 
-            src={user?.avatarUrl || "/akshat_aryan.jpg"} 
+            src={user?.avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${displayName}`} 
             alt={displayName} 
             className="avatar-img"
           />
@@ -75,7 +75,7 @@ export default function ProfileStatsWindow() {
         {/* Card 1: Total Problems Solved with mini stacked bar chart */}
         <div className="clay-panel stat-tile-card problems-tile">
           <span className="tile-title">Total Problems Solved</span>
-          <div className="tile-number-big">2,431</div>
+          <div className="tile-number-big">0</div>
 
           <div className="tile-mini-barchart">
             <ResponsiveContainer width="100%" height={32}>
@@ -109,7 +109,7 @@ export default function ProfileStatsWindow() {
                   stroke="url(#terracottaGaugeGrad)"
                   strokeWidth="10"
                   strokeDasharray="172"
-                  strokeDashoffset="10"
+                  strokeDashoffset="172"
                   strokeLinecap="round"
                 />
                 <defs>
@@ -130,7 +130,7 @@ export default function ProfileStatsWindow() {
                   strokeLinecap="round"
                   style={{
                     transformOrigin: '70px 65px',
-                    transform: `rotate(${needleAngle}deg)`,
+                    transform: `rotate(-90deg)`,
                     transition: 'transform 1.2s cubic-bezier(0.34, 1.56, 0.64, 1)'
                   }}
                 />
@@ -138,7 +138,7 @@ export default function ProfileStatsWindow() {
             </div>
 
             <div className="speedometer-val-col">
-              <span className="speedometer-pct">99.3%</span>
+              <span className="speedometer-pct">0%</span>
               <span className="speedometer-sub">PASS RATE</span>
             </div>
           </div>
@@ -147,8 +147,8 @@ export default function ProfileStatsWindow() {
         {/* Card 3: Global Rank */}
         <div className="clay-panel stat-tile-card rank-tile">
           <span className="tile-title">Global Rank (Elo)</span>
-          <div className="tile-number-big text-ochre">#1</div>
-          <span className="tile-sublabel-caption">TOP RANKED DEVELOPER</span>
+          <div className="tile-number-big text-ochre">N/A</div>
+          <span className="tile-sublabel-caption">UNRANKED</span>
         </div>
 
         {/* Card 4: Assessments Completed */}
@@ -158,7 +158,7 @@ export default function ProfileStatsWindow() {
           </div>
           <div className="crest-details-col">
             <span className="crest-title">Assessments Completed</span>
-            <div className="crest-count-big">77</div>
+            <div className="crest-count-big">0</div>
             <span className="crest-sub">ASSESSMENTS</span>
           </div>
         </div>
@@ -166,7 +166,7 @@ export default function ProfileStatsWindow() {
         {/* Card 5: Leaderboard Pos */}
         <div className="clay-panel stat-tile-card leaderboard-pos-tile">
           <span className="tile-title">Leaderboard Pos</span>
-          <div className="tile-number-big text-charcoal">1</div>
+          <div className="tile-number-big text-charcoal">-</div>
           <span className="tile-sublabel-caption">LEADERBOARD POS</span>
         </div>
       </div>
