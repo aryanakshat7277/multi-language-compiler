@@ -137,7 +137,13 @@ Return ONLY JSON matching schema: { "issues": [{ "line": number, "message": stri
 Code:
 ${code}`;
     const result = await this.generateJSON<CodeReviewResult>(prompt);
-    if (result && Array.isArray(result.issues)) return result;
+    if (result && Array.isArray(result.issues)) {
+      if (typeof result.overallQuality !== 'number') {
+        const issuesCount = result.issues.length;
+        result.overallQuality = Math.max(50, 100 - issuesCount * 10);
+      }
+      return result;
+    }
 
     // Dynamic Code Analyzer
     const lines = code.split('\n');
