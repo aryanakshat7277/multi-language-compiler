@@ -4,28 +4,30 @@ import {
   Tooltip, ResponsiveContainer 
 } from 'recharts';
 import { Activity, HelpCircle } from 'lucide-react';
-import { getCodeMetrics } from '../../services/api';
+import { getCodeMetrics, getMyStats } from '../../services/api';
 import { useCode } from '../../contexts/CodeContext';
 import './MetricsWaveWindow.css';
 
-const metricsWaveData = [
-  { day: 'Sun', executions: 42, submissions: 25, activity: 30 },
-  { day: 'Mon', executions: 68, submissions: 48, activity: 55 },
-  { day: 'Tue', executions: 85, submissions: 60, activity: 72 },
-  { day: 'Wed', executions: 75, submissions: 52, activity: 68 },
-  { day: 'Thu', executions: 110, submissions: 85, activity: 98 },
-  { day: 'Fri', executions: 95, submissions: 70, activity: 84 },
-  { day: 'Sat', executions: 125, submissions: 92, activity: 108 },
-  { day: 'Sun', executions: 88, submissions: 64, activity: 75 }
-];
+const defaultWaveData = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => ({
+  day, executions: 0, submissions: 0, activity: 0
+}));
 
 export default function MetricsWaveWindow() {
   const [showCrosshairCard, setShowCrosshairCard] = useState(false);
   const { code, language } = useCode();
   const [metrics, setMetrics] = useState<any>(null);
+  const [waveData, setWaveData] = useState<any[]>(defaultWaveData);
 
   useEffect(() => {
     let active = true;
+    getMyStats()
+      .then(s => {
+        if (active && s.activityWave && s.activityWave.length > 0) {
+          setWaveData(s.activityWave);
+        }
+      })
+      .catch(() => {});
+
     const fetchMetrics = async () => {
       try {
         const res = await getCodeMetrics(code, language);
@@ -65,7 +67,7 @@ export default function MetricsWaveWindow() {
       {/* Chart Canvas Area */}
       <div className="metrics-chart-body">
         <ResponsiveContainer width="100%" height={180}>
-          <AreaChart data={metricsWaveData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
+          <AreaChart data={waveData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
             <defs>
               <linearGradient id="gradTerracotta" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="#C85A32" stopOpacity={0.4} />

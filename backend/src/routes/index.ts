@@ -68,6 +68,8 @@ router.post('/auth/firebase', authRateLimiter, validate(z.object({ body: z.objec
 router.get('/auth/me', authenticate, authController.getMe);
 router.put('/auth/profile', authenticate, validate(z.object({ body: z.object({ displayName: z.string().min(2).optional(), bio: z.string().optional(), avatarUrl: z.string().url().optional() }) })), authController.updateProfile);
 
+router.get('/users/me/stats', optionalAuth, userController.getMyStats);
+router.get('/system/telemetry', userController.getSystemTelemetry);
 router.get('/users', authenticate, requireRole('ADMIN'), userController.getUsers);
 router.get('/users/:id', authenticate, userController.getUserById);
 router.put('/users/:id/role', authenticate, requireRole('ADMIN'), userController.updateUserRole);

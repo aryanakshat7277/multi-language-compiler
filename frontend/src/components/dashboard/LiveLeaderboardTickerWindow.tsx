@@ -1,18 +1,44 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Trophy, Award, Flame, Star, CheckCircle2 } from 'lucide-react';
+import { Trophy, Award } from 'lucide-react';
+import { api } from '../../services/api';
 import './LiveLeaderboardTickerWindow.css';
 
-const TEAM_ROSTER = [
-  { rank: 1, name: 'AKSHAT ARYAN', role: 'Lead Architect', points: 9840, solved: 243, avatar: '/akshat_aryan.jpg', isLead: true },
-  { rank: 2, name: 'WARISH KHAN', role: 'Core Contributor', points: 8910, solved: 215, avatar: '', isLead: false },
-  { rank: 3, name: 'ARUN DEV', role: 'Compiler Specialist', points: 8250, solved: 198, avatar: '', isLead: false },
-  { rank: 4, name: 'MOHIT', role: 'AI Engine Specialist', points: 7680, solved: 184, avatar: '', isLead: false },
-  { rank: 5, name: 'AQUIB', role: 'Security Lead', points: 7120, solved: 172, avatar: '', isLead: false },
-  { rank: 6, name: 'ABHAY', role: 'Performance Engineer', points: 6890, solved: 165, avatar: '', isLead: false },
-];
+interface LeaderboardUser {
+  id: string;
+  rank: number;
+  name: string;
+  avatar?: string;
+  problemsSolved: number;
+  totalSubmissions: number;
+  successRate: number;
+  score: number;
+}
 
 export default function LiveLeaderboardTickerWindow() {
+  const [roster, setRoster] = useState<LeaderboardUser[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    api.get<LeaderboardUser[]>('/leaderboard')
+      .then(data => {
+        if (active && Array.isArray(data)) {
+          // Strictly show non-admin real users
+          const filtered = data.filter(u => !u.name?.toLowerCase().includes('admin'));
+          setRoster(filtered);
+        }
+      })
+      .catch(() => {
+        if (active) setRoster([]);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => { active = false; };
+  }, []);
+
   return (
     <div className="leaderboard-ticker-card">
       <div className="ticker-header">
@@ -23,40 +49,50 @@ export default function LiveLeaderboardTickerWindow() {
             <span className="ticker-subtext">Verified Rank & Compiler Submissions Ledger</span>
           </div>
         </div>
-        <span className="rank-badge-pill">6 Core Developers</span>
+        <span className="rank-badge-pill">{roster.length} Active {roster.length === 1 ? 'Contributor' : 'Contributors'}</span>
       </div>
 
       <div className="ticker-grid">
-        {TEAM_ROSTER.map(dev => (
-          <motion.div 
-            key={dev.rank}
-            className={`dev-card-row ${dev.isLead ? 'lead-developer' : ''}`}
-            whileHover={{ scale: 1.02, y: -2 }}
-          >
-            <div className="dev-rank-circle">#{dev.rank}</div>
-            
-            <div className="dev-avatar-wrap">
-              {dev.avatar ? (
-                <img src={dev.avatar} alt={dev.name} className="dev-img" />
-              ) : (
-                <div className="dev-avatar-fallback">{dev.name.charAt(0)}</div>
-              )}
-            </div>
-
-            <div className="dev-details">
-              <div className="dev-name-row">
-                <strong className="dev-name">{dev.name}</strong>
-                {dev.isLead && <span className="lead-tag">RANK #1</span>}
+        {loading ? (
+          <div style={{ padding: '24px', textAlign: 'center', color: '#8B5A2B', fontSize: '13px' }}>
+            Loading live leaderboard standings...
+          </div>
+        ) : roster.length > 0 ? (
+          roster.map((dev, idx) => (
+            <motion.div 
+              key={dev.id || idx}
+              className={`dev-card-row ${idx === 0 ? 'lead-developer' : ''}`}
+              whileHover={{ scale: 1.02, y: -2 }}
+            >
+              <div className="dev-rank-circle">#{idx + 1}</div>
+              
+              <div className="dev-avatar-wrap">
+                <img 
+                  src={dev.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(dev.name)}&backgroundColor=c85a32,2a5a3d,b35e17`} 
+                  alt={dev.name} 
+                  className="dev-img" 
+                />
               </div>
-              <span className="dev-role">{dev.role}</span>
-            </div>
 
-            <div className="dev-stats-right">
-              <div className="dev-points">{dev.points.toLocaleString()} PTS</div>
-              <div className="dev-solved">{dev.solved} Solved</div>
-            </div>
-          </motion.div>
-        ))}
+              <div className="dev-details">
+                <div className="dev-name-row">
+                  <strong className="dev-name">{dev.name}</strong>
+                  {idx === 0 && <span className="lead-tag">RANK #1</span>}
+                </div>
+                <span className="dev-role">{dev.successRate}% Acceptance</span>
+              </div>
+
+              <div className="dev-stats-right">
+                <div className="dev-points">{dev.score.toLocaleString()} PTS</div>
+                <div className="dev-solved">{dev.problemsSolved} Solved</div>
+              </div>
+            </motion.div>
+          ))
+        ) : (
+          <div style={{ padding: '24px', textAlign: 'center', color: '#8B5A2B', fontSize: '13px' }}>
+            No verified student submissions yet. Solve problems in the compiler to rank on the live leaderboard!
+          </div>
+        )}
       </div>
     </div>
   );

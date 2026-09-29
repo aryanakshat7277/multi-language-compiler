@@ -1,28 +1,57 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Activity, Cpu, Zap, Server, ShieldCheck, Gauge, Flame } from 'lucide-react';
+import { Activity, Cpu, Zap, Server, Gauge } from 'lucide-react';
+import { getSystemTelemetry, SystemTelemetry } from '../../services/api';
 import './CompilerTelemetryWindow.css';
 
 export default function CompilerTelemetryWindow() {
-  const [throughput, setThroughput] = useState(1240);
-  const [cpuUsage, setCpuUsage] = useState(14.8);
-  const [latency, setLatency] = useState(18.2);
+  const [telemetry, setTelemetry] = useState<SystemTelemetry | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setThroughput(prev => Math.floor(1200 + Math.random() * 95));
-      setCpuUsage(prev => +(12 + Math.random() * 6).toFixed(1));
-      setLatency(prev => +(16 + Math.random() * 4).toFixed(1));
-    }, 2500);
-    return () => clearInterval(timer);
+    let active = true;
+    const fetchTelemetry = () => {
+      getSystemTelemetry()
+        .then(data => {
+          if (active) setTelemetry(data);
+        })
+        .catch(() => {})
+        .finally(() => {
+          if (active) setLoading(false);
+        });
+    };
+
+    fetchTelemetry();
+    const timer = setInterval(fetchTelemetry, 10000);
+    return () => {
+      active = false;
+      clearInterval(timer);
+    };
   }, []);
 
-  const runtimes = [
-    { name: 'Node.js v24.1', lang: 'JavaScript', status: 'Healthy', load: '12%', color: '#2A5A3D' },
-    { name: 'Python 3.12', lang: 'Python', status: 'Healthy', load: '18%', color: '#E08A3C' },
-    { name: 'GCC 14.1 (C++)', lang: 'C++', status: 'Optimal', load: '8%', color: '#C85A32' },
-    { name: 'OpenJDK 22', lang: 'Java', status: 'Healthy', load: '15%', color: '#B35E17' },
+  const totalRuns = telemetry?.totalRuns ?? 0;
+  const avgLatency = telemetry?.avgRuntimeMs ?? 42.0;
+  const activeCount = telemetry?.activeRuntimesCount ?? 10;
+  const runtimes = telemetry?.languages || [
+    { id: 'c', name: 'C', version: '11', status: 'Active' },
+    { id: 'cpp', name: 'C++', version: '17', status: 'Active' },
+    { id: 'java', name: 'Java', version: '17', status: 'Active' },
+    { id: 'python', name: 'Python', version: '3.10', status: 'Active' },
+    { id: 'javascript', name: 'JavaScript', version: '18', status: 'Active' },
+    { id: 'typescript', name: 'TypeScript', version: '5', status: 'Active' },
   ];
+
+  const getLangColor = (id: string) => {
+    switch (id) {
+      case 'javascript':
+      case 'typescript': return '#E08A3C';
+      case 'python': return '#2A5A3D';
+      case 'cpp':
+      case 'c': return '#C85A32';
+      case 'java': return '#B35E17';
+      default: return '#7A4222';
+    }
+  };
 
   return (
     <div className="telemetry-window-card">
@@ -41,38 +70,38 @@ export default function CompilerTelemetryWindow() {
         </div>
       </div>
 
-      {/* Animated Gauges Grid */}
+      {/* Real Host Gauges Grid */}
       <div className="gauges-grid">
-        {/* Throughput */}
+        {/* Total Runs */}
         <div className="gauge-item">
           <div className="gauge-icon-circle terracotta">
             <Zap size={18} />
           </div>
           <div>
-            <div className="gauge-val">{throughput.toLocaleString()}</div>
-            <div className="gauge-lbl">Executions / Min</div>
+            <div className="gauge-val">{totalRuns.toLocaleString()}</div>
+            <div className="gauge-lbl">Total Executions</div>
           </div>
         </div>
 
-        {/* Latency */}
+        {/* Real Latency */}
         <div className="gauge-item">
           <div className="gauge-icon-circle emerald">
             <Gauge size={18} />
           </div>
           <div>
-            <div className="gauge-val">{latency} ms</div>
+            <div className="gauge-val">{avgLatency} ms</div>
             <div className="gauge-lbl">Avg Execution Time</div>
           </div>
         </div>
 
-        {/* CPU */}
+        {/* Active Compilers */}
         <div className="gauge-item">
           <div className="gauge-icon-circle amber">
             <Cpu size={18} />
           </div>
           <div>
-            <div className="gauge-val">{cpuUsage}%</div>
-            <div className="gauge-lbl">Engine CPU Load</div>
+            <div className="gauge-val">{activeCount}</div>
+            <div className="gauge-lbl">Active Runtimes</div>
           </div>
         </div>
       </div>
@@ -85,20 +114,19 @@ export default function CompilerTelemetryWindow() {
         </div>
 
         <div className="runtimes-list">
-          {runtimes.map(r => (
+          {runtimes.slice(0, 5).map(r => (
             <motion.div 
-              key={r.name} 
+              key={r.id || r.name} 
               className="runtime-row"
               whileHover={{ scale: 1.01, x: 2 }}
             >
               <div className="runtime-info">
-                <span className="runtime-dot" style={{ backgroundColor: r.color }} />
+                <span className="runtime-dot" style={{ backgroundColor: getLangColor(r.id) }} />
                 <strong className="runtime-name">{r.name}</strong>
-                <span className="runtime-lang">({r.lang})</span>
+                <span className="runtime-lang">(v{r.version})</span>
               </div>
               <div className="runtime-meta">
                 <span className="runtime-badge">{r.status}</span>
-                <span className="runtime-load">{r.load}</span>
               </div>
             </motion.div>
           ))}

@@ -1,34 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { Shield, Mail, Calendar } from 'lucide-react';
-import { ResponsiveContainer, BarChart, Bar } from 'recharts';
-import { getCurrentUser, UserProfile } from '../../services/api';
+import { ResponsiveContainer, BarChart, Bar, Tooltip } from 'recharts';
+import { getCurrentUser, getMyStats, UserProfile, UserStats } from '../../services/api';
 import './ProfileStatsWindow.css';
 
-const categoryStackData = [
-  { name: 'Stack 1', valA: 40, valB: 30, valC: 30 },
-  { name: 'Stack 2', valA: 60, valB: 20, valC: 20 },
-  { name: 'Stack 3', valA: 35, valB: 45, valC: 20 },
-  { name: 'Stack 4', valA: 50, valB: 30, valC: 20 },
-  { name: 'Stack 5', valA: 70, valB: 15, valC: 15 },
-];
-
 export default function ProfileStatsWindow() {
-  const [needleAngle, setNeedleAngle] = useState(-90);
   const [user, setUser] = useState<UserProfile | null>(null);
+  const [stats, setStats] = useState<UserStats | null>(null);
+  const [needleAngle, setNeedleAngle] = useState(-90);
 
   useEffect(() => {
-    const timeout = setTimeout(() => {
-      setNeedleAngle(-90);
-    }, 300);
-
     const token = localStorage.getItem('token');
     if (token) {
       getCurrentUser()
         .then(u => setUser(u))
         .catch(() => setUser(null));
-    }
 
-    return () => clearTimeout(timeout);
+      getMyStats()
+        .then(s => {
+          setStats(s);
+          const pr = s.passRate || 0;
+          setNeedleAngle(-90 + (pr / 100) * 180);
+        })
+        .catch(() => setStats(null));
+    }
   }, []);
 
   const displayName = user?.displayName || (user ? 'Developer' : 'Loading Profile...');
@@ -37,15 +32,27 @@ export default function ProfileStatsWindow() {
   const bio = user?.bio || 'Welcome to CodeForge PRO.';
   const memberDate = user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A';
 
+  const problemsSolved = stats?.problemsSolved ?? 0;
+  const passRate = stats?.passRate ?? 0;
+  const eloRating = stats?.eloRating ?? 1200;
+  const assessmentsCount = stats?.assessmentsCompleted ?? 0;
+  const leaderboardPos = stats?.leaderboardRank ? `#${stats.leaderboardRank}` : 'Unranked';
+
+  const categoryData = [
+    { name: 'Easy', count: stats?.solvedBreakdown.easy ?? 0 },
+    { name: 'Medium', count: stats?.solvedBreakdown.medium ?? 0 },
+    { name: 'Hard', count: stats?.solvedBreakdown.hard ?? 0 },
+  ];
+
+  const strokeDashoffset = 172 - (passRate / 100) * 172;
+
   return (
     <div className="profile-stats-window-container">
-      {/* --------------------------------------------------------------------
-          1. Hero Wood Grain Banner Card
-          -------------------------------------------------------------------- */}
+      {/* 1. Hero Wood Grain Banner Card */}
       <div className="wood-grain-profile-card">
         <div className="profile-avatar-box">
           <img 
-            src={user?.avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${displayName}`} 
+            src={user?.avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(displayName)}&backgroundColor=c85a32,2a5a3d,b35e17`} 
             alt={displayName} 
             className="avatar-img"
           />
@@ -68,25 +75,21 @@ export default function ProfileStatsWindow() {
         </div>
       </div>
 
-      {/* --------------------------------------------------------------------
-          2. Modular Stats Grid (5 Cards)
-          -------------------------------------------------------------------- */}
+      {/* 2. Modular Stats Grid (5 Cards) */}
       <div className="stats-modules-grid">
-        {/* Card 1: Total Problems Solved with mini stacked bar chart */}
+        {/* Card 1: Total Problems Solved with breakdown */}
         <div className="clay-panel stat-tile-card problems-tile">
           <span className="tile-title">Total Problems Solved</span>
-          <div className="tile-number-big">0</div>
+          <div className="tile-number-big">{problemsSolved}</div>
 
           <div className="tile-mini-barchart">
             <ResponsiveContainer width="100%" height={32}>
-              <BarChart data={categoryStackData} margin={{ top: 2, right: 0, left: 0, bottom: 0 }}>
-                <Bar dataKey="valA" stackId="a" fill="#4C7A5D" />
-                <Bar dataKey="valB" stackId="a" fill="#C85A32" />
-                <Bar dataKey="valC" stackId="a" fill="#E08A3C" radius={[2, 2, 0, 0]} />
+              <BarChart data={categoryData} margin={{ top: 2, right: 0, left: 0, bottom: 0 }}>
+                <Bar dataKey="count" fill="#4C7A5D" radius={[2, 2, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
-          <span className="tile-sublabel-caption">TOTAL ALGORITHMS SOLVED</span>
+          <span className="tile-sublabel-caption">E: {categoryData[0].count} | M: {categoryData[1].count} | H: {categoryData[2].count}</span>
         </div>
 
         {/* Card 2: Submissions (Success %) with Speedometer Gauge */}
@@ -109,7 +112,7 @@ export default function ProfileStatsWindow() {
                   stroke="url(#terracottaGaugeGrad)"
                   strokeWidth="10"
                   strokeDasharray="172"
-                  strokeDashoffset="172"
+                  strokeDashoffset={strokeDashoffset}
                   strokeLinecap="round"
                 />
                 <defs>
@@ -130,7 +133,7 @@ export default function ProfileStatsWindow() {
                   strokeLinecap="round"
                   style={{
                     transformOrigin: '70px 65px',
-                    transform: `rotate(-90deg)`,
+                    transform: `rotate(${needleAngle}deg)`,
                     transition: 'transform 1.2s cubic-bezier(0.34, 1.56, 0.64, 1)'
                   }}
                 />
@@ -138,7 +141,7 @@ export default function ProfileStatsWindow() {
             </div>
 
             <div className="speedometer-val-col">
-              <span className="speedometer-pct">0%</span>
+              <span className="speedometer-pct">{passRate}%</span>
               <span className="speedometer-sub">PASS RATE</span>
             </div>
           </div>
@@ -147,8 +150,8 @@ export default function ProfileStatsWindow() {
         {/* Card 3: Global Rank */}
         <div className="clay-panel stat-tile-card rank-tile">
           <span className="tile-title">Global Rank (Elo)</span>
-          <div className="tile-number-big text-ochre">N/A</div>
-          <span className="tile-sublabel-caption">UNRANKED</span>
+          <div className="tile-number-big text-ochre">{eloRating}</div>
+          <span className="tile-sublabel-caption">{problemsSolved > 0 ? 'ACTIVE RATING' : 'PROVISIONAL'}</span>
         </div>
 
         {/* Card 4: Assessments Completed */}
@@ -158,7 +161,7 @@ export default function ProfileStatsWindow() {
           </div>
           <div className="crest-details-col">
             <span className="crest-title">Assessments Completed</span>
-            <div className="crest-count-big">0</div>
+            <div className="crest-count-big">{assessmentsCount}</div>
             <span className="crest-sub">ASSESSMENTS</span>
           </div>
         </div>
@@ -166,8 +169,8 @@ export default function ProfileStatsWindow() {
         {/* Card 5: Leaderboard Pos */}
         <div className="clay-panel stat-tile-card leaderboard-pos-tile">
           <span className="tile-title">Leaderboard Pos</span>
-          <div className="tile-number-big text-charcoal">-</div>
-          <span className="tile-sublabel-caption">LEADERBOARD POS</span>
+          <div className="tile-number-big text-charcoal">{leaderboardPos}</div>
+          <span className="tile-sublabel-caption">GLOBAL STANDING</span>
         </div>
       </div>
     </div>

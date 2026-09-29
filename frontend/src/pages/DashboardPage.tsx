@@ -2,7 +2,6 @@ import React from 'react';
 import { motion, Variants } from 'framer-motion';
 import CompilerTelemetryWindow from '../components/dashboard/CompilerTelemetryWindow';
 import ProfileStatsWindow from '../components/dashboard/ProfileStatsWindow';
-import CodeComplexityGraphWindow from '../components/dashboard/CodeComplexityGraphWindow';
 import MetricsWaveWindow from '../components/dashboard/MetricsWaveWindow';
 import LiveLeaderboardTickerWindow from '../components/dashboard/LiveLeaderboardTickerWindow';
 import './DashboardPage.css';
@@ -41,7 +40,7 @@ export default function DashboardPage() {
         initial="hidden" 
         animate="visible"
       >
-        {/* Top Row: Telemetry, Developer Profile, AST Complexity */}
+        {/* Top Row: Compiler Telemetry & User Profile */}
         <motion.div 
           className="grid-cell cell-telemetry" 
           variants={itemVariants}
@@ -56,14 +55,6 @@ export default function DashboardPage() {
           whileHover={{ y: -4, transition: { duration: 0.2 } }}
         >
           <ProfileStatsWindow />
-        </motion.div>
-
-        <motion.div 
-          className="grid-cell cell-complexity" 
-          variants={itemVariants}
-          whileHover={{ y: -4, transition: { duration: 0.2 } }}
-        >
-          <CodeComplexityGraphWindow />
         </motion.div>
 
         {/* Middle Row: Wide Metrics Waveform Graph */}

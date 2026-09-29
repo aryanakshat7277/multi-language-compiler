@@ -309,3 +309,39 @@ export async function generateAiAssessment(topic: string, difficulty: string, nu
 export async function submitAssessmentReport(assessmentId: string, title: string, questions: any[], answers: Record<string, string>): Promise<AssessmentGradeReport> {
   return api.post(`/assessments/${assessmentId}/submit`, { title, questions, answers });
 }
+
+// ─── User Real-Time Statistics & System Telemetry ──────────────────────────────
+export interface UserStats {
+  problemsSolved: number;
+  totalSubmissions: number;
+  acceptedSubmissions: number;
+  passRate: number;
+  solvedBreakdown: { easy: number; medium: number; hard: number };
+  assessmentsCompleted: number;
+  leaderboardRank: number | null;
+  eloRating: number;
+  activityWave: Array<{ day: string; executions: number; submissions: number; activity: number }>;
+  latestComplexity: {
+    cyclomaticComplexity: number;
+    maintainabilityIndex: number;
+    linesOfCode: number;
+    halsteadDifficulty: number;
+  } | null;
+}
+
+export interface SystemTelemetry {
+  totalRuns: number;
+  avgRuntimeMs: number;
+  activeRuntimesCount: number;
+  languages: Array<{ id: string; name: string; version: string; status: string }>;
+  systemUptimeSeconds: number;
+}
+
+export async function getMyStats(): Promise<UserStats> {
+  return api.get('/users/me/stats');
+}
+
+export async function getSystemTelemetry(): Promise<SystemTelemetry> {
+  return api.get('/system/telemetry');
+}
+
