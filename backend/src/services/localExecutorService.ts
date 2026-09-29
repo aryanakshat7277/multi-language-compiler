@@ -10,8 +10,8 @@ export class LocalExecutorService {
 
   // High-Concurrency Production Semaphore
   private static activeJobs = 0;
-  private static readonly MAX_CONCURRENT = Math.max(4, (os.cpus()?.length || 4) * 2);
-  private static readonly MAX_QUEUE_DEPTH = 2000;
+  private static readonly MAX_CONCURRENT = Math.max(8, (os.cpus()?.length || 4) * 3);
+  private static readonly MAX_QUEUE_DEPTH = 3000;
   private static waitQueue: Array<{
     resolve: () => void;
     reject: (err: Error) => void;
@@ -21,7 +21,7 @@ export class LocalExecutorService {
   /**
    * Acquire a concurrency execution slot with FIFO queueing
    */
-  private static async acquireSlot(timeoutMs: number = 30000): Promise<void> {
+  private static async acquireSlot(timeoutMs: number = 45000): Promise<void> {
     if (this.activeJobs < this.MAX_CONCURRENT) {
       this.activeJobs++;
       return;
