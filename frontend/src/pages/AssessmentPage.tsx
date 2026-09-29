@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import Editor from '@monaco-editor/react';
 import { 
   Clock, CheckCircle2, 
-  Play, ArrowLeft, Send, CheckSquare, Award, Loader2, Sparkles, X, Plus
+  Play, ArrowLeft, Send, CheckSquare, Award, Loader2, Sparkles, X, Plus, Search, Check
 } from 'lucide-react';
 import { 
   api, generateAiAssessment, submitAssessmentReport, AssessmentGradeReport 
@@ -116,6 +116,141 @@ const FALLBACK_ASSESSMENTS: Assessment[] = [
   }
 ];
 
+const POPULAR_EXAM_TOPICS: string[] = [
+  // Core Data Structures & Algorithms
+  "Arrays & Two Pointers",
+  "Sliding Window & Subarray Problems",
+  "Binary Search & Rotated Sorted Arrays",
+  "Linked Lists, Fast & Slow Pointers",
+  "Stack, Monotonic Stack & Next Greater Element",
+  "Queue, Deque & Priority Queue",
+  "Binary Trees & BFS/DFS Traversals",
+  "Binary Search Tree (BST) & Validation",
+  "Heap & Top-K Frequent Elements",
+  "Graph Breadth-First Search (BFS)",
+  "Graph Depth-First Search (DFS) & Connected Components",
+  "Dijkstra's Algorithm & Shortest Path",
+  "Bellman-Ford & Negative Cycle Detection",
+  "Floyd-Warshall All-Pairs Shortest Path",
+  "Minimum Spanning Tree (Kruskal & Prim)",
+  "Topological Sort & Kahn's Algorithm",
+  "Disjoint Set Union (DSU / Union-Find)",
+  "Trie / Prefix Tree Implementation",
+  "Segment Tree & Range Sum Queries",
+  "Fenwick Tree (Binary Indexed Tree)",
+  "Dynamic Programming - 1D Array Optimization",
+  "Dynamic Programming - 2D Grid & Minimum Path Sum",
+  "Dynamic Programming - 0/1 Knapsack & Subsets",
+  "Dynamic Programming - Longest Common Subsequence (LCS)",
+  "Dynamic Programming - Longest Increasing Subsequence (LIS)",
+  "Dynamic Programming - Matrix Chain Multiplication",
+  "Bit Manipulation, XOR Tricks & Bitmasks",
+  "Greedy Algorithms & Activity Selection",
+  "Backtracking, N-Queens & Permutations",
+  "Recursion & Divide and Conquer",
+  "String Matching - KMP Algorithm",
+  "String Hashing & Rabin-Karp",
+  "Fast Sorting Algorithms (QuickSort & MergeSort)",
+  "Mathematics, Modular Arithmetic & Fast Exponentiation",
+  "Prime Sieve (Sieve of Eratosthenes) & GCD",
+  "Game Theory & Minimax Algorithm",
+  
+  // Python Programming
+  "Python - Data Structures & List Comprehensions",
+  "Python - Object-Oriented Programming (OOP) & Dunder Methods",
+  "Python - Generators, Iterators & Yield",
+  "Python - Decorators & Functional Closures",
+  "Python - Concurrency with Asyncio & Coroutines",
+  "Python - Multithreading vs Multiprocessing & GIL",
+  "Python - NumPy Vectorization & Array Operations",
+  "Python - Pandas DataFrames, Filtering & GroupBy",
+  "Python - Memory Profiling & Garbage Collection",
+  
+  // JavaScript & TypeScript
+  "JavaScript - Event Loop, Microtasks & Macrotasks",
+  "JavaScript - Promises, Async/Await & Error Handling",
+  "JavaScript - Closures, Scope Chain & Lexical Environment",
+  "JavaScript - Prototypes, Prototypal Inheritance & Classes",
+  "JavaScript - DOM Manipulation & Event Delegation",
+  "TypeScript - Generics & Generic Constraints",
+  "TypeScript - Advanced Type Narrowing & Discriminated Unions",
+  "TypeScript - Utility Types (Pick, Omit, Partial, Record)",
+  "TypeScript - Interfaces vs Type Aliases",
+  
+  // C & C++ Systems Programming
+  "C++ - Pointers, References & Memory Layout",
+  "C++ - Standard Template Library (STL) Containers & Iterators",
+  "C++ - Dynamic Memory Management (new, delete, malloc, free)",
+  "C++ - Smart Pointers (unique_ptr, shared_ptr, weak_ptr)",
+  "C++ - Move Semantics, Rvalue References & std::move",
+  "C++ - Object-Oriented Principles, Virtual Tables (vtable)",
+  "C++ - Template Metaprogramming & Compile-Time Evaluation",
+  "C - Low-Level Bit Operations & Struct Packing",
+  "C - POSIX System Calls & File Descriptors",
+  
+  // Java & Object-Oriented Systems
+  "Java - Collections Framework (HashMap, TreeMap, ConcurrentHashMap)",
+  "Java - Multithreading, Synchronized & Locks",
+  "Java - ExecutorService, Thread Pools & CompletableFuture",
+  "Java - Stream API & Functional Interfaces",
+  "Java - JVM Memory Model (Heap, Stack, Metaspace) & GC",
+  "Java - SOLID Principles & Design Patterns",
+  
+  // Rust & Go Modern Systems
+  "Rust - Ownership, Borrowing Rules & Lifetimes",
+  "Rust - Pattern Matching, Enums & Option/Result",
+  "Rust - Concurrency with Threads, Mutex & Arc",
+  "Go - Goroutines, Channels & Select Statements",
+  "Go - Interfaces, Structs & Composition",
+  "Go - Concurrency Patterns (Worker Pools, Fan-in/Fan-out)",
+  
+  // Web & Backend Engineering
+  "RESTful API Design Principles & HTTP Status Codes",
+  "GraphQL Schema Design, Queries & Resolvers",
+  "WebSockets & Real-Time Bidirectional Communication",
+  "JWT Authentication, Refresh Tokens & OAuth 2.0",
+  "Caching Strategies & In-Memory Redis Implementation",
+  "Message Brokers: Apache Kafka & RabbitMQ Architecture",
+  "Microservices vs Monoliths & Inter-Service Communication",
+  "Docker Containerization & Multi-Stage Builds",
+  "Kubernetes Fundamentals (Pods, Services, Ingress)",
+  "Relational Database Schema Design & Normalization",
+  "SQL Joins, Group By, Subqueries & Window Functions",
+  "Database Indexing (B-Trees, Hash Indexes) & Query Optimization",
+  "ACID Properties & Database Transaction Isolation Levels",
+  "NoSQL Key-Value & Document Stores (MongoDB, DynamoDB)",
+  "Rate Limiting Algorithms (Token Bucket & Leaky Bucket)",
+  "Reverse Proxies, API Gateways & Load Balancing",
+  "Linux Shell Scripting & CLI Process Management",
+  "CI/CD Pipeline Automation & GitHub Actions",
+  
+  // System Design & Architecture
+  "Distributed Systems & CAP / PACELC Theorems",
+  "Consistent Hashing & Distributed Key-Value Store",
+  "Database Sharding, Partitioning & Master-Slave Replication",
+  "Distributed Caching & Cache-Aside Invalidation",
+  "System Design: URL Shortener (TinyURL)",
+  "System Design: Notification & Push Alert Service",
+  "System Design: Real-Time Chat Application (WhatsApp/Slack)",
+  "System Design: Video Streaming Platform (YouTube/Netflix)",
+  "System Design: E-Commerce Flash Sale & Inventory Locking",
+  "System Design: Distributed Web Crawler & Indexer",
+  
+  // Frontend & Performance
+  "React - Functional Components, useState & useEffect Hooks",
+  "React - Custom Hooks & Reusable Logic",
+  "React - Performance Tuning (useMemo, useCallback, React.memo)",
+  "React - Global State Management (Zustand, Redux, Context)",
+  "Web Security: Cross-Site Scripting (XSS) & Prevention",
+  "Web Security: Cross-Site Request Forgery (CSRF) & CORS",
+  
+  // Career Technical Mocks
+  "FAANG / Top-Tier Tech Coding Interview Simulation",
+  "Junior Software Engineer Placement Coding Assessment",
+  "Senior Full-Stack Architecture & Algorithmic Evaluation",
+  "Machine Learning Engineer - Data Pipelines & Model Coding"
+];
+
 export default function AssessmentPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -127,6 +262,7 @@ export default function AssessmentPage() {
   // AI Generator Modal state
   const [showGenModal, setShowGenModal] = useState(false);
   const [genTopic, setGenTopic] = useState('Dynamic Programming & Graphs');
+  const [topicSearch, setTopicSearch] = useState('');
   const [genDifficulty, setGenDifficulty] = useState('Intermediate');
   const [genNumQuestions, setGenNumQuestions] = useState(3);
   const [generating, setGenerating] = useState(false);
@@ -378,7 +514,7 @@ export default function AssessmentPage() {
         {/* AI GENERATOR MODAL */}
         {showGenModal && (
           <div style={{ position: 'fixed', inset: 0, background: 'rgba(28, 19, 14, 0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, backdropFilter: 'blur(3px)' }}>
-            <div style={{ background: '#FAF4EE', border: '1.5px solid #C8B6A6', borderRadius: 12, width: 480, padding: 24, boxShadow: '0 12px 32px rgba(0,0,0,0.25)' }}>
+            <div style={{ background: '#FAF4EE', border: '1.5px solid #C8B6A6', borderRadius: 12, width: 520, maxWidth: '95vw', padding: 24, boxShadow: '0 12px 32px rgba(0,0,0,0.25)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <Sparkles size={18} style={{ color: '#C85A32' }} />
@@ -389,14 +525,101 @@ export default function AssessmentPage() {
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                 <div>
-                  <label style={{ fontSize: 12, fontWeight: 700, color: '#8B5A2B', display: 'block', marginBottom: 4 }}>Exam Topic / Subject</label>
-                  <select value={genTopic} onChange={e => setGenTopic(e.target.value)} style={{ width: '100%', padding: '8px 10px', borderRadius: 6, border: '1px solid #C8B6A6', background: '#F5ECE3', fontSize: 13, color: '#2D231E' }}>
-                    <option value="Dynamic Programming & Graphs">Dynamic Programming & Graphs</option>
-                    <option value="Python Data Structures">Python Data Structures & OOP</option>
-                    <option value="JavaScript & Async Engine">JavaScript Async & Event Loop</option>
-                    <option value="C++ Memory Management & Pointers">C++ Memory & Low-Level Algorithms</option>
-                    <option value="Software Engineer Placement Mock">Software Engineer Placement Mock</option>
-                  </select>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                    <label style={{ fontSize: 12, fontWeight: 700, color: '#8B5A2B' }}>
+                      Exam Topic / Subject ({POPULAR_EXAM_TOPICS.length}+ Curated)
+                    </label>
+                    {genTopic && (
+                      <span 
+                        style={{ fontSize: 11, color: '#C85A32', fontWeight: 700, maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} 
+                        title={genTopic}
+                      >
+                        ✓ {genTopic}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Search Bar Input */}
+                  <div style={{ position: 'relative', marginBottom: 8 }}>
+                    <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#8B5A2B' }} />
+                    <input
+                      type="text"
+                      placeholder="Search 100+ topics (e.g. DP, Trie, React, Rust, Concurrency)..."
+                      value={topicSearch}
+                      onChange={e => setTopicSearch(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '8px 30px 8px 32px',
+                        borderRadius: 6,
+                        border: '1px solid #C8B6A6',
+                        background: '#FFF',
+                        fontSize: 12.5,
+                        color: '#2D231E',
+                        boxSizing: 'border-box',
+                        outline: 'none'
+                      }}
+                    />
+                    {topicSearch && (
+                      <button 
+                        type="button"
+                        onClick={() => setTopicSearch('')}
+                        style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#8B5A2B' }}
+                      >
+                        <X size={13} />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Scrollable list of 100+ topics */}
+                  <div style={{
+                    maxHeight: 160,
+                    overflowY: 'auto',
+                    border: '1px solid #C8B6A6',
+                    borderRadius: 6,
+                    background: '#F5ECE3',
+                    padding: '4px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 2
+                  }}>
+                    {POPULAR_EXAM_TOPICS.filter(t => t.toLowerCase().includes(topicSearch.toLowerCase())).map((top) => {
+                      const isSelected = genTopic === top;
+                      return (
+                        <div
+                          key={top}
+                          onClick={() => setGenTopic(top)}
+                          style={{
+                            padding: '6px 10px',
+                            borderRadius: 4,
+                            fontSize: 12.5,
+                            cursor: 'pointer',
+                            background: isSelected ? '#C85A32' : 'transparent',
+                            color: isSelected ? '#FFF' : '#2D231E',
+                            fontWeight: isSelected ? 700 : 500,
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            transition: 'background 0.15s ease'
+                          }}
+                        >
+                          <span>{top}</span>
+                          {isSelected && <Check size={13} />}
+                        </div>
+                      );
+                    })}
+                    {POPULAR_EXAM_TOPICS.filter(t => t.toLowerCase().includes(topicSearch.toLowerCase())).length === 0 && (
+                      <div style={{ padding: '14px', textAlign: 'center', fontSize: 12, color: '#8B5A2B' }}>
+                        <div>No predefined topic found for "{topicSearch}".</div>
+                        <button 
+                          type="button"
+                          onClick={() => setGenTopic(topicSearch)}
+                          style={{ marginTop: 8, padding: '5px 12px', fontSize: 11.5, background: '#C85A32', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer', fontWeight: 600 }}
+                        >
+                          Use "{topicSearch}" as Custom Topic
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
