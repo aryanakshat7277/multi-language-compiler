@@ -8,7 +8,7 @@ const OutputPanel: React.FC = () => {
     stdout, stderr, stdin, setStdin,
     executionTime, memoryUsed, exitCode,
     executionStatus, compileOutput, statusMessage,
-    language, resetOutput
+    language, resetOutput, jobId, compilationMeta
   } = useEditorStore();
 
   const [activeTab, setActiveTab] = useState<'terminal' | 'input' | 'compile' | 'pipeline'>('terminal');
@@ -223,6 +223,11 @@ const OutputPanel: React.FC = () => {
                         <span>Memory: {memoryUsed.toFixed(1)}MB</span>
                       </div>
                     )}
+                    {jobId && (
+                      <div className="summary-item" style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', opacity: 0.85 }}>
+                        <span>ID: {jobId}</span>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -241,12 +246,12 @@ const OutputPanel: React.FC = () => {
               <div className="pipe-line" />
               <div className={`pipe-step ${step >= 2 ? 'done' : ''} ${step === 2 ? 'active' : ''}`}>
                 <div className="step-node">2</div>
-                <div className="step-label">COMPILING</div>
+                <div className="step-label">PARSER</div>
               </div>
               <div className="pipe-line" />
               <div className={`pipe-step ${step >= 3 ? 'done' : ''} ${step === 3 ? 'active' : ''}`}>
                 <div className="step-node">3</div>
-                <div className="step-label">RUNNING</div>
+                <div className="step-label">EXECUTION</div>
               </div>
               <div className="pipe-line" />
               <div className={`pipe-step ${step >= 5 ? 'done' : step === -1 ? 'error' : ''}`}>
@@ -255,7 +260,17 @@ const OutputPanel: React.FC = () => {
               </div>
             </div>
             <div className="pipeline-details">
-              Status: <strong>{executionStatus.toUpperCase()}</strong> • Engine: <strong>Local Direct Sandbox</strong>
+              <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginBottom: '6px' }}>
+                <span>Compilation ID: <strong style={{ fontFamily: 'var(--font-mono)' }}>{jobId || compilationMeta?.compilationId || 'c-idle'}</strong></span>
+                <span>Status: <strong>{executionStatus === 'completed' ? 'SUCCEEDED' : executionStatus.toUpperCase()}</strong></span>
+                <span>Stage: <strong>{compilationMeta?.stage || (isRunning ? 'CODE_GENERATION' : 'READY')}</strong></span>
+                {executionTime !== null && <span>Duration: <strong>{executionTime}ms</strong></span>}
+              </div>
+              <div style={{ fontSize: '12px', opacity: 0.8, display: 'flex', gap: '14px', flexWrap: 'wrap' }}>
+                <span>Worker Pool: <strong>Bounded Semaphore (2,000 max queue)</strong></span>
+                {memoryUsed !== null && <span>Peak Memory: <strong>{memoryUsed.toFixed(1)} MB</strong></span>}
+                <span>Engine: <strong>Local Direct Sandbox</strong></span>
+              </div>
             </div>
           </div>
         )}

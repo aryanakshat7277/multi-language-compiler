@@ -67,7 +67,6 @@ async function bootstrap() {
   app.use('/api', routes);
 
   // 4. Production Static Single-Port Delivery (Frontend React SPA)
-  // Check candidate paths where frontend dist might reside
   const candidateDistPaths = [
     path.resolve(process.cwd(), 'frontend/dist'),
     path.resolve(process.cwd(), '../frontend/dist'),
@@ -107,9 +106,13 @@ async function bootstrap() {
     process.exit(1);
   }
 
-  // 8. Server Listen
+  // 8. HTTP Keep-Alive tuning for reverse proxies (Nginx/Cloudflare/Render)
+  server.keepAliveTimeout = 65000;
+  server.headersTimeout = 66000;
+
+  // 9. Server Listen
   server.listen(config.port, () => {
-    logger.info(`Production-ready server running on port ${config.port}`);
+    logger.info(`Production-ready server running on port ${config.port} (PID: ${process.pid})`);
     logger.info(`API Base URL: http://localhost:${config.port}/api`);
     if (frontendDist) {
       logger.info(`Web UI available at: http://localhost:${config.port}`);
@@ -122,13 +125,18 @@ async function bootstrap() {
     server.close(async () => {
       try {
         await prisma.$disconnect();
-        logger.info('Database connection closed.');
-        process.exit(0);
+        logger.info('Prisma database connection closed cleanly.');
       } catch (err) {
-        logger.error('Error during shutdown', err);
-        process.exit(1);
+        logger.error('Error closing database connection', err);
       }
+      process.exit(0);
     });
+
+    // Force shutdown after 10s if connections linger
+    setTimeout(() => {
+      logger.error('Forced shutdown due to lingering connections.');
+      process.exit(1);
+    }, 10000).unref();
   };
 
   process.on('SIGTERM', () => shutdown('SIGTERM'));
@@ -136,5 +144,5 @@ async function bootstrap() {
 }
 
 bootstrap().catch(err => {
-  logger.error('Bootstrap error', err);
+  logger.error('Bootstrap fatal error', err);
 });

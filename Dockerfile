@@ -39,7 +39,7 @@ ENV VITE_FIREBASE_APP_ID=$VITE_FIREBASE_APP_ID
 ENV VITE_FIREBASE_MEASUREMENT_ID=$VITE_FIREBASE_MEASUREMENT_ID
 
 # Generate Prisma Client & build both workspaces
-RUN cd backend && npx prisma generate && npx prisma db push
+RUN cd backend && npx prisma generate && npx prisma db push && npx prisma db seed
 RUN npm run build:frontend
 RUN npm run build:backend
 
@@ -64,6 +64,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ruby \
     curl \
     openssl \
+    ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy root package manifest & install production dependencies

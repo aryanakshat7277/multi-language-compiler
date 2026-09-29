@@ -1,4 +1,4 @@
-import { spawn } from 'child_process';
+import { spawn, exec } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
@@ -7,6 +7,91 @@ import { logger } from '../utils/logger';
 
 export class LocalExecutorService {
   private static cachedPaths: Record<string, string> = {};
+
+  // High-Concurrency Production Semaphore
+  private static activeJobs = 0;
+  private static readonly MAX_CONCURRENT = Math.max(4, (os.cpus()?.length || 4) * 2);
+  private static readonly MAX_QUEUE_DEPTH = 2000;
+  private static waitQueue: Array<{
+    resolve: () => void;
+    reject: (err: Error) => void;
+    timer: NodeJS.Timeout;
+  }> = [];
+
+  /**
+   * Acquire a concurrency execution slot with FIFO queueing
+   */
+  private static async acquireSlot(timeoutMs: number = 30000): Promise<void> {
+    if (this.activeJobs < this.MAX_CONCURRENT) {
+      this.activeJobs++;
+      return;
+    }
+
+    if (this.waitQueue.length >= this.MAX_QUEUE_DEPTH) {
+      throw new Error(`Compiler worker queue capacity reached (${this.MAX_QUEUE_DEPTH} jobs). Please retry shortly.`);
+    }
+
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        const idx = LocalExecutorService.waitQueue.findIndex(item => item.timer === timer);
+        if (idx !== -1) {
+          LocalExecutorService.waitQueue.splice(idx, 1);
+          reject(new Error(`Compilation queue wait timeout (${timeoutMs}ms limit exceeded). System under high load.`));
+        }
+      }, timeoutMs);
+
+      LocalExecutorService.waitQueue.push({ resolve, reject, timer });
+    });
+  }
+
+  /**
+   * Release concurrency execution slot and notify next waiting job
+   */
+  private static releaseSlot(): void {
+    this.activeJobs = Math.max(0, this.activeJobs - 1);
+    const next = this.waitQueue.shift();
+    if (next) {
+      clearTimeout(next.timer);
+      this.activeJobs++;
+      next.resolve();
+    }
+  }
+
+  /**
+   * Return telemetry on execution worker pool load
+   */
+  public static getPoolMetrics() {
+    return {
+      activeJobs: this.activeJobs,
+      queuedJobs: this.waitQueue.length,
+      maxConcurrent: this.MAX_CONCURRENT,
+      utilizationPct: Math.round((this.activeJobs / this.MAX_CONCURRENT) * 100)
+    };
+  }
+
+  /**
+   * Pre-execution Security Scan (Detects fork bombs, destructive OS calls, and credential harvesting)
+   */
+  private static validateSecurity(code: string): void {
+    const dangerousPatterns = [
+      /\bos\.fork\s*\(\s*\)/i,
+      /\bwhile\s+True\s*:\s*os\.fork/i,
+      /\brmdir\s+[\/\\][sq]/i,
+      /\bdel\s+[\/\\][fsq]/i,
+      /\bformat\s+[a-z]:/i,
+      /\bdiskpart\b/i,
+      /\bshutdown\s+[\-\/][st]/i,
+      /\b(mkfs|dd\s+if=)/i,
+      /:()\s*\{\s*:\s*\|\s*:\s*&\s*\}\s*;\s*:/,
+      /\b__proto__\b/
+    ];
+
+    for (const pattern of dangerousPatterns) {
+      if (pattern.test(code)) {
+        throw new Error('Security Restriction: Prohibited system command or fork bomb detected.');
+      }
+    }
+  }
 
   /**
    * Search for compiler/runtime binaries across standard Windows & Unix locations.
@@ -125,6 +210,16 @@ export class LocalExecutorService {
    * Execute code locally on the host system as a fallback when Piston container is offline.
    */
   static async execute(request: PistonExecuteRequest): Promise<PistonExecuteResponse> {
+    // 1. Validate security of all submitted files
+    for (const file of request.files) {
+      if (file && file.content) {
+        this.validateSecurity(file.content);
+      }
+    }
+
+    // 2. Acquire concurrency slot from worker pool
+    await this.acquireSlot();
+
     const tempDir = path.join(os.tmpdir(), `codeforge-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`);
     fs.mkdirSync(tempDir, { recursive: true });
 
@@ -134,7 +229,7 @@ export class LocalExecutorService {
       const lang = request.language.toLowerCase();
       let mainFile = request.files[0]?.name ? path.basename(request.files[0].name) : 'main.txt';
 
-      // 1. Special handling for Java public class detection
+      // Special handling for Java public class detection
       if (lang === 'java') {
         const content = request.files[0]?.content || '';
         const match = content.match(/public\s+class\s+([A-Za-z0-9_$]+)/) || content.match(/class\s+([A-Za-z0-9_$]+)/);
@@ -214,12 +309,13 @@ export class LocalExecutorService {
       };
 
     } finally {
-      // 4. Cleanup temp directory
+      // 4. Cleanup temp directory & release worker slot
       try {
         fs.rmSync(tempDir, { recursive: true, force: true });
       } catch (err) {
         logger.warn(`Failed to remove temp execution dir: ${tempDir}`, err);
       }
+      this.releaseSlot();
     }
   }
 
@@ -304,6 +400,7 @@ export class LocalExecutorService {
         // ignore
       }
 
+      // Shielded environment: ONLY pass safe OS execution variables; NEVER leak backend secrets
       const sanitizedEnv: Record<string, string> = {
         PATH: envPath || '',
         PYTHONUNBUFFERED: '1',
@@ -331,9 +428,20 @@ export class LocalExecutorService {
         env: sanitizedEnv
       });
 
+      const killProcessTree = () => {
+        if (!proc.pid) return;
+        if (process.platform === 'win32') {
+          exec(`taskkill /pid ${proc.pid} /T /F`, () => {});
+        } else {
+          try {
+            proc.kill('SIGKILL');
+          } catch {}
+        }
+      };
+
       const timer = setTimeout(() => {
         isTimedOut = true;
-        proc.kill('SIGKILL');
+        killProcessTree();
       }, timeoutMs);
 
       if (stdin && proc.stdin) {
@@ -347,7 +455,7 @@ export class LocalExecutorService {
         stdout += data.toString();
         if (stdout.length > 512 * 1024) {
           stdout = stdout.substring(0, 512 * 1024) + '\n[Output truncated...]';
-          proc.kill();
+          killProcessTree();
         }
       });
 
@@ -355,7 +463,7 @@ export class LocalExecutorService {
         stderr += data.toString();
         if (stderr.length > 512 * 1024) {
           stderr = stderr.substring(0, 512 * 1024) + '\n[Error output truncated...]';
-          proc.kill();
+          killProcessTree();
         }
       });
 

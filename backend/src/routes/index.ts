@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
+import * as os from 'os';
 import { validate } from '../middleware/validation';
 import { authenticate, optionalAuth } from '../middleware/auth';
 import { requireRole } from '../middleware/rbac';
@@ -17,13 +18,47 @@ import * as adminController from '../controllers/adminController';
 import * as compilerController from '../controllers/compilerController';
 import prisma from '../config/database';
 import { parseCode } from '../services/astService';
-import { compilationRateLimiter, aiRateLimiter, authRateLimiter } from '../middleware/rateLimiter';
+import { LocalExecutorService } from '../services/localExecutorService';
+import { executionRateLimiter, authRateLimiter, analysisRateLimiter, aiRateLimiter } from '../middleware/rateLimiter';
+import v1CompilationRoutes from './v1/compilationRoutes';
+import * as compilationControllerV1 from '../controllers/compilationControllerV1';
 
 const router = Router();
 
+// Phase 1 Architecture: Liveness & Readiness Probes
+router.get('/health/live', compilationControllerV1.getLiveness);
+router.get('/health/ready', compilationControllerV1.getReadiness);
+
+// Phase 1 Unified Compilation Architecture (v1)
+router.use('/v1', v1CompilationRoutes);
+
+// Production System Telemetry & Health Monitoring
+router.get('/health/telemetry', (_req, res) => {
+  const memory = process.memoryUsage();
+  const pool = LocalExecutorService.getPoolMetrics();
+  res.json({
+    status: 'HEALTHY',
+    uptimeSeconds: Math.round(process.uptime()),
+    timestamp: new Date().toISOString(),
+    system: {
+      platform: process.platform,
+      arch: process.arch,
+      cpuCores: os.cpus().length,
+      freeMemoryMb: Math.round(os.freemem() / (1024 * 1024)),
+      totalMemoryMb: Math.round(os.totalmem() / (1024 * 1024))
+    },
+    process: {
+      heapUsedMb: Math.round(memory.heapUsed / (1024 * 1024)),
+      heapTotalMb: Math.round(memory.heapTotal / (1024 * 1024)),
+      rssMb: Math.round(memory.rss / (1024 * 1024))
+    },
+    compilerWorkerPool: pool
+  });
+});
+
 router.get('/compiler/health', compilerController.healthCheck);
 router.get('/compiler/languages', compilerController.getLanguages);
-router.post('/compiler/execute', compilationRateLimiter, optionalAuth, compilerController.executeCode);
+router.post('/compiler/execute', executionRateLimiter, optionalAuth, compilerController.executeCode);
 router.get('/compiler/executions/:id', optionalAuth, compilerController.getExecution);
 router.get('/compiler/executions/:id/events', optionalAuth, compilerController.getExecutionEvents);
 
@@ -57,12 +92,12 @@ router.get('/submissions', optionalAuth, submissionController.getSubmissions);
 router.get('/submissions/:id', optionalAuth, submissionController.getSubmissionById);
 router.get('/users/:userId/submissions', optionalAuth, submissionController.getUserSubmissions);
 
-router.post('/code-analysis', aiRateLimiter, optionalAuth, validate(z.object({ body: z.object({ sourceCode: z.string(), languageId: z.string() }) })), analysisController.runCodeAnalysis);
+router.post('/code-analysis', analysisRateLimiter, optionalAuth, validate(z.object({ body: z.object({ sourceCode: z.string(), languageId: z.string() }) })), analysisController.runCodeAnalysis);
 router.get('/code-analysis/:id', optionalAuth, analysisController.getCodeAnalysis);
-router.post('/ast-analysis', aiRateLimiter, optionalAuth, validate(z.object({ body: z.object({ sourceCode: z.string(), languageId: z.string() }) })), analysisController.runAstAnalysis);
+router.post('/ast-analysis', analysisRateLimiter, optionalAuth, validate(z.object({ body: z.object({ sourceCode: z.string(), languageId: z.string() }) })), analysisController.runAstAnalysis);
 router.get('/ast-analysis/:id', optionalAuth, analysisController.getAstAnalysis);
 
-router.post('/ast/parse', aiRateLimiter, async (req: any, res: any, next: any) => {
+router.post('/ast/parse', analysisRateLimiter, async (req: any, res: any, next: any) => {
   try {
     const { code, language } = req.body;
     if (!code) return res.status(400).json({ error: 'code is required' });
@@ -86,7 +121,7 @@ router.post('/ai-review/detect', aiRateLimiter, optionalAuth, validate(codePaylo
 router.post('/ai-review/shortest-code', aiRateLimiter, optionalAuth, validate(z.object({ body: z.object({ sourceCode: z.string(), languageId: z.string(), expectedOutput: z.string().optional() }) })), aiController.generateShortestCode);
 router.post('/ai-review/hover', aiRateLimiter, optionalAuth, aiController.explainHover);
 
-router.post('/code-similarity', aiRateLimiter, optionalAuth, validate(z.object({ body: z.object({ sourceCodeA: z.string(), sourceCodeB: z.string(), languageId: z.string() }) })), aiController.compareCode);
+router.post('/code-similarity', analysisRateLimiter, optionalAuth, validate(z.object({ body: z.object({ sourceCodeA: z.string(), sourceCodeB: z.string(), languageId: z.string() }) })), aiController.compareCode);
 router.get('/code-similarity/:id', optionalAuth, aiController.getSimilarityReport);
 
 router.post('/assessments/generate-ai', optionalAuth, assessmentController.generateAiAssessment);

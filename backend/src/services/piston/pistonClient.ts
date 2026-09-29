@@ -50,11 +50,9 @@ const executeCode = async (req: PistonExecuteRequest): Promise<PistonExecuteResp
 
 const getRuntimes = async (): Promise<PistonRuntime[]> => {
   const primaryUrl = `${config.pistonBaseUrl}/runtimes`.replace('/api/v2/api/v2/', '/api/v2/').replace('/api/v2/v2/', '/api/v2/');
-  const fallbackUrl = 'https://emkc.org/api/v2/piston/runtimes';
-  logger.info('Fetching Piston runtimes');
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), config.compilerConnectTimeout);
+  const timeout = setTimeout(() => controller.abort(), 1000);
 
   try {
     const response = await fetch(primaryUrl, {
@@ -71,20 +69,6 @@ const getRuntimes = async (): Promise<PistonRuntime[]> => {
     }
   } catch (error: any) {
     clearTimeout(timeout);
-    logger.warn(`Primary Piston URL unreachable (${error.message}), falling back to public Piston API...`);
-  }
-
-  // Fallback to public Piston API
-  try {
-    const fbResponse = await fetch(fallbackUrl, {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' }
-    });
-    if (fbResponse.ok) {
-      return (await fbResponse.json()) as PistonRuntime[];
-    }
-  } catch (fbErr: any) {
-    logger.error(`Piston get runtimes error: ${fbErr.message}`);
   }
 
   return [];
