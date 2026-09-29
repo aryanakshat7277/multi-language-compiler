@@ -313,7 +313,14 @@ export class LocalExecutorService {
       try {
         fs.rmSync(tempDir, { recursive: true, force: true });
       } catch (err) {
-        logger.warn(`Failed to remove temp execution dir: ${tempDir}`, err);
+        // Windows executable file lock retry after brief delay
+        setTimeout(() => {
+          try {
+            if (fs.existsSync(tempDir)) {
+              fs.rmSync(tempDir, { recursive: true, force: true });
+            }
+          } catch {}
+        }, 500);
       }
       this.releaseSlot();
     }

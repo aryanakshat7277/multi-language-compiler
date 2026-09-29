@@ -14,6 +14,8 @@ import { config } from '../config/env';
 import { LocalExecutorService } from './localExecutorService';
 
 export class CompilerService {
+  private static verifiedLanguages = new Set<string>();
+
   static async execute(userId: string | undefined, request: CompilerExecutionRequest): Promise<CompilerExecutionResponse> {
     // 1. Validate
     CompilerValidator.validateExecutionRequest(request);
@@ -28,25 +30,28 @@ export class CompilerService {
       CompilerValidator.validateFileExtension(file.name, request.language);
     }
 
-    // Ensure Language row exists in DB for foreign key constraint
-    try {
-      await prisma.language.upsert({
-        where: { id: langDef.id },
-        update: {},
-        create: {
-          id: langDef.id,
-          displayName: langDef.displayName,
-          extension: langDef.fileExtension.replace('.', ''),
-          runCmd: langDef.id,
-          compileRequired: langDef.supportsCompilation,
-          version: langDef.pistonVersion,
-          memoryLimitMb: 256,
-          timeLimitMs: 10000,
-          enabled: true
-        }
-      });
-    } catch (err: any) {
-      logger.warn(`Language upsert warning for ${langDef.id}: ${err.message}`);
+    // Ensure Language row exists in DB for foreign key constraint (cached in-memory to prevent SQLite lockups)
+    if (!this.verifiedLanguages.has(langDef.id)) {
+      try {
+        await prisma.language.upsert({
+          where: { id: langDef.id },
+          update: {},
+          create: {
+            id: langDef.id,
+            displayName: langDef.displayName,
+            extension: langDef.fileExtension.replace('.', ''),
+            runCmd: langDef.id,
+            compileRequired: langDef.supportsCompilation,
+            version: langDef.pistonVersion,
+            memoryLimitMb: 256,
+            timeLimitMs: 10000,
+            enabled: true
+          }
+        });
+        this.verifiedLanguages.add(langDef.id);
+      } catch (err: any) {
+        logger.warn(`Language upsert warning for ${langDef.id}: ${err.message}`);
+      }
     }
 
     // 3. Create DB Job
