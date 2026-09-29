@@ -108,10 +108,8 @@ async function bootstrap() {
 
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-  app.use(globalRateLimiter);
-
-  // 3. API Routes
-  app.use('/api', routes);
+  // 3. API Routes (Rate limiter scoped to /api only, leaving static assets unthrottled)
+  app.use('/api', globalRateLimiter, routes);
 
   // 4. Production Static Single-Port Delivery (Frontend React SPA)
   const candidateDistPaths = [

@@ -59,12 +59,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     g++ \
     python3 \
+    python-is-python3 \
     python3-pip \
     php-cli \
     ruby \
     curl \
     openssl \
     ca-certificates \
+    && ln -sf /usr/bin/python3 /usr/bin/python \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy root package manifest & install production dependencies

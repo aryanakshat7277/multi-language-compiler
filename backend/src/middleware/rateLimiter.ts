@@ -6,6 +6,11 @@ import { config } from '../config/env';
  */
 const getUserOrIpKey = (req: any): string => {
   if (req.user?.id) return `user_${req.user.id}`;
+  const authHeader = req.headers['authorization'];
+  if (authHeader && typeof authHeader === 'string' && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.substring(7).trim();
+    if (token) return `token_${token.slice(-16)}`;
+  }
   const forwarded = req.headers['x-forwarded-for'];
   if (forwarded) {
     const ipList = typeof forwarded === 'string' ? forwarded.split(',') : forwarded;
@@ -24,14 +29,15 @@ export const globalRateLimiter = rateLimit({
   message: { error: 'Too many requests, please slow down.' },
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => !req.path.startsWith('/api') && !req.originalUrl.startsWith('/api')
 });
 
 /**
- * Compilation rate limiter (CPU intensive) — 45 runs per minute per user/IP
+ * Compilation rate limiter (CPU intensive) — 120 runs per minute per user/IP
  */
 export const compilationRateLimiter = rateLimit({
   windowMs: 60 * 1000,
-  max: 45,
+  max: 120,
   keyGenerator: getUserOrIpKey,
   message: { error: 'Execution rate limit exceeded. Please wait before submitting more code.' },
   standardHeaders: true,
@@ -41,11 +47,11 @@ export const compilationRateLimiter = rateLimit({
 export const executionRateLimiter = compilationRateLimiter;
 
 /**
- * AI rate limiter — 30 requests per minute per user/IP
+ * AI rate limiter — 60 requests per minute per user/IP
  */
 export const aiRateLimiter = rateLimit({
   windowMs: 60 * 1000,
-  max: 30,
+  max: 60,
   keyGenerator: getUserOrIpKey,
   message: { error: 'AI analysis rate limit exceeded. Please wait a moment before requesting another review.' },
   standardHeaders: true,

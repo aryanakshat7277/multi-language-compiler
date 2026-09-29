@@ -102,7 +102,15 @@ export class LocalExecutorService {
     }
 
     const isWin = process.platform === 'win32';
-    const names = isWin ? [binName, `${binName}.exe`, `${binName}.cmd`, `${binName}.bat`] : [binName];
+    let baseNames = [binName];
+    if (binName === 'python' || binName === 'python3') {
+      baseNames = ['python3', 'python', 'py'];
+    } else if (binName === 'gcc' || binName === 'c') {
+      baseNames = ['gcc', 'clang'];
+    } else if (binName === 'g++' || binName === 'cpp') {
+      baseNames = ['g++', 'clang++', 'c++'];
+    }
+    const names = isWin ? baseNames.flatMap(n => [n, `${n}.exe`, `${n}.cmd`, `${n}.bat`]) : baseNames;
 
     // 1. Check current process.env.PATH
     const pathDirs = (process.env.PATH || '').split(path.delimiter);
@@ -202,8 +210,8 @@ export class LocalExecutorService {
       }
     }
 
-    // Default fallback to naked command name
-    return binName;
+    // Default fallback to first base name
+    return baseNames[0] || binName;
   }
 
   /**
@@ -260,24 +268,34 @@ export class LocalExecutorService {
         cmd = this.findBinary('node');
         args = ['--experimental-strip-types', mainFilePath, ...(request.args || [])];
       } else if (lang === 'c' || lang === 'gcc') {
-        const outBin = path.join(tempDir, 'main.exe');
+        const isWin = process.platform === 'win32';
+        const outBin = path.join(tempDir, isWin ? 'main.exe' : 'main.out');
         const gccBin = this.findBinary('gcc');
-        return await this.compileAndRun(tempDir, gccBin, [mainFilePath, '-O2', '-static', '-o', outBin], outBin, request.stdin, request.run_timeout || 5000);
+        const cArgs = isWin
+          ? [mainFilePath, '-O2', '-static', '-o', outBin]
+          : [mainFilePath, '-O2', '-o', outBin];
+        return await this.compileAndRun(tempDir, gccBin, cArgs, outBin, request.stdin, request.run_timeout || 5000);
       } else if (lang === 'cpp' || lang === 'c++' || lang === 'g++') {
-        const outBin = path.join(tempDir, 'main.exe');
+        const isWin = process.platform === 'win32';
+        const outBin = path.join(tempDir, isWin ? 'main.exe' : 'main.out');
         const gppBin = this.findBinary('g++');
-        return await this.compileAndRun(tempDir, gppBin, [mainFilePath, '-std=c++17', '-O2', '-static', '-static-libgcc', '-static-libstdc++', '-o', outBin], outBin, request.stdin, request.run_timeout || 5000);
+        const cppArgs = isWin
+          ? [mainFilePath, '-std=c++17', '-O2', '-static', '-static-libgcc', '-static-libstdc++', '-o', outBin]
+          : [mainFilePath, '-std=c++17', '-O2', '-o', outBin];
+        return await this.compileAndRun(tempDir, gppBin, cppArgs, outBin, request.stdin, request.run_timeout || 5000);
       } else if (lang === 'java') {
         const javacBin = this.findBinary('javac');
         const javaBin = this.findBinary('java');
         const className = path.basename(mainFile, '.java');
         return await this.compileAndRun(tempDir, javacBin, [mainFilePath], javaBin, request.stdin, request.run_timeout || 6000, ['-cp', tempDir, className]);
       } else if (lang === 'go') {
-        const outBin = path.join(tempDir, 'main.exe');
+        const isWin = process.platform === 'win32';
+        const outBin = path.join(tempDir, isWin ? 'main.exe' : 'main.out');
         const goBin = this.findBinary('go');
         return await this.compileAndRun(tempDir, goBin, ['build', '-o', outBin, mainFilePath], outBin, request.stdin, request.run_timeout || 8000);
       } else if (lang === 'rust') {
-        const outBin = path.join(tempDir, 'main.exe');
+        const isWin = process.platform === 'win32';
+        const outBin = path.join(tempDir, isWin ? 'main.exe' : 'main.out');
         const rustcBin = this.findBinary('rustc');
         return await this.compileAndRun(tempDir, rustcBin, [mainFilePath, '-O', '-o', outBin], outBin, request.stdin, request.run_timeout || 5000);
       } else if (lang === 'php') {
