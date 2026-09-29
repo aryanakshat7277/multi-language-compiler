@@ -42,10 +42,19 @@ export default function CodeShortenerPage() {
   const { showToast } = useToast();
 
   const getFilename = (lang: string) => {
-    if (lang === 'python') return 'main.py';
-    if (lang === 'cpp') return 'main.cpp';
-    if (lang === 'java') return 'Main.java';
-    return 'main.js';
+    switch (lang) {
+      case 'python': return 'main.py';
+      case 'cpp': return 'main.cpp';
+      case 'c': return 'main.c';
+      case 'java': return 'Main.java';
+      case 'javascript': return 'main.js';
+      case 'typescript': return 'main.ts';
+      case 'go': return 'main.go';
+      case 'rust': return 'main.rs';
+      case 'php': return 'main.php';
+      case 'ruby': return 'main.rb';
+      default: return 'main.js';
+    }
   };
 
   const handleGenerateShortest = async () => {
@@ -129,11 +138,16 @@ export default function CodeShortenerPage() {
             onChange={e => setLanguage(e.target.value)} 
             className="shortener-lang-select"
           >
-            <option value="javascript">JavaScript</option>
             <option value="python">Python</option>
-            <option value="typescript">TypeScript</option>
             <option value="cpp">C++</option>
+            <option value="c">C</option>
             <option value="java">Java</option>
+            <option value="javascript">JavaScript</option>
+            <option value="typescript">TypeScript</option>
+            <option value="go">Go</option>
+            <option value="rust">Rust</option>
+            <option value="php">PHP</option>
+            <option value="ruby">Ruby</option>
           </select>
 
           <button 
