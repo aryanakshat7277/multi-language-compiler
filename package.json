@@ -20,6 +20,8 @@
     "db:migrate": "cd backend && npx prisma migrate dev",
     "db:seed": "cd backend && npx prisma db seed",
     "db:studio": "cd backend && npx prisma studio",
+    "db:use-postgres": "node scripts/switch-database.js postgres",
+    "db:use-sqlite": "node scripts/switch-database.js sqlite",
     "test": "npx concurrently \"npm run test:backend\" \"npm run test:frontend\"",
     "test:backend": "cd backend && npm test",
     "test:frontend": "cd frontend && npm test",

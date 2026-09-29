@@ -37,7 +37,7 @@ export class GeminiProvider implements AIProvider {
 
     // 2. High-Speed Primary Engine: Groq LPU (Sub-300ms, 14,400 free req/day)
     if (config.groqApiKey) {
-      const groqModels = ['qwen/qwen3.8-27b', 'openai/gpt-oss-120b', 'openai/gpt-oss-20b'];
+      const groqModels = ['openai/gpt-oss-20b', 'openai/gpt-oss-120b', 'qwen/qwen3.8-27b'];
       for (const model of groqModels) {
         try {
           const controller = new AbortController();
@@ -70,12 +70,12 @@ export class GeminiProvider implements AIProvider {
             if (content) {
               const cleaned = content.replace(/^```json\s*/i, '').replace(/```\s*$/i, '').trim();
               const parsed = JSON.parse(cleaned) as T;
-              // Cache for 15 minutes
-              if (GeminiProvider.responseCache.size > 500) {
+              // Cache for 30 minutes
+              if (GeminiProvider.responseCache.size > 1000) {
                 const oldest = GeminiProvider.responseCache.keys().next().value;
                 if (oldest) GeminiProvider.responseCache.delete(oldest);
               }
-              GeminiProvider.responseCache.set(cacheKey, { data: parsed, expiresAt: Date.now() + 15 * 60 * 1000 });
+              GeminiProvider.responseCache.set(cacheKey, { data: parsed, expiresAt: Date.now() + 30 * 60 * 1000 });
               return parsed;
             }
           }

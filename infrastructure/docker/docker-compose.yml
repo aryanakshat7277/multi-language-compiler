@@ -29,6 +29,14 @@ services:
       timeout: 5s
       retries: 5
 
+  piston:
+    image: ghcr.io/engineer-man/piston
+    ports:
+      - "2000:2000"
+    privileged: true
+    restart: unless-stopped
+
 volumes:
   postgres_data:
   redis_data:
+
