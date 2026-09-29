@@ -6,6 +6,7 @@ import {
 import { getShortestCode, ShortestCodeResult, api } from '../services/api';
 import { useToast } from '../contexts/ToastContext';
 import { registerMonacoThemes } from '../utils/monacoThemes';
+import { formatToPoints } from '../utils/bulletPoints';
 import './CodeShortenerPage.css';
 
 const DEFAULT_ORIGINAL_CODE = `function isPrime(num) {
@@ -288,10 +289,18 @@ export default function CodeShortenerPage() {
               </div>
             )}
 
-            {/* Explanation paragraph */}
+            {/* Explanation points list */}
             {result.explanation && (
-              <div style={{ background: '#FAF4EE', border: '1px solid #E4D9CE', borderRadius: 8, padding: 12, fontSize: 13, color: '#2D231E', lineHeight: 1.55, whiteSpace: 'pre-wrap' }}>
-                <strong>Optimization Insight:</strong> {result.explanation}
+              <div style={{ background: '#FAF4EE', border: '1px solid #E4D9CE', borderRadius: 8, padding: '12px 16px', fontSize: 13, color: '#2D231E' }}>
+                <strong style={{ display: 'block', marginBottom: 6, color: '#8B5A2B' }}>Optimization Insights:</strong>
+                <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 5 }}>
+                  {formatToPoints(result.explanation).map((pt, i) => (
+                    <li key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 6, lineHeight: 1.45 }}>
+                      <span style={{ color: '#C85A32', fontWeight: 800 }}>▸</span>
+                      <span>{pt}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
             )}
 

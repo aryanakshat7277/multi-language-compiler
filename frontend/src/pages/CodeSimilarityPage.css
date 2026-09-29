@@ -255,6 +255,34 @@
   margin: 0;
 }
 
+.verdict-points-list {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.verdict-point-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-family: var(--font-serif);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.verdict-point-item .bullet-glyph {
+  color: #C85A32;
+  font-weight: 900;
+  font-size: 13px;
+  line-height: 1.4;
+  flex-shrink: 0;
+}
+
 .stats-bars-right {
   flex: 1;
   display: flex;

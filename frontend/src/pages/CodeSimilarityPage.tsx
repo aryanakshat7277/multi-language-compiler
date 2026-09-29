@@ -6,6 +6,7 @@ import {
 import { getCodeSimilarity, SimilarityResult, api } from '../services/api';
 import { useToast } from '../contexts/ToastContext';
 import { registerMonacoThemes } from '../utils/monacoThemes';
+import { formatToPoints } from '../utils/bulletPoints';
 import './CodeSimilarityPage.css';
 
 const SNIPPET_A = `// Program A: Target Solution
@@ -219,11 +220,16 @@ export default function CodeSimilarityPage() {
                   <h4 style={{ color: isHighRisk ? '#C85A32' : '#2A5A3D' }}>
                     {isHighRisk ? '⚠️ High Structural Similarity / Plagiarism Risk' : '✓ Low Similarity / Distinct Implementations'}
                   </h4>
-                  <p className="verdict-explanation">
-                    {formatExplanation(result.explanation) || (isHighRisk 
-                    ? 'The structural signatures are highly similar, indicating identical algorithmic logic.'
-                    : 'Both programs exhibit distinct structures with divergent logic.')}
-                  </p>
+                  <ul className="verdict-points-list">
+                    {formatToPoints(result.explanation || (isHighRisk 
+                      ? 'The structural signatures are highly similar, indicating identical algorithmic logic.'
+                      : 'Both programs exhibit distinct structures with divergent logic.')).map((point, idx) => (
+                      <li key={idx} className="verdict-point-item">
+                        <span className="bullet-glyph">▸</span>
+                        <span>{point}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               </div>
 

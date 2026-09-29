@@ -16,6 +16,7 @@ import { useCode } from '../contexts/CodeContext';
 import { useToast } from '../contexts/ToastContext';
 import { registerMonacoThemes } from '../utils/monacoThemes';
 import { registerMonacoHoverProvider } from '../utils/monacoHoverProvider';
+import { formatToPoints } from '../utils/bulletPoints';
 import './CodeAnalysisPage.css';
 
 interface MetricDetail {
@@ -423,7 +424,14 @@ export default function CodeAnalysisPage() {
                 <div className="detail-fields-list">
                   <div className="detail-field">
                     <span className="df-label">REAL CODE ANALYSIS:</span>
-                    <p className="df-text" style={{ fontSize: '13.5px', fontWeight: 700, color: '#2D231E' }}>{metricInfo.analysis}</p>
+                    <ul style={{ listStyle: 'none', padding: 0, margin: '6px 0 0 0', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      {formatToPoints(metricInfo.analysis).map((pt, i) => (
+                        <li key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 6, fontSize: '13px', fontWeight: 700, color: '#2D231E', lineHeight: 1.45 }}>
+                          <span style={{ color: metricInfo.color, flexShrink: 0 }}>▸</span>
+                          <span>{pt}</span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
 
                   <div className="detail-field">
