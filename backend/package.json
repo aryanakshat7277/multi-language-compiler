@@ -9,7 +9,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "db:migrate": "prisma migrate dev",
-    "db:seed": "tsx prisma/seed.ts",
+    "db:seed": "node prisma/seed.js",
     "db:studio": "prisma studio"
   },
   "dependencies": {
@@ -47,6 +47,6 @@
     "vitest": "^3.0.0"
   },
   "prisma": {
-    "seed": "tsx prisma/seed.ts"
+    "seed": "node prisma/seed.js"
   }
 }
