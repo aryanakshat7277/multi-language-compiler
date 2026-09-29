@@ -3,6 +3,7 @@ class WebSocketService {
   private url: string;
   private reconnectAttempts = 0;
   private subscribers: Map<string, (data: any) => void> = new Map();
+  private adminCallbacks: Set<(event: string, payload: any) => void> = new Set();
 
   constructor() {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -18,6 +19,9 @@ class WebSocketService {
     
     this.socket.onopen = () => {
       this.reconnectAttempts = 0;
+      if (this.adminCallbacks.size > 0) {
+        this.socket?.send(JSON.stringify({ type: 'subscribe_admin' }));
+      }
     };
     
     this.socket.onmessage = (event) => {
@@ -25,6 +29,15 @@ class WebSocketService {
         const data = JSON.parse(event.data);
         if (data.jobId && this.subscribers.has(data.jobId)) {
           this.subscribers.get(data.jobId)!(data);
+        }
+        if (data.type === 'admin_event') {
+          this.adminCallbacks.forEach(cb => {
+            try {
+              cb(data.event, data.payload);
+            } catch (err) {
+              console.error('Error in admin WS callback:', err);
+            }
+          });
         }
       } catch (e) {
         console.error('Failed to parse WS message', e);
@@ -37,6 +50,35 @@ class WebSocketService {
         if (this.reconnectAttempts < 5) this.connect();
       }, Math.min(1000 * Math.pow(2, this.reconnectAttempts), 10000));
     };
+  }
+
+  subscribeToAdmin(onAdminUpdate: (event: string, payload: any) => void) {
+    if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
+      this.connect();
+    }
+    this.adminCallbacks.add(onAdminUpdate);
+    const sendSub = () => {
+      if (this.socket?.readyState === WebSocket.OPEN) {
+        this.socket.send(JSON.stringify({ type: 'subscribe_admin' }));
+      }
+    };
+    if (this.socket?.readyState === WebSocket.OPEN) {
+      sendSub();
+    } else {
+      const checkInterval = setInterval(() => {
+        if (this.socket?.readyState === WebSocket.OPEN) {
+          sendSub();
+          clearInterval(checkInterval);
+        }
+      }, 100);
+    }
+  }
+
+  unsubscribeFromAdmin(onAdminUpdate: (event: string, payload: any) => void) {
+    this.adminCallbacks.delete(onAdminUpdate);
+    if (this.adminCallbacks.size === 0 && this.socket?.readyState === WebSocket.OPEN) {
+      this.socket.send(JSON.stringify({ type: 'unsubscribe_admin' }));
+    }
   }
 
   subscribeToJob(jobId: string, onStatusUpdate: (data: any) => void) {

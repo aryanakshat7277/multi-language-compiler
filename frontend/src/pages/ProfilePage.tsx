@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { api } from '../services/api';
 import { Mail, Award, Calendar, CheckCircle2, Code, Clock, Zap } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 import './ProfilePage.css';
@@ -29,41 +30,88 @@ export default function ProfilePage() {
   const [editBio, setEditBio] = useState('');
   const [saveLoading, setSaveLoading] = useState(false);
 
-  const submissionActivity = [
-    { day: 'Mon', submissions: 4 },
-    { day: 'Tue', submissions: 7 },
-    { day: 'Wed', submissions: 2 },
-    { day: 'Thu', submissions: 8 },
-    { day: 'Fri', submissions: 5 },
-    { day: 'Sat', submissions: 12 },
-    { day: 'Sun', submissions: 3 },
-  ];
+  const [submissionActivity, setSubmissionActivity] = useState<Array<{ day: string; submissions: number }>>([
+    { day: 'Mon', submissions: 0 },
+    { day: 'Tue', submissions: 0 },
+    { day: 'Wed', submissions: 0 },
+    { day: 'Thu', submissions: 0 },
+    { day: 'Fri', submissions: 0 },
+    { day: 'Sat', submissions: 0 },
+    { day: 'Sun', submissions: 0 },
+  ]);
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
         setLoading(true);
-        setTimeout(() => {
-          const mockProfile: UserProfile = {
-            id: user?.id || 'u123',
-            name: user?.displayName || 'AKSHAT ARYAN',
-            email: user?.email || 'akshat.aryan@codeforge.io',
-            role: user?.role || 'LEAD ARCHITECT',
-            bio: 'Building high-performance multi-language compilers, AST parsers, and Gemini AI analysis engines.',
-            createdAt: '2023-05-12T00:00:00Z',
-            stats: {
-              problemsSolved: 243,
-              totalSubmissions: 310,
-              successRate: 99.3
-            }
-          };
-          setProfile(mockProfile);
-          setEditName(mockProfile.name);
-          setEditBio(mockProfile.bio || '');
+        setError('');
+        
+        // Fetch real authenticated user profile
+        const me = await api.get<any>('/auth/me');
+        if (!me) {
+          setError('User session not found. Please log in.');
           setLoading(false);
-        }, 400);
+          return;
+        }
+
+        // Fetch real user submissions
+        let subsList: any[] = [];
+        try {
+          const subsRes = await api.get<any>(`/users/${me.id}/submissions`);
+          subsList = subsRes?.data || [];
+        } catch {
+          subsList = [];
+        }
+
+        const totalSubs = subsList.length;
+        const accepted = subsList.filter((s: any) => s.status === 'ACCEPTED');
+        const uniqueSolved = new Set(accepted.map((s: any) => s.problemId)).size;
+        const rate = totalSubs > 0 ? Math.round((accepted.length / totalSubs) * 1000) / 10 : 0;
+
+        // Group last 7 days submissions
+        const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const dayCounts: Record<string, number> = {
+          Mon: 0, Tue: 0, Wed: 0, Thu: 0, Fri: 0, Sat: 0, Sun: 0
+        };
+        const oneWeekAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+        subsList.forEach((s: any) => {
+          const subDate = new Date(s.createdAt);
+          if (subDate.getTime() >= oneWeekAgo) {
+            const dName = dayNames[subDate.getDay()];
+            if (dayCounts[dName] !== undefined) dayCounts[dName]++;
+          }
+        });
+
+        setSubmissionActivity([
+          { day: 'Mon', submissions: dayCounts.Mon },
+          { day: 'Tue', submissions: dayCounts.Tue },
+          { day: 'Wed', submissions: dayCounts.Wed },
+          { day: 'Thu', submissions: dayCounts.Thu },
+          { day: 'Fri', submissions: dayCounts.Fri },
+          { day: 'Sat', submissions: dayCounts.Sat },
+          { day: 'Sun', submissions: dayCounts.Sun },
+        ]);
+
+        const realProfile: UserProfile = {
+          id: me.id,
+          name: me.displayName || me.email.split('@')[0],
+          email: me.email,
+          role: me.role,
+          bio: me.bio || 'Developer on CodeForge Pro',
+          createdAt: me.createdAt || new Date().toISOString(),
+          stats: {
+            problemsSolved: uniqueSolved,
+            totalSubmissions: totalSubs,
+            successRate: rate
+          }
+        };
+
+        setProfile(realProfile);
+        setEditName(realProfile.name);
+        setEditBio(realProfile.bio || '');
       } catch (err: any) {
-        setError(err.message || 'Failed to load profile');
+        setError(err.message || 'Please log in to view your profile');
+      } finally {
         setLoading(false);
       }
     };
@@ -74,12 +122,15 @@ export default function ProfilePage() {
   const handleSaveProfile = async () => {
     try {
       setSaveLoading(true);
-      await new Promise(resolve => setTimeout(resolve, 400));
+      const updated = await api.put<any>('/auth/profile', {
+        displayName: editName,
+        bio: editBio
+      });
       if (profile) {
         setProfile({
           ...profile,
-          name: editName,
-          bio: editBio
+          name: updated.displayName || editName,
+          bio: updated.bio !== undefined ? updated.bio : editBio
         });
       }
       setIsEditing(false);

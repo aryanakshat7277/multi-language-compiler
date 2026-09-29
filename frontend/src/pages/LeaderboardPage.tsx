@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Trophy, Medal, Search, Filter } from 'lucide-react';
 import { api } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 import './LeaderboardPage.css';
 
 interface LeaderboardUser {
@@ -15,47 +16,32 @@ interface LeaderboardUser {
 }
 
 export default function LeaderboardPage() {
+  const { user } = useAuth();
   const [users, setUsers] = useState<LeaderboardUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [timeFilter, setTimeFilter] = useState('all-time');
   
-  const currentUserId = 'u123';
+  const currentUserId = user?.id;
 
   useEffect(() => {
     const fetchLeaderboard = async () => {
       setLoading(true);
+      setError('');
       try {
-        const realUsers = await api.get('/users');
-        if (Array.isArray(realUsers) && realUsers.length > 0) {
-          const transformed: LeaderboardUser[] = realUsers.map((u: any, idx: number) => ({
-            id: u.id,
-            rank: idx + 1,
-            name: u.displayName || u.email || 'User',
-            problemsSolved: u._count?.submissions || 10,
-            totalSubmissions: (u._count?.submissions || 10) + 5,
-            successRate: 85.0,
-            score: (realUsers.length - idx) * 1000 + 500
-          }));
-          setUsers(transformed);
-          setLoading(false);
-          return;
+        const realUsers = await api.get<LeaderboardUser[]>('/leaderboard');
+        if (Array.isArray(realUsers)) {
+          setUsers(realUsers);
+        } else {
+          setUsers([]);
         }
-      } catch {
-        /* fallback to default leaderboard */
+      } catch (err: any) {
+        setError(err.message || 'Failed to load leaderboard');
+        setUsers([]);
+      } finally {
+        setLoading(false);
       }
-
-      const mockData: LeaderboardUser[] = [
-        { id: 'u001', rank: 1, name: 'AKSHAT ARYAN', avatar: '/akshat_aryan.jpg', problemsSolved: 243, totalSubmissions: 310, successRate: 99.3, score: 12450 },
-        { id: 'u002', rank: 2, name: 'WARISH KHAN', problemsSolved: 215, totalSubmissions: 280, successRate: 96.8, score: 10980 },
-        { id: 'u003', rank: 3, name: 'ARUN DEV', problemsSolved: 198, totalSubmissions: 250, successRate: 94.2, score: 9850 },
-        { id: 'u004', rank: 4, name: 'MOHIT', problemsSolved: 184, totalSubmissions: 230, successRate: 92.5, score: 9100 },
-        { id: 'u005', rank: 5, name: 'AQUIB', problemsSolved: 172, totalSubmissions: 210, successRate: 90.1, score: 8450 },
-        { id: 'u006', rank: 6, name: 'ABHAY', problemsSolved: 165, totalSubmissions: 195, successRate: 88.6, score: 7900 },
-      ];
-      setUsers(mockData);
-      setLoading(false);
     };
 
     fetchLeaderboard();

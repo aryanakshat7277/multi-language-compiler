@@ -1,0 +1,39 @@
+services:
+  - type: web
+    name: codeforge-pro
+    runtime: docker
+    dockerfilePath: Dockerfile
+    plan: free
+    region: oregon
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      - key: DATABASE_URL
+        value: file:./prisma/dev.db
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: FIREBASE_PROJECT_ID
+        value: codeforge-a
+      - key: VITE_FIREBASE_API_KEY
+        value: AIzaSyB2NlX3Hy5BY18MYeqf2tPHmvFQOjrvxso
+      - key: VITE_FIREBASE_AUTH_DOMAIN
+        value: codeforge-a.firebaseapp.com
+      - key: VITE_FIREBASE_PROJECT_ID
+        value: codeforge-a
+      - key: VITE_FIREBASE_STORAGE_BUCKET
+        value: codeforge-a.firebasestorage.app
+      - key: VITE_FIREBASE_MESSAGING_SENDER_ID
+        value: "687684067787"
+      - key: VITE_FIREBASE_APP_ID
+        value: 1:687684067787:web:9166da51d8f9466914564e
+      - key: VITE_FIREBASE_MEASUREMENT_ID
+        value: G-YRCTE5YDQ3
+    healthCheckPath: /api/compiler/health

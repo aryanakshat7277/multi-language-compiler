@@ -38,6 +38,9 @@ export class LocalExecutorService {
         path.join(programFiles, 'Go', 'bin'),
         path.join(userHome, 'go', 'bin'),
         path.join(userHome, '.cargo', 'bin'),
+        path.join(programFiles, 'Rust stable GNU 1.98', 'bin'),
+        path.join(programFiles, 'Rust stable MSVC 1.98', 'bin'),
+        'C:\\Rust\\bin',
         path.join(programFiles, 'Common Files', 'Oracle', 'Java', 'javapath'),
         path.join(programFiles, 'Java'),
         'C:\\mingw64\\bin',
@@ -49,6 +52,19 @@ export class LocalExecutorService {
         'C:\\Python311',
         'C:\\Python310',
         'C:\\Program Files\\Go\\bin',
+        'C:\\php',
+        'C:\\tools\\php',
+        path.join(programFiles, 'PHP'),
+        path.join(localAppData, 'Programs', 'PHP'),
+        path.join(localAppData, 'Microsoft', 'WinGet', 'Packages', 'PHP.PHP.8.4_Microsoft.Winget.Source_8wekyb3d8bbwe'),
+        path.join(localAppData, 'Microsoft', 'WinGet', 'Links'),
+        'C:\\Ruby34-x64\\bin',
+        'C:\\Ruby33-x64\\bin',
+        'C:\\Ruby32-x64\\bin',
+        'C:\\Ruby31-x64\\bin',
+        path.join(programFiles, 'Ruby33-x64', 'bin'),
+        path.join(programFiles, 'Ruby34-x64', 'bin'),
+        path.join(localAppData, 'Programs', 'Ruby33-x64', 'bin'),
       ];
 
       // Direct check in candidates
@@ -169,6 +185,12 @@ export class LocalExecutorService {
         const outBin = path.join(tempDir, 'main.exe');
         const rustcBin = this.findBinary('rustc');
         return await this.compileAndRun(tempDir, rustcBin, [mainFilePath, '-O', '-o', outBin], outBin, request.stdin, request.run_timeout || 5000);
+      } else if (lang === 'php') {
+        cmd = this.findBinary('php');
+        args = [mainFilePath, ...(request.args || [])];
+      } else if (lang === 'ruby' || lang === 'rb') {
+        cmd = this.findBinary('ruby');
+        args = [mainFilePath, ...(request.args || [])];
       } else {
         throw new Error(`Local execution fallback does not support language: ${request.language}`);
       }
@@ -273,15 +295,40 @@ export class LocalExecutorService {
         ? `${binDir}${path.delimiter}${process.env.PATH || ''}`
         : process.env.PATH;
 
+      const goCacheDir = path.join(os.tmpdir(), 'gocache');
+      const goPathDir = path.join(os.tmpdir(), 'gopath');
+      try {
+        fs.mkdirSync(goCacheDir, { recursive: true });
+        fs.mkdirSync(goPathDir, { recursive: true });
+      } catch {
+        // ignore
+      }
+
+      const sanitizedEnv: Record<string, string> = {
+        PATH: envPath || '',
+        PYTHONUNBUFFERED: '1',
+        NODE_ENV: 'production',
+        TEMP: process.env.TEMP || os.tmpdir(),
+        TMP: process.env.TMP || os.tmpdir(),
+        USERPROFILE: os.tmpdir(),
+        HOME: os.tmpdir(),
+        GOCACHE: goCacheDir,
+        GOPATH: goPathDir,
+        LOCALAPPDATA: process.env.LOCALAPPDATA || path.join(os.tmpdir(), 'localappdata'),
+        LANG: 'en_US.UTF-8'
+      };
+
+      if (process.platform === 'win32') {
+        if (process.env.SystemRoot) sanitizedEnv.SystemRoot = process.env.SystemRoot;
+        if (process.env.windir) sanitizedEnv.windir = process.env.windir;
+        if (process.env.COMSPEC) sanitizedEnv.COMSPEC = process.env.COMSPEC;
+        if (process.env.PATHEXT) sanitizedEnv.PATHEXT = process.env.PATHEXT;
+      }
+
       const proc = spawn(command, args, {
         cwd,
         shell: false,
-        env: {
-          ...process.env,
-          PATH: envPath,
-          PYTHONUNBUFFERED: '1',
-          NODE_ENV: 'production'
-        }
+        env: sanitizedEnv
       });
 
       const timer = setTimeout(() => {

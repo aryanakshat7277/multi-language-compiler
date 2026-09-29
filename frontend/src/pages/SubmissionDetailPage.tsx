@@ -39,31 +39,45 @@ export default function SubmissionDetailPage() {
   useEffect(() => {
     const fetchSubmission = async () => {
       setLoading(true);
+      setError('');
       try {
-        // Mock fetch
-        setTimeout(() => {
-          setSubmission({
-            id: id || 'sub-1',
-            problemId: 'p-1',
-            problemTitle: 'Two Sum',
-            language: 'python',
-            code: 'def twoSum(nums, target):\n    seen = {}\n    for i, num in enumerate(nums):\n        if target - num in seen:\n            return [seen[target - num], i]\n        seen[num] = i\n    return []',
-            status: 'Wrong Answer',
-            score: 75,
-            runtime: 45,
-            memory: 16.2,
-            createdAt: new Date().toISOString(),
-            testCases: [
-              { id: 'tc1', testNumber: 1, status: 'Passed', expected: '[0, 1]', actual: '[0, 1]', time: 5 },
-              { id: 'tc2', testNumber: 2, status: 'Passed', expected: '[1, 2]', actual: '[1, 2]', time: 4 },
-              { id: 'tc3', testNumber: 3, status: 'Passed', expected: '[0, 1]', actual: '[0, 1]', time: 6 },
-              { id: 'tc4', testNumber: 4, status: 'Failed', expected: '[2, 4]', actual: '[]', time: 30 },
-            ]
-          });
+        const data = await api.get<any>(`/submissions/${id}`);
+        if (!data) {
+          setError('Submission not found');
           setLoading(false);
-        }, 600);
-      } catch (err) {
-        setError('Failed to fetch submission details');
+          return;
+        }
+
+        const mainFile = data.files?.[0]?.content || data.sourceCode || '// No source code recorded';
+        const formattedTestCases = (data.testResults || []).map((tr: any, idx: number) => ({
+          id: tr.id || `tc-${idx + 1}`,
+          testNumber: idx + 1,
+          status: tr.status === 'PASSED' || tr.status === 'Passed' ? 'Passed' : 'Failed',
+          expected: tr.expectedOutput || 'Expected Output',
+          actual: tr.actualOutput || 'Actual Output',
+          time: tr.runtimeMs || 0
+        }));
+
+        setSubmission({
+          id: data.id,
+          problemId: data.problemId,
+          problemTitle: data.problem?.title || 'Coding Problem',
+          language: data.languageId || 'plaintext',
+          code: mainFile,
+          status: data.status === 'ACCEPTED' ? 'Accepted' :
+                  data.status === 'WRONG_ANSWER' ? 'Wrong Answer' :
+                  data.status === 'TIME_LIMIT_EXCEEDED' ? 'Time Limit Exceeded' :
+                  data.status === 'COMPILATION_ERROR' ? 'Compilation Error' : 'Runtime Error',
+          score: data.status === 'ACCEPTED' ? 100 : (data.score || 0),
+          runtime: data.runtime || 0,
+          memory: data.memory ? Math.round(data.memory / 1024 * 10) / 10 : 0,
+          createdAt: data.createdAt || new Date().toISOString(),
+          errorOutput: data.errorOutput,
+          testCases: formattedTestCases
+        });
+      } catch (err: any) {
+        setError(err.message || 'Failed to fetch submission details');
+      } finally {
         setLoading(false);
       }
     };

@@ -10,6 +10,8 @@ import { CompilerValidator } from './compilerValidator';
 import { broadcastJobStatus } from '../websocket/statusServer';
 import prisma from '../config/database';
 import { logger } from '../utils/logger';
+import { config } from '../config/env';
+import { LocalExecutorService } from './localExecutorService';
 
 export class CompilerService {
   static async execute(userId: string | undefined, request: CompilerExecutionRequest): Promise<CompilerExecutionResponse> {
@@ -71,13 +73,18 @@ export class CompilerService {
       broadcastJobStatus(executionId, 'RUNNING');
 
       let pistonRes: any;
-      try {
-        // Try Piston container first
-        pistonRes = await pistonClient.executeCode(pistonReq);
-      } catch (pistonErr: any) {
-        logger.warn(`Piston offline or unreachable (${pistonErr.message}), falling back to LocalExecutorService`);
-        // Seamless fallback to host runtime execution
-        pistonRes = await (await import('./localExecutorService')).LocalExecutorService.execute(pistonReq);
+      const isPrivatePiston = config.pistonBaseUrl && !config.pistonBaseUrl.includes('emkc.org');
+      
+      if (isPrivatePiston) {
+        try {
+          pistonRes = await pistonClient.executeCode(pistonReq);
+        } catch (pistonErr: any) {
+          logger.warn(`Private Piston offline (${pistonErr.message}), falling back to LocalExecutorService`);
+          pistonRes = await LocalExecutorService.execute(pistonReq);
+        }
+      } else {
+        // Direct native local execution: sub-100ms ultra-low latency, zero dead network waits
+        pistonRes = await LocalExecutorService.execute(pistonReq);
       }
       
       compileResult = pistonRes.compile;

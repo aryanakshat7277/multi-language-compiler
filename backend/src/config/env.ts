@@ -9,6 +9,7 @@ export const config = {
   redisUrl: process.env.REDIS_URL || 'redis://localhost:6379',
   geminiApiKey: process.env.GEMINI_API_KEY || '',
   geminiApiKeyFallback: process.env.GEMINI_API_KEY_FALLBACK || '',
+  groqApiKey: process.env.GROQ_API_KEY || '',
   logLevel: process.env.LOG_LEVEL || 'info',
   rateLimitWindowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000', 10),
   rateLimitMax: parseInt(process.env.RATE_LIMIT_MAX || '100', 10),
@@ -18,5 +19,9 @@ export const config = {
   compilerMaxSourceSize: parseInt(process.env.COMPILER_MAX_SOURCE_SIZE || '102400'),
   compilerMaxFiles: parseInt(process.env.COMPILER_MAX_FILES || '20'),
   compilerMaxStdinSize: parseInt(process.env.COMPILER_MAX_STDIN_SIZE || '51200'),
-  compilerMaxConcurrentJobs: parseInt(process.env.COMPILER_MAX_CONCURRENT_JOBS || '10')
+  compilerMaxConcurrentJobs: parseInt(process.env.COMPILER_MAX_CONCURRENT_JOBS || '10'),
+  firebaseProjectId: process.env.FIREBASE_PROJECT_ID || process.env.VITE_FIREBASE_PROJECT_ID || '',
+  firebaseClientEmail: process.env.FIREBASE_CLIENT_EMAIL || '',
+  firebasePrivateKey: (process.env.FIREBASE_PRIVATE_KEY || '').replace(/\\n/g, '\n'),
+  firebaseServiceAccountJson: process.env.FIREBASE_SERVICE_ACCOUNT_JSON || ''
 };

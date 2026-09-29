@@ -25,7 +25,12 @@ export default function IdeWindow() {
     if (lang === 'python' || lang === 'python3') return 'main.py';
     if (lang === 'java') return 'Main.java';
     if (lang === 'cpp' || lang === 'c++') return 'main.cpp';
+    if (lang === 'c') return 'main.c';
     if (lang === 'typescript' || lang === 'ts') return 'main.ts';
+    if (lang === 'go') return 'main.go';
+    if (lang === 'rust') return 'main.rs';
+    if (lang === 'php') return 'main.php';
+    if (lang === 'ruby') return 'main.rb';
     return 'main.js';
   };
 
@@ -71,10 +76,16 @@ export default function IdeWindow() {
             onChange={(e) => setLanguage(e.target.value)}
             className="clay-lang-select"
           >
-            <option value="python">Python 3.12</option>
-            <option value="java">Java 17</option>
+            <option value="python">Python 3.14</option>
             <option value="javascript">JavaScript</option>
+            <option value="typescript">TypeScript</option>
             <option value="cpp">C++ 17</option>
+            <option value="c">C 11</option>
+            <option value="java">Java 17</option>
+            <option value="go">Go 1.20</option>
+            <option value="rust">Rust 1.98</option>
+            <option value="php">PHP 8.4</option>
+            <option value="ruby">Ruby 3.3</option>
           </select>
 
           <button 

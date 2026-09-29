@@ -57,7 +57,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       title: 'DEVELOPER',
       items: [
         { path: '/profile', label: 'Developer Profile', icon: <User size={20} /> },
-        ...(isAdmin ? [{ path: '/admin', label: 'Administration', icon: <Shield size={20} /> }] : []),
+        ...(isAdmin ? [{ path: '/admin', label: 'Administration & Monitoring', icon: <Shield size={20} /> }] : [])
       ]
     }
   ];

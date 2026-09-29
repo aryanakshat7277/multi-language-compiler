@@ -1,0 +1,13 @@
+node_modules
+*/node_modules
+.git
+.github
+*.log
+backend/prisma/*.db-journal
+backend/prisma/*.db-shm
+backend/prisma/*.db-wal
+dist
+frontend/dist
+backend/dist
+.vscode
+.gemini

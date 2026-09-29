@@ -38,6 +38,9 @@ coverage/
 
 # Prisma local DB
 backend/prisma/*.db
+backend/prisma/*.db-journal
+backend/prisma/*.db-shm
+backend/prisma/*.db-wal
 backend/prisma/dev.db
 
 # Docker volumes

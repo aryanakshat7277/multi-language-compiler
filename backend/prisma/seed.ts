@@ -15,37 +15,13 @@ async function main() {
     create: {
       email: 'admin@test.com',
       passwordHash,
-      displayName: 'Admin User',
+      displayName: 'System Administrator',
       role: Role.ADMIN,
       progress: { create: {} }
     }
   });
 
-  const instructor = await prisma.user.upsert({
-    where: { email: 'instructor@test.com' },
-    update: {},
-    create: {
-      email: 'instructor@test.com',
-      passwordHash,
-      displayName: 'Instructor User',
-      role: Role.INSTRUCTOR,
-      progress: { create: {} }
-    }
-  });
-
-  const student = await prisma.user.upsert({
-    where: { email: 'student@test.com' },
-    update: {},
-    create: {
-      email: 'student@test.com',
-      passwordHash,
-      displayName: 'Student User',
-      role: Role.STUDENT,
-      progress: { create: {} }
-    }
-  });
-
-  console.log('Seeded users.');
+  console.log('Seeded genuine administrator account.');
 
   // 2. Languages
   const languages = [
@@ -56,7 +32,9 @@ async function main() {
     { id: 'javascript', displayName: 'JavaScript', extension: 'js', compileCmd: null, runCmd: 'node {file}', compileRequired: false, version: '18', memoryLimitMb: 256, timeLimitMs: 3000, enabled: true },
     { id: 'typescript', displayName: 'TypeScript', extension: 'ts', compileCmd: 'npx tsc {file}', runCmd: 'node {file_no_ext}.js', compileRequired: true, version: '5', memoryLimitMb: 256, timeLimitMs: 4000, enabled: true },
     { id: 'go', displayName: 'Go', extension: 'go', compileCmd: 'go build -o main {file}', runCmd: './main', compileRequired: true, version: '1.20', memoryLimitMb: 128, timeLimitMs: 2000, enabled: true },
-    { id: 'rust', displayName: 'Rust', extension: 'rs', compileCmd: 'rustc {file} -o main', runCmd: './main', compileRequired: true, version: '1.70', memoryLimitMb: 128, timeLimitMs: 2000, enabled: true }
+    { id: 'rust', displayName: 'Rust', extension: 'rs', compileCmd: 'rustc {file} -o main', runCmd: './main', compileRequired: true, version: '1.70', memoryLimitMb: 128, timeLimitMs: 2000, enabled: true },
+    { id: 'php', displayName: 'PHP', extension: 'php', compileCmd: null, runCmd: 'php {file}', compileRequired: false, version: '8.4', memoryLimitMb: 128, timeLimitMs: 3000, enabled: true },
+    { id: 'ruby', displayName: 'Ruby', extension: 'rb', compileCmd: null, runCmd: 'ruby {file}', compileRequired: false, version: '3.3', memoryLimitMb: 128, timeLimitMs: 3000, enabled: true }
   ];
 
   for (const lang of languages) {
@@ -102,7 +80,7 @@ async function main() {
       timeLimit: 1000,
       memoryLimit: 128,
       tags: JSON.stringify(['math', 'dp']),
-      createdById: instructor.id,
+      createdById: admin.id,
       testCases: {
         create: [
           { input: '2\n', expectedOutput: '1\n', isHidden: false, orderIndex: 1 },

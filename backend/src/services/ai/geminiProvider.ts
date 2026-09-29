@@ -1,9 +1,12 @@
+import crypto from 'crypto';
 import { GoogleGenAI } from '@google/genai';
 import { config } from '../../config/env';
+import { logger } from '../../utils/logger';
 import { AIProvider, CodeReviewResult, CodeExplanation, SimilarityResult, GeneratedTests, AiDetectionResult, DebugResult, GeneratedAssessment, AssessmentGradeResult, GeneratedQuestion, CodeMetricsResult, ShortestCodeResult, HoverExplanationResult } from './aiProvider';
 
 export class GeminiProvider implements AIProvider {
   private aiClients: GoogleGenAI[] = [];
+  private static responseCache = new Map<string, { data: any; expiresAt: number }>();
 
   constructor() {
     const rawKeys = [
@@ -17,33 +20,107 @@ export class GeminiProvider implements AIProvider {
       this.aiClients.push(new GoogleGenAI({ apiKey: k as string }));
     });
 
-    if (this.aiClients.length === 0) {
-      console.warn("⚠️ GEMINI_API_KEY is missing. AI functionality will use local heuristic fallback.");
+    if (this.aiClients.length === 0 && !config.groqApiKey) {
+      console.warn("⚠️ Both GROQ_API_KEY and GEMINI_API_KEY are missing. AI functionality will use local heuristic fallback.");
     }
   }
 
   private async generateJSON<T>(prompt: string, schema?: any): Promise<T | null> {
-    if (this.aiClients.length === 0) return null;
-    const modelsToTry = ['gemini-3.6-flash', 'gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-2.5-flash'];
+    // 1. In-Memory Cache Lookup (0ms latency, zero API calls)
+    const cacheKey = crypto.createHash('sha256').update(prompt).digest('hex');
+    const cached = GeminiProvider.responseCache.get(cacheKey);
+    if (cached && cached.expiresAt > Date.now()) {
+      return cached.data as T;
+    }
 
-    for (const client of this.aiClients) {
-      for (const model of modelsToTry) {
+    // 2. High-Speed Primary Engine: Groq LPU (Sub-300ms, 14,400 free req/day)
+    if (config.groqApiKey) {
+      const groqModels = ['qwen/qwen3.8-27b', 'openai/gpt-oss-120b', 'openai/gpt-oss-20b'];
+      for (const model of groqModels) {
         try {
-          const response = await client.models.generateContent({
-            model,
-            contents: prompt,
-            config: {
-              responseMimeType: 'application/json',
-              ...(schema ? { responseSchema: schema } : {})
-            }
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 6000);
+          const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${config.groqApiKey}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              model,
+              messages: [
+                { 
+                  role: 'system', 
+                  content: 'You are an expert programming AI assistant. You MUST return ONLY a valid, parseable JSON object matching the requested schema. Do NOT include markdown code blocks, backticks, or conversational commentary.' 
+                },
+                { role: 'user', content: prompt }
+              ],
+              response_format: { type: 'json_object' },
+              temperature: 0.15
+            }),
+            signal: controller.signal
           });
-          if (!response.text) continue;
-          return JSON.parse(response.text) as T;
-        } catch (error: any) {
-          // Keep trying models silently
+          clearTimeout(timeoutId);
+
+          if (response.ok) {
+            const data: any = await response.json();
+            const content = data.choices?.[0]?.message?.content;
+            if (content) {
+              const cleaned = content.replace(/^```json\s*/i, '').replace(/```\s*$/i, '').trim();
+              const parsed = JSON.parse(cleaned) as T;
+              // Cache for 15 minutes
+              if (GeminiProvider.responseCache.size > 500) {
+                const oldest = GeminiProvider.responseCache.keys().next().value;
+                if (oldest) GeminiProvider.responseCache.delete(oldest);
+              }
+              GeminiProvider.responseCache.set(cacheKey, { data: parsed, expiresAt: Date.now() + 15 * 60 * 1000 });
+              return parsed;
+            }
+          }
+        } catch (err: any) {
+          logger.warn(`[Groq AI] ${model} attempt failed: ${err.message}. Trying next engine...`);
         }
       }
     }
+
+    // 3. Secondary Engine: Google Gemini Verified Active Models
+    if (this.aiClients.length > 0) {
+      const geminiModels = [
+        'gemini-flash-lite-latest',
+        'gemini-3.5-flash-lite',
+        'gemini-3.7-flash',
+        'gemini-flash-latest'
+      ];
+
+      for (const client of this.aiClients) {
+        for (const model of geminiModels) {
+          try {
+            const response = await client.models.generateContent({
+              model,
+              contents: prompt,
+              config: {
+                responseMimeType: 'application/json',
+                ...(schema ? { responseSchema: schema } : {})
+              }
+            });
+            if (response.text) {
+              const cleaned = response.text.replace(/^```json\s*/i, '').replace(/```\s*$/i, '').trim();
+              const parsed = JSON.parse(cleaned) as T;
+              // Cache for 15 minutes
+              if (GeminiProvider.responseCache.size > 500) {
+                const oldest = GeminiProvider.responseCache.keys().next().value;
+                if (oldest) GeminiProvider.responseCache.delete(oldest);
+              }
+              GeminiProvider.responseCache.set(cacheKey, { data: parsed, expiresAt: Date.now() + 15 * 60 * 1000 });
+              return parsed;
+            }
+          } catch (error: any) {
+            // Silently try next model or next key
+          }
+        }
+      }
+    }
+
     return null;
   }
 

@@ -19,6 +19,9 @@ interface WsMessage {
 export const statusBus = new EventEmitter();
 statusBus.setMaxListeners(100);
 
+// Global set for connected Admin WebSockets
+const adminSockets = new Set<WebSocket>();
+
 export const setupWebSocket = (server: Server) => {
   const wss = new WebSocketServer({ server });
   
@@ -55,19 +58,35 @@ export const setupWebSocket = (server: Server) => {
           const clients = subscriptions.get(parsed.jobId);
           if (clients) clients.delete(ws);
         }
+
+        // Admin real-time telemetry channel subscription
+        if (parsed.type === 'subscribe_admin') {
+          adminSockets.add(ws);
+          ws.send(JSON.stringify({
+            type: 'admin_connected',
+            status: 'CONNECTED',
+            activeAdmins: adminSockets.size,
+            timestamp: new Date().toISOString()
+          }));
+        }
+
+        if (parsed.type === 'unsubscribe_admin') {
+          adminSockets.delete(ws);
+        }
       } catch (e) {
         // ignore malformed messages
       }
     });
 
     ws.on('close', () => {
+      adminSockets.delete(ws);
       for (const clients of subscriptions.values()) {
         clients.delete(ws);
       }
     });
   });
 
-  logger.info('WebSocket status server initialized');
+  logger.info('WebSocket status server initialized with Admin telemetry support');
   return wss;
 };
 
@@ -78,3 +97,26 @@ export const setupWebSocket = (server: Server) => {
 export function broadcastJobStatus(jobId: string, status: string, data?: any) {
   statusBus.emit('job_update', { jobId, status, data });
 }
+
+/**
+ * Broadcast real-time system event to all connected administrators.
+ */
+export function broadcastToAdmin(event: string, payload: any) {
+  const message = JSON.stringify({
+    type: 'admin_event',
+    event,
+    payload,
+    timestamp: new Date().toISOString()
+  });
+
+  for (const client of adminSockets) {
+    if (client.readyState === WebSocket.OPEN) {
+      try {
+        client.send(message);
+      } catch (err) {
+        // client send error
+      }
+    }
+  }
+}
+

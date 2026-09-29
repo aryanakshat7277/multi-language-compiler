@@ -84,6 +84,16 @@ export const STARTER_TEMPLATES: Record<string, { filename: string; content: stri
     filename: 'main.rs',
     language: 'rust',
     content: 'fn main() {\n    println!("Hello, CodeForge!");\n}\n'
+  },
+  php: {
+    filename: 'main.php',
+    language: 'php',
+    content: '<?php\n\necho "Hello, CodeForge!\\n";\n'
+  },
+  ruby: {
+    filename: 'main.rb',
+    language: 'ruby',
+    content: 'puts "Hello, CodeForge!"\n'
   }
 };
 

@@ -14,7 +14,9 @@ const APP_TO_PISTON_MAP: Record<string, string> = {
   javascript: 'javascript',
   typescript: 'typescript',
   go: 'go',
-  rust: 'rust'
+  rust: 'rust',
+  php: 'php',
+  ruby: 'ruby'
 };
 
 const mapRuntimeToLanguageDef = (appId: string, runtime: PistonRuntime): LanguageDefinition => {
@@ -42,7 +44,9 @@ const getFileExtension = (appId: string): string => {
     javascript: '.js',
     typescript: '.ts',
     go: '.go',
-    rust: '.rs'
+    rust: '.rs',
+    php: '.php',
+    ruby: '.rb'
   };
   return map[appId] || '.txt';
 };
@@ -56,7 +60,9 @@ const getDefaultFilename = (appId: string): string => {
     javascript: 'index.js',
     typescript: 'index.ts',
     go: 'main.go',
-    rust: 'main.rs'
+    rust: 'main.rs',
+    php: 'main.php',
+    ruby: 'main.rb'
   };
   return map[appId] || 'main.txt';
 };

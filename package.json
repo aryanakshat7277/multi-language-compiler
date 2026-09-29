@@ -13,7 +13,7 @@
     "dev:frontend": "cd frontend && npm run dev",
     "dev:backend": "cd backend && npm run dev",
     "dev:worker": "cd worker && npm run dev",
-    "build": "npx concurrently \"npm run build:frontend\" \"npm run build:backend\" \"npm run build:worker\"",
+    "start": "node backend/dist/index.js",
     "build:frontend": "cd frontend && npm run build",
     "build:backend": "cd backend && npm run build",
     "build:worker": "cd worker && npm run build",

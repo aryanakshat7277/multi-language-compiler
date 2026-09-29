@@ -61,3 +61,48 @@ export const getUserSubmissions = async (req: AuthRequest, res: Response, next: 
     res.status(200).json({ data: submissions, total, page, pageSize });
   } catch (error) { next(error); }
 };
+
+export const getSubmissions = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const page = parseInt(req.query.page as string) || 1;
+    const pageSize = parseInt(req.query.pageSize as string) || 30;
+
+    const where: any = {};
+    if (req.user && req.user.role !== 'ADMIN') {
+      where.userId = req.user.id;
+    }
+
+    const [submissions, total] = await Promise.all([
+      prisma.submission.findMany({
+        where,
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          language: true,
+          problem: { select: { title: true, slug: true } },
+          user: { select: { displayName: true, email: true } }
+        }
+      }),
+      prisma.submission.count({ where })
+    ]);
+
+    const formatted = submissions.map(s => ({
+      id: s.id,
+      problemId: s.problemId,
+      problemTitle: s.problem?.title || 'Coding Problem',
+      language: s.languageId,
+      verdict: s.status,
+      score: s.status === 'ACCEPTED' ? 100 : s.status === 'PENDING' ? 0 : 40,
+      runtimeMs: s.executionTimeMs || 0,
+      memoryKb: s.memoryUsedMb ? s.memoryUsedMb * 1024 : 0,
+      submittedAt: s.createdAt.toISOString(),
+      userName: s.user?.displayName || 'User'
+    }));
+
+    res.status(200).json({ data: formatted, total, page, pageSize });
+  } catch (error) {
+    next(error);
+  }
+};
+

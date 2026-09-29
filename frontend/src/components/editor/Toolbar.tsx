@@ -24,6 +24,8 @@ const FALLBACK_LANGUAGES: LanguageOption[] = [
   { id: 'java', displayName: 'Java 17', pistonLanguage: 'java', pistonVersion: '17', fileExtension: '.java', defaultFilename: 'Main.java', enabled: true },
   { id: 'go', displayName: 'Go 1.20', pistonLanguage: 'go', pistonVersion: '1.20', fileExtension: '.go', defaultFilename: 'main.go', enabled: true },
   { id: 'rust', displayName: 'Rust 1.70', pistonLanguage: 'rust', pistonVersion: '1.70', fileExtension: '.rs', defaultFilename: 'main.rs', enabled: true },
+  { id: 'php', displayName: 'PHP 8.4', pistonLanguage: 'php', pistonVersion: '8.4', fileExtension: '.php', defaultFilename: 'main.php', enabled: true },
+  { id: 'ruby', displayName: 'Ruby 3.3', pistonLanguage: 'ruby', pistonVersion: '3.3', fileExtension: '.rb', defaultFilename: 'main.rb', enabled: true },
 ];
 
 const Toolbar: React.FC = () => {
