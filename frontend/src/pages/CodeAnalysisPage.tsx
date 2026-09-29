@@ -284,11 +284,16 @@ export default function CodeAnalysisPage() {
             onChange={e => setLanguage(e.target.value)} 
             className="clay-lang-select"
           >
-            <option value="javascript">JavaScript (Node)</option>
-            <option value="python">Python 3.12</option>
+            <option value="python">Python</option>
+            <option value="cpp">C++</option>
+            <option value="c">C</option>
+            <option value="java">Java</option>
+            <option value="javascript">JavaScript</option>
             <option value="typescript">TypeScript</option>
-            <option value="cpp">C++ 17</option>
-            <option value="java">Java 17</option>
+            <option value="go">Go</option>
+            <option value="rust">Rust</option>
+            <option value="php">PHP</option>
+            <option value="ruby">Ruby</option>
           </select>
         </div>
 
