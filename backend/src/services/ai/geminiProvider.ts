@@ -172,7 +172,9 @@ ${code}`;
 
   async explainCode(code: string, language: string, level: 'beginner' | 'intermediate' | 'advanced'): Promise<CodeExplanation> {
     const prompt = `You are a Senior Computer Science Educator. Provide a clear, highly detailed, code-specific explanation of this ${language} code for a ${level} developer.
-Return ONLY JSON matching schema: { "explanation": "string", "keyConcepts": ["string"] }
+CRITICAL FORMATTING MANDATE: The "explanation" field MUST be formatted strictly as a pointwise bulleted list using "- " for every single point (e.g. "- Point 1\\n- Point 2\\n- Point 3"). Explain the algorithmic purpose, line-by-line mechanics, data structures, loops, and time/space complexity as separate bullet points. NEVER output a continuous paragraph.
+
+Return ONLY JSON matching schema: { "explanation": "string (formatted strictly as pointwise bulleted list using - )", "keyConcepts": ["string"] }
 
 Code:
 ${code}`;
@@ -225,6 +227,7 @@ ${code}`;
   async compareCode(codeA: string, codeB: string, language: string): Promise<SimilarityResult> {
     const prompt = `You are a Senior Software Architect & Algorithmic Auditor.
 Compare Program A and Program B written in ${language} for structural, algorithmic, lexical, and semantic similarity.
+CRITICAL FORMATTING MANDATE: The "explanation" field MUST be formatted strictly as a pointwise bulleted list using "- " for every single point (e.g. "- Point 1\\n- Point 2\\n- Point 3"). Break down lexical differences, structural patterns, AST nodes, and time/space complexity into separate bullet points. NEVER output a continuous paragraph.
 
 Return ONLY JSON matching this EXACT schema:
 {
@@ -234,7 +237,7 @@ Return ONLY JSON matching this EXACT schema:
   "astScore": number (between 0.0 and 1.0),
   "semanticScore": number (between 0.0 and 1.0),
   "algorithmScore": number (between 0.0 and 1.0),
-  "explanation": "string (detailed code-specific comparison of functions, loops, variables, and computational algorithms in both programs)"
+  "explanation": "string (strictly formatted as a pointwise bulleted list using - for each point)"
 }
 
 Program A:

@@ -4,6 +4,7 @@ import { Brain, Sparkles, Loader2, Bug, CheckCircle2, Zap, AlertTriangle, Tag, P
 import { getAiExplanation, getAiTests, getAiDebug, getAiReview, ExplanationResult, TestsResult, DebugResult, ReviewResult } from '../services/api';
 import { useToast } from '../contexts/ToastContext';
 import { registerMonacoThemes } from '../utils/monacoThemes';
+import { formatToPoints } from '../utils/bulletPoints';
 import './AiReviewPage.css';
 
 const DEFAULT_AI_CODE = `function mergeSortedArrays(a, b) {
@@ -180,8 +181,15 @@ export default function AiReviewPage() {
                 const r = result as ExplanationResult;
                 return (
                   <div>
-                    <div style={{ background: '#FAF4EE', border: '1px solid #E4D9CE', borderRadius: 8, padding: '16px', marginBottom: 16 }}>
-                      <p style={{ margin: 0, lineHeight: 1.75, fontSize: 14, color: '#2D231E', whiteSpace: 'pre-wrap' }}>{r.explanation}</p>
+                    <div style={{ background: '#FAF4EE', border: '1px solid #E4D9CE', borderRadius: 8, padding: '18px 20px', marginBottom: 16 }}>
+                      <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                        {formatToPoints(r.explanation).map((point, idx) => (
+                          <li key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, fontSize: 13.5, color: '#2D231E', lineHeight: 1.6, fontWeight: 500 }}>
+                            <span style={{ color: '#C85A32', fontWeight: 900, fontSize: 14, flexShrink: 0, lineHeight: 1.5 }}>▸</span>
+                            <span>{point}</span>
+                          </li>
+                        ))}
+                      </ul>
                     </div>
                     {r.keyConcepts && r.keyConcepts.length > 0 && (
                       <div>
@@ -204,7 +212,18 @@ export default function AiReviewPage() {
                 const r = result as TestsResult;
                 return (
                   <div>
-                    {r.explanation && <p style={{ fontSize: 13, color: '#5C4D44', marginBottom: 12, lineHeight: 1.6 }}>{r.explanation}</p>}
+                    {r.explanation && (
+                      <div style={{ background: '#FAF4EE', border: '1px solid #E4D9CE', borderRadius: 8, padding: '12px 16px', marginBottom: 14 }}>
+                        <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                          {formatToPoints(r.explanation).map((pt, i) => (
+                            <li key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#5C4D44', lineHeight: 1.5 }}>
+                              <span style={{ color: '#C85A32', fontWeight: 800 }}>▸</span>
+                              <span>{pt}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                       <thead>
                         <tr style={{ borderBottom: '2px solid #E4D9CE' }}>
@@ -233,8 +252,15 @@ export default function AiReviewPage() {
                 return (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                     <div style={{ background: '#FDF0ED', border: '1.5px solid #C85A32', borderRadius: 8, padding: 14 }}>
-                      <div style={{ fontSize: 11, fontWeight: 700, color: '#C85A32', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Root Cause</div>
-                      <p style={{ margin: 0, fontSize: 13.5, color: '#2D231E', lineHeight: 1.6 }}>{r.rootCause}</p>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: '#C85A32', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Root Cause Analysis</div>
+                      <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                        {formatToPoints(r.rootCause).map((pt, i) => (
+                          <li key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13.5, color: '#2D231E', lineHeight: 1.55 }}>
+                            <span style={{ color: '#C85A32', fontWeight: 800 }}>▸</span>
+                            <span>{pt}</span>
+                          </li>
+                        ))}
+                      </ul>
                     </div>
                     {r.hints && r.hints.length > 0 && (
                       <div style={{ background: '#FDF3E7', border: '1.5px solid #E08A3C', borderRadius: 8, padding: 14 }}>
