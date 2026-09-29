@@ -48,7 +48,7 @@ export default function AiReviewPage() {
       else if (mode === 'debug') res = await getAiDebug(code, errorOutput, language);
       else if (mode === 'review') res = await getAiReview(code, language);
       setResult(res);
-      showToast('Gemini AI Analysis complete!', 'success');
+      showToast('AI Analysis complete!', 'success');
     } catch (e: any) {
       showToast(e.message || 'Error contacting AI service', 'error');
     } finally {
@@ -88,7 +88,7 @@ export default function AiReviewPage() {
             />
             <button className="btn btn-primary btn-sm" onClick={handleAnalyze} disabled={loading} style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 6, fontWeight: 700 }}>
               {loading ? <Loader2 size={13} className="spin-icon" /> : <Bug size={13} />}
-              <span>Debug Code with Gemini AI</span>
+              <span>Debug Code with AI</span>
             </button>
           </div>
         )}
@@ -107,7 +107,7 @@ export default function AiReviewPage() {
             />
             <button className="btn btn-primary btn-sm" onClick={handleAnalyze} disabled={loading} style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 6, fontWeight: 700 }}>
               {loading ? <Loader2 size={13} className="spin-icon" /> : <CheckCircle2 size={13} />}
-              <span>Generate Test Cases with Gemini AI</span>
+              <span>Generate Test Cases with AI</span>
             </button>
           </div>
         )}
@@ -121,7 +121,7 @@ export default function AiReviewPage() {
         <div className="ai-panel-footer">
           <button className="btn btn-primary btn-run-ai-review" onClick={handleAnalyze} disabled={loading}>
             {loading
-              ? <><Loader2 size={15} className="spin-icon" /><span>Analyzing with Gemini...</span></>
+              ? <><Loader2 size={15} className="spin-icon" /><span>Analyzing with AI...</span></>
               : <><Sparkles size={15} /><span>{btnLabel}</span></>}
           </button>
         </div>
@@ -151,7 +151,7 @@ export default function AiReviewPage() {
             <div className="empty-state-container">
               <div className="empty-state-circle violet"><Brain size={48} className="empty-state-icon" /></div>
               <h4 className="empty-state-title">AI Code Mentor Ready</h4>
-              <p className="empty-state-desc">Click below to run Gemini 2.5 Flash AI analysis for <strong>{btnLabel}</strong>.</p>
+              <p className="empty-state-desc">Click below to run CodeForge AI AI analysis for <strong>{btnLabel}</strong>.</p>
               
               <button 
                 className="btn btn-primary" 
@@ -167,8 +167,8 @@ export default function AiReviewPage() {
           {loading && (
             <div className="empty-state-container">
               <div className="empty-state-circle violet"><Loader2 size={48} className="empty-state-icon spin-icon" /></div>
-              <h4 className="empty-state-title">Analyzing with Gemini AI</h4>
-              <p className="empty-state-desc">Processing your code through Google Gemini 2.5 Flash...</p>
+              <h4 className="empty-state-title">Analyzing with AI</h4>
+              <p className="empty-state-desc">Processing your code through Google CodeForge AI...</p>
             </div>
           )}
 

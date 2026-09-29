@@ -3,7 +3,7 @@ import { getHoverExplanation } from '../services/api';
 const registeredLanguages = new Set<string>();
 
 /**
- * Registers Gemini AI Hover Provider for Monaco Editor across ANY programming language.
+ * Registers AI Hover Provider for Monaco Editor across ANY programming language.
  */
 export function registerMonacoHoverProvider(monaco: any, languageId: string) {
   if (!monaco) return;
@@ -53,7 +53,7 @@ export function registerMonacoHoverProvider(monaco: any, languageId: string) {
             if (!data || !data.explanation) return null;
 
             const contents = [
-              { value: `**✨ Gemini AI IntelliSense (${lang.toUpperCase()})**  \n### \`${data.title || targetWord}\`` },
+              { value: `**✨ AI IntelliSense (${lang.toUpperCase()})**  \n### \`${data.title || targetWord}\`` },
               { value: `_${data.category || 'Code Symbol'}_  \n${data.explanation}` }
             ];
 

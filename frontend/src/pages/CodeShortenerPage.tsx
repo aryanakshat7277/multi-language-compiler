@@ -78,7 +78,7 @@ export default function CodeShortenerPage() {
       const finalOrigOut = (stdOutA ? stdOutA : '') + (stdErrA ? (stdOutA ? '\n' : '') + 'Errors:\n' + stdErrA : '') || '➜ Executed cleanly with no stdout';
       setOrigOutput(finalOrigOut);
 
-      // 2. Call Gemini 2.5 Flash model API to generate the shortest code producing exact same output
+      // 2. Call AI model API to generate the shortest code producing exact same output
       const aiRes = await getShortestCode(code, language, finalOrigOut);
       setResult(aiRes);
 
@@ -98,7 +98,7 @@ export default function CodeShortenerPage() {
         });
       }
 
-      showToast('Gemini 2.5 Flash shortest code generated!', 'success');
+      showToast('Shortest code generated!', 'success');
     } catch (e: any) {
       showToast(e.message || 'Error generating shortest code', 'error');
     } finally {
@@ -129,7 +129,7 @@ export default function CodeShortenerPage() {
             <Zap size={18} style={{ color: '#C85A32' }} />
             <h1 className="shortener-title">AI Code Golf & Shortest Code Generator</h1>
           </div>
-          <span className="engine-status-subtext">Powered by Gemini 2.5 Flash Model + Host Execution Output Verification</span>
+          <span className="engine-status-subtext">Powered by CodeForge AI Model + Host Execution Output Verification</span>
         </div>
 
         <div className="header-right-actions">
@@ -192,7 +192,7 @@ export default function CodeShortenerPage() {
           </div>
         </div>
 
-        {/* Right Gemini Shortest Code */}
+        {/* Right AI Shortest Code */}
         <div className="shortener-panel">
           <div className="panel-header">
             <div className="panel-title-wrap">
@@ -221,7 +221,7 @@ export default function CodeShortenerPage() {
               language={language}
               theme="clay-light"
               beforeMount={registerMonacoThemes}
-              value={result?.shortestCode || '// Click "Run & Generate Shortest Code" above to synthesize shortest code with Gemini 2.5 Flash'}
+              value={result?.shortestCode || '// Click "Run & Generate Shortest Code" above to synthesize shortest code with CodeForge AI'}
               options={{ minimap: { enabled: false }, fontSize: 13.5, readOnly: true, padding: { top: 10 } }}
             />
           </div>
@@ -279,7 +279,7 @@ export default function CodeShortenerPage() {
             {/* Techniques Used */}
             {result.techniquesUsed && result.techniquesUsed.length > 0 && (
               <div className="techniques-section">
-                <span className="tech-title">Code Golf Techniques Applied by Gemini 2.5 Flash:</span>
+                <span className="tech-title">Code Golf Techniques Applied by CodeForge AI:</span>
                 <div className="tech-pills-row">
                   {result.techniquesUsed.map((tech, idx) => (
                     <span key={idx} className="tech-pill">{tech}</span>
@@ -320,7 +320,7 @@ export default function CodeShortenerPage() {
           </>
         ) : (
           <div className="empty-shortener-state">
-            Write or paste any code above and click <strong>Run & Generate Shortest Code</strong>. Gemini 2.5 Flash will execute your code, analyze its exact stdout, and synthesize the shortest possible program in that language!
+            Write or paste any code above and click <strong>Run & Generate Shortest Code</strong>. CodeForge AI will execute your code, analyze its exact stdout, and synthesize the shortest possible program in that language!
           </div>
         )}
       </div>

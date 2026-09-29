@@ -66,11 +66,11 @@ export default function CodeSimilarityPage() {
   const handleCompareAndRun = async () => {
     setLoading(true);
     try {
-      // 1. Instantly get real Gemini 2.5 Flash Code Similarity
+      // 1. Instantly get real AI Code Similarity
       const simRes = await getCodeSimilarity(codeA, codeB, language);
       if (simRes) {
         setResult(simRes);
-        showToast('Gemini AI Code DNA Comparison complete!', 'success');
+        showToast('AI Code DNA Comparison complete!', 'success');
       }
 
       // 2. Concurrently execute Program A and B in background

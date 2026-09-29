@@ -45,7 +45,7 @@ export class SimilarityService {
     // 3. AST Similarity — Tree structure comparison
     const astResult = await this.calculateAstSimilarity(codeA, codeB, languageId);
 
-    // 4. Semantic + Algorithm Similarity — AI-powered (Gemini 3.6 Flash)
+    // 4. Semantic + Algorithm Similarity — AI-powered (CodeForge AI)
     try {
       const { aiProvider } = await import('./ai/geminiProvider');
       if (aiProvider) {
@@ -63,7 +63,7 @@ export class SimilarityService {
             semanticScore: Math.round(overallScore * 100) / 100,
             algorithmScore: Math.round(overallScore * 0.95 * 100) / 100,
             overallScore: Math.round(overallScore * 100) / 100,
-            explanation: aiResult.explanation || 'Gemini 3.6 Flash structural & semantic comparison analysis completed.',
+            explanation: aiResult.explanation || 'CodeForge AI structural & semantic comparison analysis completed.',
             details: {
               lexicalDetails: `Lexical similarity: ${Math.round(lexScore * 100)}%`,
               structuralDetails: `Structural similarity: ${Math.round(structScore * 100)}%`,

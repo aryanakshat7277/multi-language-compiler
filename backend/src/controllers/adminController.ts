@@ -153,9 +153,9 @@ export const getOverview = async (_req: Request, res: Response, next: NextFuncti
     });
 
     const aiProviderName = config.groqApiKey 
-      ? 'Groq LPU (Primary) + Google Gemini'
+      ? 'Groq LPU (Primary) + CodeForge AI'
       : config.geminiApiKey 
-        ? 'Google Gemini Flash' 
+        ? 'CodeForge AI Flash' 
         : 'Local AST Heuristic Analyzer';
 
     res.status(200).json({

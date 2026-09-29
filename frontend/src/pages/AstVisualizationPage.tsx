@@ -149,7 +149,7 @@ export default function AstVisualizationPage() {
       const res = await api.post('/ast/parse', { code, language });
       if (res && res.ast) {
         setAstTree(res.ast);
-        showToast('Gemini AI AST Hierarchy parsed successfully!', 'success');
+        showToast('AI AST Hierarchy parsed successfully!', 'success');
       } else if (res && res.astJson) {
         setAstTree(res.astJson);
         showToast('AST Hierarchy parsed successfully!', 'success');

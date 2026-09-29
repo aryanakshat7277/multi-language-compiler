@@ -498,17 +498,17 @@ export default function AdminPage() {
                 </div>
               </div>
 
-              {/* AI Gemini Intelligence */}
+              {/* AI Intelligence */}
               <div className="service-card">
                 <div className="service-card-header">
                   <Zap size={18} className="service-icon" />
-                  <h4>Gemini 2.5 AI Pipeline</h4>
+                  <h4>AI Pipeline</h4>
                   <span className="service-status-pill online">ONLINE</span>
                 </div>
                 <div className="service-card-body">
                   <div className="spec-row">
                     <span className="spec-name">Provider:</span>
-                    <span className="spec-val">Google Gemini 2.5</span>
+                    <span className="spec-val">CodeForge AI</span>
                   </div>
                   <div className="spec-row">
                     <span className="spec-name">API Key State:</span>

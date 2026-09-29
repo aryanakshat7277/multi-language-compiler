@@ -135,7 +135,7 @@ export default function CodeAnalysisPage() {
 
   const handleAnalyze = async () => {
     setLoading(true);
-    setScanningStep('1/3: Transmitting code to Google Gemini 3.6 Flash...');
+    setScanningStep('1/3: Transmitting code to CodeForge AI...');
 
     try {
       const stepTimer1 = setTimeout(() => setScanningStep('2/3: Computing Cyclomatic & Maintainability Metrics...'), 400);
@@ -164,7 +164,7 @@ export default function CodeAnalysisPage() {
           ]);
         }
 
-        // Real Gemini AI Metrics
+        // Real AI Metrics
         if (response.aiMetrics) {
           const ai = response.aiMetrics;
 
@@ -256,9 +256,9 @@ export default function CodeAnalysisPage() {
         }
       }
 
-      showToast('Gemini AI Code Analysis Complete!', 'success');
+      showToast('AI Code Analysis Complete!', 'success');
     } catch (e: any) {
-      showToast(e.message || 'Error running Gemini AI analysis', 'error');
+      showToast(e.message || 'Error running AI analysis', 'error');
     } finally {
       setLoading(false);
       setScanningStep('');
