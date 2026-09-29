@@ -142,6 +142,9 @@ router.put('/admin/languages/:id', authenticate, requireRole('ADMIN'), adminCont
 router.get('/leaderboard', async (_req: any, res: any, next: any) => {
   try {
     const users = await prisma.user.findMany({
+      where: {
+        role: { not: 'ADMIN' }
+      },
       select: {
         id: true,
         displayName: true,
@@ -156,7 +159,9 @@ router.get('/leaderboard', async (_req: any, res: any, next: any) => {
       }
     });
 
-    const leaderboard = users.map(u => {
+    const nonAdminUsers = users.filter(u => !u.displayName?.toLowerCase().includes('admin'));
+
+    const leaderboard = nonAdminUsers.map(u => {
       const totalSubmissions = u.submissions.length;
       const acceptedProblemIds = new Set(
         u.submissions.filter(s => s.status === 'ACCEPTED').map(s => s.problemId)

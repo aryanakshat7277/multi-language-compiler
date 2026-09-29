@@ -48,6 +48,7 @@ export default function LeaderboardPage() {
   }, [timeFilter]);
 
   const filteredUsers = users.filter(u => 
+    !u.name.toLowerCase().includes('admin') &&
     u.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -138,7 +139,9 @@ export default function LeaderboardPage() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={6} className="empty-state">No users found matching your search.</td>
+                  <td colSpan={6} className="empty-state">
+                    {users.length === 0 ? 'No participant rankings yet. Solve challenges to be the first on the board!' : 'No developers found matching your search.'}
+                  </td>
                 </tr>
               )}
             </tbody>
