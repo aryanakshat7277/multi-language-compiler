@@ -34,7 +34,6 @@ export default function ProfileStatsWindow() {
 
   const problemsSolved = stats?.problemsSolved ?? 0;
   const passRate = stats?.passRate ?? 0;
-  const eloRating = stats?.eloRating ?? 1200;
   const assessmentsCount = stats?.assessmentsCompleted ?? 0;
   const leaderboardPos = stats?.leaderboardRank ? `#${stats.leaderboardRank}` : 'Unranked';
 
@@ -147,14 +146,7 @@ export default function ProfileStatsWindow() {
           </div>
         </div>
 
-        {/* Card 3: Global Rank */}
-        <div className="clay-panel stat-tile-card rank-tile">
-          <span className="tile-title">Global Rank (Elo)</span>
-          <div className="tile-number-big text-ochre">{eloRating}</div>
-          <span className="tile-sublabel-caption">{problemsSolved > 0 ? 'ACTIVE RATING' : 'PROVISIONAL'}</span>
-        </div>
-
-        {/* Card 4: Assessments Completed */}
+        {/* Card 3: Assessments Completed */}
         <div className="clay-panel stat-tile-card assessment-crest-tile">
           <div className="bronze-shield-icon-box">
             <Shield size={20} className="shield-icon" />

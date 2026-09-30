@@ -332,7 +332,7 @@ export interface UserStats {
   solvedBreakdown: { easy: number; medium: number; hard: number };
   assessmentsCompleted: number;
   leaderboardRank: number | null;
-  eloRating: number;
+  eloRating?: number;
   activityWave: Array<{ day: string; executions: number; submissions: number; activity: number }>;
   latestComplexity: {
     cyclomaticComplexity: number;

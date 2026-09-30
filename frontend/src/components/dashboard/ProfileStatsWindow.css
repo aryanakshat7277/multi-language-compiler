@@ -111,7 +111,7 @@
 .stats-modules-grid {
   flex: 1;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   grid-template-rows: 1fr 1fr;
   gap: 16px;
   min-height: 0;
@@ -215,15 +215,9 @@
   letter-spacing: 0.06em;
 }
 
-/* Rank Tile */
-.rank-tile {
-  grid-column: 3;
-  grid-row: 1;
-}
-
 /* Bronze Shield Crest Tile */
 .assessment-crest-tile {
-  grid-column: 1 / span 2;
+  grid-column: 1;
   grid-row: 2;
   flex-direction: row;
   align-items: center;
@@ -273,6 +267,6 @@
 
 /* Leaderboard Pos Tile */
 .leaderboard-pos-tile {
-  grid-column: 3;
+  grid-column: 2;
   grid-row: 2;
 }
