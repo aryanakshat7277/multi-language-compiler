@@ -8,8 +8,15 @@ class WebSocketService {
   constructor() {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const host = window.location.host;
-    // Assuming backend is at 3001 in dev
-    this.url = import.meta.env.DEV ? `ws://localhost:3001/ws` : `${protocol}//${host}/ws`;
+    if (import.meta.env.VITE_WS_URL) {
+      this.url = import.meta.env.VITE_WS_URL;
+    } else if (import.meta.env.DEV) {
+      this.url = `ws://localhost:3001/ws`;
+    } else if (typeof window !== 'undefined' && window.location.hostname.endsWith('.vercel.app')) {
+      this.url = `wss://codeforge-pro.onrender.com/ws`;
+    } else {
+      this.url = `${protocol}//${host}/ws`;
+    }
   }
 
   connect() {

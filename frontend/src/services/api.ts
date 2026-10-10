@@ -2,14 +2,17 @@
 // In production or when hosted on any remote domain (like Render), ALWAYS use '/api'
 // to communicate with the co-hosted backend and prevent connection-refused/mixed-content blocks.
 const getBaseUrl = (): string => {
+  if (import.meta.env.VITE_API_URL) {
+    const raw = import.meta.env.VITE_API_URL;
+    return raw.endsWith('/') ? raw.slice(0, -1) : raw;
+  }
   if (typeof window !== 'undefined') {
     const host = window.location.hostname;
     if (host && host !== 'localhost' && host !== '127.0.0.1') {
       return '/api';
     }
   }
-  const raw = import.meta.env.VITE_API_URL || '/api';
-  return raw.endsWith('/') ? raw.slice(0, -1) : raw;
+  return '/api';
 };
 
 const BASE_URL = getBaseUrl();

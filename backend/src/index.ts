@@ -95,7 +95,7 @@ async function bootstrap() {
         if (
           !origin || 
           allowedOrigins.includes(origin) || 
-          (origin && origin.endsWith('.onrender.com')) || 
+          (origin && (origin.endsWith('.onrender.com') || origin.endsWith('.vercel.app'))) || 
           process.env.NODE_ENV !== 'production'
         ) {
           return callback(null, true);
