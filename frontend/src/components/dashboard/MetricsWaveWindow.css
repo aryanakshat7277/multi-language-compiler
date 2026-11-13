@@ -154,6 +154,48 @@
   height: 180px;
 }
 
+/* Time Range & Trend Controls */
+.metrics-time-range-wrap {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  background-color: var(--bg-surface-sunken);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-full);
+  padding: 2px;
+}
+
+.time-range-btn {
+  border: none;
+  background: transparent;
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.time-range-btn.active {
+  background-color: #FAF4EE;
+  color: #C85A32;
+  box-shadow: 1px 1px 3px rgba(166, 145, 127, 0.2);
+}
+
+.metrics-trend-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #2A5A3D;
+  background-color: #EBF4EF;
+  border: 1px solid #C3E2D1;
+  padding: 2px 7px;
+  border-radius: 10px;
+}
+
 @media (max-width: 768px) {
   .metrics-legends-row {
     display: none;

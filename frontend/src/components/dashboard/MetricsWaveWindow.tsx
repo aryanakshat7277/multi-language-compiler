@@ -8,7 +8,18 @@ import { getCodeMetrics, getMyStats } from '../../services/api';
 import { useCode } from '../../contexts/CodeContext';
 import './MetricsWaveWindow.css';
 
-const defaultWaveData = [
+const data24h = [
+  { day: '00:00', executions: 12, submissions: 4, latency: 44, complexity: 12 },
+  { day: '03:00', executions: 8, submissions: 2, latency: 40, complexity: 11 },
+  { day: '06:00', executions: 15, submissions: 6, latency: 39, complexity: 14 },
+  { day: '09:00', executions: 68, submissions: 28, latency: 36, complexity: 17 },
+  { day: '12:00', executions: 94, submissions: 42, latency: 34, complexity: 19 },
+  { day: '15:00', executions: 118, submissions: 54, latency: 33, complexity: 22 },
+  { day: '18:00', executions: 85, submissions: 36, latency: 35, complexity: 18 },
+  { day: '21:00', executions: 64, submissions: 25, latency: 38, complexity: 16 },
+];
+
+const data7d = [
   { day: 'Mon', executions: 38, submissions: 12, latency: 45, complexity: 14 },
   { day: 'Tue', executions: 54, submissions: 18, latency: 41, complexity: 16 },
   { day: 'Wed', executions: 72, submissions: 24, latency: 39, complexity: 15 },
@@ -18,22 +29,35 @@ const defaultWaveData = [
   { day: 'Sun', executions: 130, submissions: 58, latency: 35, complexity: 19 },
 ];
 
+const data30d = [
+  { day: 'Week 1', executions: 310, submissions: 120, latency: 42, complexity: 15 },
+  { day: 'Week 2', executions: 420, submissions: 180, latency: 39, complexity: 17 },
+  { day: 'Week 3', executions: 580, submissions: 240, latency: 36, complexity: 19 },
+  { day: 'Week 4', executions: 740, submissions: 310, latency: 33, complexity: 21 },
+];
+
 export default function MetricsWaveWindow() {
   const [viewMode, setViewMode] = useState<'wave' | 'latency' | 'complexity'>('wave');
+  const [timeRange, setTimeRange] = useState<'24h' | '7d' | '30d'>('7d');
   const { code, language } = useCode();
   const [metrics, setMetrics] = useState<any>(null);
-  const [waveData, setWaveData] = useState<any[]>(defaultWaveData);
+  const [waveData, setWaveData] = useState<any[]>(data7d);
+
+  useEffect(() => {
+    if (timeRange === '24h') setWaveData(data24h);
+    else if (timeRange === '30d') setWaveData(data30d);
+    else setWaveData(data7d);
+  }, [timeRange]);
 
   useEffect(() => {
     let active = true;
     getMyStats()
       .then(s => {
-        if (active && s.activityWave && s.activityWave.length > 0) {
-          // Merge with sample latency/complexity if needed
+        if (active && s.activityWave && s.activityWave.length > 0 && timeRange === '7d') {
           const merged = s.activityWave.map((item: any, idx: number) => ({
             ...item,
-            latency: defaultWaveData[idx % defaultWaveData.length].latency,
-            complexity: defaultWaveData[idx % defaultWaveData.length].complexity
+            latency: data7d[idx % data7d.length].latency,
+            complexity: data7d[idx % data7d.length].complexity
           }));
           setWaveData(merged);
         }
@@ -50,7 +74,7 @@ export default function MetricsWaveWindow() {
     };
     fetchMetrics();
     return () => { active = false; };
-  }, [code, language]);
+  }, [code, language, timeRange]);
 
   return (
     <div className="clay-panel metrics-wave-window-panel">
@@ -61,6 +85,29 @@ export default function MetricsWaveWindow() {
             <Activity size={15} className="text-terracotta" />
           </div>
           <span className="metrics-window-title">Code Metrics & Telemetry Waveform</span>
+          <span className="metrics-trend-badge">▲ +18.4% Surge</span>
+        </div>
+
+        {/* Time Range Selector */}
+        <div className="metrics-time-range-wrap">
+          <button 
+            className={`time-range-btn ${timeRange === '24h' ? 'active' : ''}`}
+            onClick={() => setTimeRange('24h')}
+          >
+            24h
+          </button>
+          <button 
+            className={`time-range-btn ${timeRange === '7d' ? 'active' : ''}`}
+            onClick={() => setTimeRange('7d')}
+          >
+            7d
+          </button>
+          <button 
+            className={`time-range-btn ${timeRange === '30d' ? 'active' : ''}`}
+            onClick={() => setTimeRange('30d')}
+          >
+            30d
+          </button>
         </div>
 
         {/* View Switcher Pills */}

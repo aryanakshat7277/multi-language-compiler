@@ -1,0 +1,339 @@
+/* ==========================================================================
+   CODEFORGE PRO — EXECUTION PIPELINE VISUALIZER (WARM CLAY THEME)
+   ========================================================================== */
+
+.pipeline-visualizer-card {
+  background-color: var(--bg-panel, #FAF4EE);
+  border: 1.5px solid var(--border-color, #E4D9CE);
+  border-radius: 12px;
+  box-shadow: 
+    0 4px 12px rgba(166, 145, 127, 0.12),
+    0 1px 3px rgba(166, 145, 127, 0.08);
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.pipeline-visualizer-card:hover {
+  box-shadow: 
+    0 6px 20px rgba(166, 145, 127, 0.18),
+    0 2px 6px rgba(166, 145, 127, 0.10);
+}
+
+/* Header */
+.pipeline-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.pipeline-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pipeline-icon-box {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background-color: #F3EAE0;
+  border: 1px solid #DFCFC0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #C85A32;
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.6);
+}
+
+.pipeline-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary, #2D231E);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.pipeline-subtitle {
+  font-size: 12px;
+  color: var(--text-secondary, #7A6B61);
+  display: block;
+  margin-top: 2px;
+}
+
+/* Controls */
+.pipeline-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.pipeline-lang-select {
+  display: flex;
+  background-color: #F1E7DC;
+  border: 1px solid #DFCFC0;
+  border-radius: 7px;
+  padding: 2px;
+  gap: 2px;
+}
+
+.pipeline-lang-btn {
+  background: transparent;
+  border: none;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 5px;
+  color: #7A6B61;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.pipeline-lang-btn.active {
+  background-color: #FAF4EE;
+  color: #C85A32;
+  box-shadow: 0 1px 3px rgba(166, 145, 127, 0.2);
+}
+
+.pipeline-simulate-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #DE7048 0%, #C85A32 100%);
+  color: #FFFFFF;
+  border: none;
+  border-radius: 7px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(200, 90, 50, 0.3);
+  transition: all 0.2s ease;
+}
+
+.pipeline-simulate-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(200, 90, 50, 0.4);
+}
+
+.pipeline-simulate-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Pipeline Track & Steps */
+.pipeline-stages-track {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  position: relative;
+  margin-top: 6px;
+}
+
+.pipeline-stage-node {
+  background-color: #F5ECE3;
+  border: 1.5px solid #DFCFC0;
+  border-radius: 10px;
+  padding: 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.7);
+}
+
+.pipeline-stage-node.active-stage {
+  border-color: #C85A32;
+  background-color: #FAF2EC;
+  box-shadow: 
+    0 0 0 3px rgba(200, 90, 50, 0.18),
+    inset 0 1px 3px rgba(255, 255, 255, 0.9);
+  transform: translateY(-2px);
+}
+
+.pipeline-stage-node.passed-stage {
+  border-color: #2A5A3D;
+  background-color: #F2F7F4;
+}
+
+.stage-step-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  color: #8B7A6F;
+  text-transform: uppercase;
+}
+
+.stage-node-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.stage-icon-circle {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #EDE2D6;
+  color: #5C4E44;
+  transition: all 0.25s ease;
+}
+
+.active-stage .stage-icon-circle {
+  background-color: #C85A32;
+  color: #FFFFFF;
+  box-shadow: 0 2px 8px rgba(200, 90, 50, 0.4);
+}
+
+.passed-stage .stage-icon-circle {
+  background-color: #2A5A3D;
+  color: #FFFFFF;
+}
+
+.stage-status-indicator {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background-color: #E7DDD2;
+  color: #6E6056;
+}
+
+.active-stage .stage-status-indicator {
+  background-color: #FCE8E0;
+  color: #C85A32;
+  animation: pulsePill 1.2s infinite ease-in-out;
+}
+
+.passed-stage .stage-status-indicator {
+  background-color: #E2ECE5;
+  color: #2A5A3D;
+}
+
+.stage-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #2D231E;
+  margin: 0;
+}
+
+.stage-metric-snippet {
+  font-size: 11px;
+  color: #7A6B61;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  background-color: rgba(255, 255, 255, 0.6);
+  padding: 4px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(223, 207, 192, 0.5);
+  min-height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.stage-metric-val {
+  font-weight: 700;
+  color: #C85A32;
+}
+
+/* Connecting Pulse Line */
+.pipeline-connector-line {
+  position: absolute;
+  top: 50%;
+  right: -10px;
+  width: 8px;
+  height: 2px;
+  background-color: #DFCFC0;
+  z-index: 2;
+}
+
+/* Telemetry Log Terminal Output */
+.pipeline-terminal-bar {
+  background-color: #2D231E;
+  border-radius: 8px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #FAF4EE;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 11px;
+  gap: 12px;
+  overflow-x: auto;
+}
+
+.term-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.term-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: #38A169;
+  box-shadow: 0 0 6px #38A169;
+}
+
+.term-prompt {
+  color: #DE7048;
+  font-weight: 700;
+}
+
+.term-msg {
+  color: #E2D9CE;
+}
+
+.term-stats {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: #A3968C;
+  font-size: 10px;
+}
+
+.term-stat-item span {
+  color: #F1E7DC;
+  font-weight: 700;
+}
+
+@keyframes pulsePill {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.75; transform: scale(0.97); }
+}
+
+/* Responsive adjustments */
+@media (max-width: 900px) {
+  .pipeline-stages-track {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 580px) {
+  .pipeline-stages-track {
+    grid-template-columns: 1fr;
+  }
+  .pipeline-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .pipeline-controls {
+    width: 100%;
+    justify-content: space-between;
+  }
+}

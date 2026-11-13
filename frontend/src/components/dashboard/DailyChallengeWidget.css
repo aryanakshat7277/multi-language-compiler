@@ -1,0 +1,190 @@
+/* ==========================================================================
+   CODEFORGE PRO — DAILY CHALLENGE WIDGET (WARM CLAY THEME)
+   ========================================================================== */
+
+.daily-challenge-card {
+  background-color: var(--bg-panel, #FAF4EE);
+  border: 1.5px solid var(--border-color, #E4D9CE);
+  border-radius: 12px;
+  box-shadow: 
+    0 4px 12px rgba(166, 145, 127, 0.12),
+    0 1px 3px rgba(166, 145, 127, 0.08);
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.daily-challenge-card:hover {
+  box-shadow: 
+    0 6px 20px rgba(166, 145, 127, 0.18),
+    0 2px 6px rgba(166, 145, 127, 0.10);
+}
+
+.daily-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.daily-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.daily-icon-box {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background-color: #FCE8E0;
+  border: 1px solid #DFCFC0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #C85A32;
+}
+
+.daily-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary, #2D231E);
+  margin: 0;
+}
+
+.daily-subtext {
+  font-size: 11px;
+  color: var(--text-secondary, #7A6B61);
+  display: block;
+}
+
+.daily-countdown-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background-color: #F5ECE3;
+  border: 1px solid #DFCFC0;
+  border-radius: 14px;
+  padding: 3px 9px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #B35E17;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+/* Problem Details & Tags */
+.daily-problem-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.daily-problem-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #2D231E;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.difficulty-badge {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.difficulty-badge.medium {
+  background-color: #FEF3E2;
+  color: #B35E17;
+  border: 1px solid #E8D3B9;
+}
+
+.difficulty-badge.hard {
+  background-color: #FCE8E0;
+  color: #C85A32;
+  border: 1px solid #EDC3B4;
+}
+
+.daily-category-tag {
+  font-size: 11px;
+  color: #7A6B61;
+  background-color: #F1E7DC;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+/* Code Preview Box */
+.daily-code-box {
+  background-color: #2D231E;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 11px;
+  color: #EDE2D6;
+  line-height: 1.5;
+  overflow-x: auto;
+  border: 1px solid #3F332C;
+}
+
+.code-keyword {
+  color: #E08A3C;
+  font-weight: 700;
+}
+
+.code-func {
+  color: #68D391;
+}
+
+.code-comment {
+  color: #8C7B70;
+  font-style: italic;
+}
+
+/* Bottom Action Row */
+.daily-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 2px;
+}
+
+.daily-cases-hint {
+  font-size: 11px;
+  color: #2A5A3D;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.solve-challenge-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #DE7048 0%, #C85A32 100%);
+  color: #FFFFFF;
+  border: none;
+  border-radius: 7px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(200, 90, 50, 0.3);
+  transition: all 0.2s ease;
+}
+
+.solve-challenge-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(200, 90, 50, 0.4);
+}

@@ -3,7 +3,10 @@ import { motion, Variants } from 'framer-motion';
 import CompilerTelemetryWindow from '../components/dashboard/CompilerTelemetryWindow';
 import ProfileStatsWindow from '../components/dashboard/ProfileStatsWindow';
 import DashboardQuickActions from '../components/dashboard/DashboardQuickActions';
+import ExecutionPipelineVisualizer from '../components/dashboard/ExecutionPipelineVisualizer';
 import MetricsWaveWindow from '../components/dashboard/MetricsWaveWindow';
+import CodeDnaRadarWindow from '../components/dashboard/CodeDnaRadarWindow';
+import DailyChallengeWidget from '../components/dashboard/DailyChallengeWidget';
 import LiveLeaderboardTickerWindow from '../components/dashboard/LiveLeaderboardTickerWindow';
 import './DashboardPage.css';
 
@@ -41,7 +44,7 @@ export default function DashboardPage() {
         initial="hidden" 
         animate="visible"
       >
-        {/* Top Row: Compiler Telemetry & User Profile */}
+        {/* Row 1: Compiler Telemetry & User Profile */}
         <motion.div 
           className="grid-cell cell-telemetry" 
           variants={itemVariants}
@@ -58,7 +61,7 @@ export default function DashboardPage() {
           <ProfileStatsWindow />
         </motion.div>
 
-        {/* Quick Launchpad Command Center */}
+        {/* Row 2: Quick Launchpad Command Center */}
         <motion.div 
           className="grid-cell cell-quick-actions-wide" 
           variants={itemVariants}
@@ -67,18 +70,43 @@ export default function DashboardPage() {
           <DashboardQuickActions />
         </motion.div>
 
-        {/* Middle Row: Wide Metrics Waveform Graph */}
+        {/* Row 3: Direct Engine Execution Pipeline Visualizer */}
         <motion.div 
-          className="grid-cell cell-metrics-wide" 
+          className="grid-cell cell-pipeline-wide" 
+          variants={itemVariants}
+          whileHover={{ y: -4, transition: { duration: 0.2 } }}
+        >
+          <ExecutionPipelineVisualizer />
+        </motion.div>
+
+        {/* Row 4: Analytics Dual Column (Telemetry Wave + Skills DNA Radar) */}
+        <motion.div 
+          className="grid-cell cell-metrics-col" 
           variants={itemVariants}
           whileHover={{ y: -4, transition: { duration: 0.2 } }}
         >
           <MetricsWaveWindow />
         </motion.div>
 
-        {/* Bottom Row: Team Leaderboard & Developer Activity Ticker */}
         <motion.div 
-          className="grid-cell cell-leaderboard-wide" 
+          className="grid-cell cell-radar-col" 
+          variants={itemVariants}
+          whileHover={{ y: -4, transition: { duration: 0.2 } }}
+        >
+          <CodeDnaRadarWindow />
+        </motion.div>
+
+        {/* Row 5: Algorithmic Challenge of the Day & Live Community Standings */}
+        <motion.div 
+          className="grid-cell cell-daily-col" 
+          variants={itemVariants}
+          whileHover={{ y: -4, transition: { duration: 0.2 } }}
+        >
+          <DailyChallengeWidget />
+        </motion.div>
+
+        <motion.div 
+          className="grid-cell cell-leaderboard-col" 
           variants={itemVariants}
           whileHover={{ y: -4, transition: { duration: 0.2 } }}
         >
