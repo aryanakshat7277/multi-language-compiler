@@ -121,18 +121,19 @@ class ApiRateManager {
     s.totalSuccesses++;
   }
 
-  /** Mark this combo as rate-limited — block for 30s */
+  /** Mark this combo as rate-limited — cooldown for 30s */
   markRateLimited(tail: string, model: string): void {
     const s = this.getOrCreate(tail, model);
-    s.blockedUntil = Date.now() + 30_000;
+    s.blockedUntil = Date.now() + 30_000; // 30-second cooldown
     s.minute.count = 9999;
     s.total429s++;
   }
 
-  /** Mark an entire key as failed/exhausted */
-  markKeyFailure(tail: string, model: string, isPermanent = false): void {
+  /** Mark an entire key as failed/exhausted (15m cooldown for invalid keys, 30s for transient) */
+  markKeyFailure(tail: string, model: string, isAuthOr404 = false): void {
     const s = this.getOrCreate(tail, model);
-    s.blockedUntil = Date.now() + (isPermanent ? 3600_000 : 30_000);
+    // Auth 401/403 or Model 404 gets a 15-minute cooldown; transient errors get 30 seconds
+    s.blockedUntil = Date.now() + (isAuthOr404 ? 15 * 60_000 : 30_000);
     s.minute.count = 9999;
     s.total429s++;
   }
@@ -320,7 +321,7 @@ export class GeminiProvider implements AIProvider {
       }
       if (response.status === 401 || response.status === 403) {
         rateManager.markKeyFailure(tail, model, true);
-        logger.warn(`[Groq] Auth ${response.status} on key=...${tail} -> permanently blocking key and falling back`);
+        logger.warn(`[Groq] Auth ${response.status} on key=...${tail} -> 15m cooldown, immediately falling back to next API key`);
         return null;
       }
       if (response.ok) {
@@ -366,7 +367,7 @@ export class GeminiProvider implements AIProvider {
         logger.warn(`[Gemini] 429/quota idx=${idx} model=${model} -> immediately falling back to next Gemini key`);
       } else if (msg.includes('404') || /no longer available/i.test(msg)) {
         rateManager.markKeyFailure(`gm_${idx}`, model, true);
-        logger.warn(`[Gemini] Model ${model} unavailable (404) -> permanently bypassing and falling back to 3.5 Flash Lite`);
+        logger.warn(`[Gemini] Model ${model} unavailable (404) -> 15m cooldown, immediately falling back to 3.5 Flash Lite`);
       } else if (msg.includes('timeout')) {
         logger.warn(`[Gemini] Timeout (3.5s) idx=${idx} model=${model} -> immediately falling back to next Gemini key`);
       } else {
