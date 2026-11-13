@@ -37,11 +37,11 @@ export class GeminiProvider implements AIProvider {
 
     // 2. High-Speed Primary Engine: Groq LPU (Sub-300ms, 14,400 free req/day)
     if (config.groqApiKey) {
-      const groqModels = ['openai/gpt-oss-20b', 'openai/gpt-oss-120b', 'qwen/qwen3.8-27b'];
+      const groqModels = ['openai/gpt-oss-120b', 'qwen/qwen3.8-27b'];
       for (const model of groqModels) {
         try {
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 6000);
+          const timeoutId = setTimeout(() => controller.abort(), 4000);
           const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
             method: 'POST',
             headers: {
@@ -89,15 +89,13 @@ export class GeminiProvider implements AIProvider {
     if (this.aiClients.length > 0) {
       const geminiModels = [
         'gemini-flash-lite-latest',
-        'gemini-3.5-flash-lite',
-        'gemini-3.7-flash',
-        'gemini-flash-latest'
+        'gemini-3.5-flash-lite'
       ];
 
       for (const client of this.aiClients) {
         for (const model of geminiModels) {
           try {
-            const response = await client.models.generateContent({
+            const callPromise = client.models.generateContent({
               model,
               contents: prompt,
               config: {
@@ -105,7 +103,12 @@ export class GeminiProvider implements AIProvider {
                 ...(schema ? { responseSchema: schema } : {})
               }
             });
-            if (response.text) {
+            const timeoutPromise = new Promise((_, reject) =>
+              setTimeout(() => reject(new Error(`Gemini ${model} timeout`)), 4500)
+            );
+            const response: any = await Promise.race([callPromise, timeoutPromise]);
+
+            if (response && response.text) {
               const cleaned = response.text.replace(/^```json\s*/i, '').replace(/```\s*$/i, '').trim();
               const parsed = JSON.parse(cleaned) as T;
               // Cache for 15 minutes
