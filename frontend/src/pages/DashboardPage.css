@@ -37,38 +37,21 @@
   grid-column: 2;
 }
 
-/* Row 2: Quick Launchpad (Full Span) */
+/* Middle Row - Full Width Span */
 .cell-quick-actions-wide {
   grid-column: 1 / span 2;
   width: 100%;
 }
 
-/* Row 3: Direct Engine Execution Pipeline Visualizer (Full Span) */
-.cell-pipeline-wide {
+.cell-metrics-wide {
   grid-column: 1 / span 2;
   width: 100%;
 }
 
-/* Row 4: Analytics Dual Column */
-.cell-metrics-col {
-  grid-column: 1;
-  min-width: 0;
-}
-
-.cell-radar-col {
-  grid-column: 2;
-  min-width: 0;
-}
-
-/* Row 5: Daily Challenge & Community Live Leaderboard */
-.cell-daily-col {
-  grid-column: 1;
-  min-width: 0;
-}
-
-.cell-leaderboard-col {
-  grid-column: 2;
-  min-width: 0;
+/* Bottom Row - Full Width Span */
+.cell-leaderboard-wide {
+  grid-column: 1 / span 2;
+  width: 100%;
 }
 
 /* --------------------------------------------------------------------------
@@ -82,11 +65,8 @@
   .cell-telemetry,
   .cell-profile,
   .cell-quick-actions-wide,
-  .cell-pipeline-wide,
-  .cell-metrics-col,
-  .cell-radar-col,
-  .cell-daily-col,
-  .cell-leaderboard-col {
+  .cell-metrics-wide,
+  .cell-leaderboard-wide {
     grid-column: 1;
   }
 }

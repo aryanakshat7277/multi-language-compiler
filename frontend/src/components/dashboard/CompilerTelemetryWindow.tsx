@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Activity, Cpu, Zap, Server, Gauge, ShieldCheck, HardDrive, Lock, RefreshCw, Globe, Radio } from 'lucide-react';
+import { Activity, Cpu, Zap, Server, Gauge, ShieldCheck, HardDrive, Lock, RefreshCw } from 'lucide-react';
 import { getSystemTelemetry, SystemTelemetry } from '../../services/api';
 import { useAnimatedCounter } from '../../utils/useAnimatedCounter';
 import './CompilerTelemetryWindow.css';
@@ -8,9 +8,8 @@ import './CompilerTelemetryWindow.css';
 export default function CompilerTelemetryWindow() {
   const [telemetry, setTelemetry] = useState<SystemTelemetry | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'metrics' | 'sandbox' | 'nodes'>('metrics');
+  const [activeTab, setActiveTab] = useState<'metrics' | 'sandbox'>('metrics');
   const [sparkPoints, setSparkPoints] = useState<number[]>([25, 45, 30, 65, 40, 80, 55, 90, 70, 85, 60, 95]);
-  const [burstActive, setBurstActive] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -43,18 +42,8 @@ export default function CompilerTelemetryWindow() {
     };
   }, []);
 
-  const handleSimulateBurst = () => {
-    if (burstActive) return;
-    setBurstActive(true);
-    setSparkPoints([85, 92, 98, 95, 99, 90, 88, 94, 96, 92, 98, 95]);
-
-    setTimeout(() => {
-      setBurstActive(false);
-    }, 3000);
-  };
-
-  const totalRuns = (telemetry?.totalRuns ?? 312) + (burstActive ? 120 : 0);
-  const avgLatency = burstActive ? 28.4 : (telemetry?.avgRuntimeMs ?? 42.0);
+  const totalRuns = telemetry?.totalRuns ?? 312;
+  const avgLatency = telemetry?.avgRuntimeMs ?? 42.0;
   const activeCount = telemetry?.activeRuntimesCount ?? 10;
 
   const animatedRuns = useAnimatedCounter(totalRuns);
@@ -106,15 +95,6 @@ export default function CompilerTelemetryWindow() {
 
         {/* View Switcher Pills */}
         <div className="telemetry-header-right">
-          <button 
-            className="simulate-burst-btn" 
-            onClick={handleSimulateBurst}
-            title="Inject simulated load burst into telemetry"
-          >
-            <Radio size={11} />
-            <span>{burstActive ? 'Load Surging...' : 'Burst Test'}</span>
-          </button>
-
           <div className="telemetry-tabs-pills">
             <button 
               className={`telemetry-tab-pill ${activeTab === 'metrics' ? 'active' : ''}`}
@@ -127,12 +107,6 @@ export default function CompilerTelemetryWindow() {
               onClick={() => setActiveTab('sandbox')}
             >
               Sandbox
-            </button>
-            <button 
-              className={`telemetry-tab-pill ${activeTab === 'nodes' ? 'active' : ''}`}
-              onClick={() => setActiveTab('nodes')}
-            >
-              Nodes
             </button>
           </div>
           <div className="live-pill" title="Engine Connected">
@@ -279,7 +253,7 @@ export default function CompilerTelemetryWindow() {
               </div>
             </div>
           </motion.div>
-        ) : activeTab === 'sandbox' ? (
+        ) : (
           <motion.div 
             key="sandbox" 
             className="telemetry-sandbox-view"
@@ -339,101 +313,6 @@ export default function CompilerTelemetryWindow() {
                   <div className="sb-meter-fill forest" style={{ width: '98%' }} />
                 </div>
                 <span className="sb-meta">98.4% Zero-Failure SLA</span>
-              </div>
-            </div>
-          </motion.div>
-        ) : (
-          <motion.div 
-            key="nodes" 
-            className="telemetry-nodes-view"
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
-            transition={{ duration: 0.2 }}
-          >
-            <div className="nodes-grid">
-              <div className="node-card">
-                <div className="node-card-top">
-                  <div className="node-title-group">
-                    <div className="node-icon-box">
-                      <Server size={14} />
-                    </div>
-                    <div>
-                      <h5 className="node-name">US-East Direct</h5>
-                      <span className="node-region">Primary Execution Kernel</span>
-                    </div>
-                  </div>
-                  <span className="node-status-tag online">
-                    <span className="node-ping-dot" /> Online
-                  </span>
-                </div>
-                <div className="node-stats-row">
-                  <span className="node-stat-item">Ping: <strong>28ms</strong></span>
-                  <span className="node-stat-item">Capacity: <strong>32% Load</strong></span>
-                </div>
-              </div>
-
-              <div className="node-card">
-                <div className="node-card-top">
-                  <div className="node-title-group">
-                    <div className="node-icon-box">
-                      <ShieldCheck size={14} />
-                    </div>
-                    <div>
-                      <h5 className="node-name">EU-West Sandbox</h5>
-                      <span className="node-region">cgroup v2 & Seccomp Jail</span>
-                    </div>
-                  </div>
-                  <span className="node-status-tag online">
-                    <span className="node-ping-dot" /> Online
-                  </span>
-                </div>
-                <div className="node-stats-row">
-                  <span className="node-stat-item">Ping: <strong>48ms</strong></span>
-                  <span className="node-stat-item">Capacity: <strong>26% Load</strong></span>
-                </div>
-              </div>
-
-              <div className="node-card">
-                <div className="node-card-top">
-                  <div className="node-title-group">
-                    <div className="node-icon-box">
-                      <Globe size={14} />
-                    </div>
-                    <div>
-                      <h5 className="node-name">AP-South Cache</h5>
-                      <span className="node-region">Edge AST Tokenizer</span>
-                    </div>
-                  </div>
-                  <span className="node-status-tag online">
-                    <span className="node-ping-dot" /> Online
-                  </span>
-                </div>
-                <div className="node-stats-row">
-                  <span className="node-stat-item">Ping: <strong>14ms</strong></span>
-                  <span className="node-stat-item">Capacity: <strong>19% Load</strong></span>
-                </div>
-              </div>
-
-              <div className="node-card">
-                <div className="node-card-top">
-                  <div className="node-title-group">
-                    <div className="node-icon-box">
-                      <Cpu size={14} />
-                    </div>
-                    <div>
-                      <h5 className="node-name">Neural Fallback</h5>
-                      <span className="node-region">6-Tier Gemini & Groq Pool</span>
-                    </div>
-                  </div>
-                  <span className="node-status-tag online">
-                    <span className="node-ping-dot" /> Active
-                  </span>
-                </div>
-                <div className="node-stats-row">
-                  <span className="node-stat-item">Uptime: <strong>99.98%</strong></span>
-                  <span className="node-stat-item">Status: <strong>Zero Fail</strong></span>
-                </div>
               </div>
             </div>
           </motion.div>
