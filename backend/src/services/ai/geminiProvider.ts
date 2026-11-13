@@ -4,6 +4,149 @@ import { config } from '../../config/env';
 import { logger } from '../../utils/logger';
 import { AIProvider, CodeReviewResult, CodeExplanation, SimilarityResult, GeneratedTests, AiDetectionResult, DebugResult, GeneratedAssessment, GeneratedDailyProblem, AssessmentGradeResult, GeneratedQuestion, CodeMetricsResult, ShortestCodeResult, HoverExplanationResult } from './aiProvider';
 
+// ─────────────────────────────────────────────────────────────────────────────
+// ApiRateManager — per-key, per-model RPM/RPD tracking with least-loaded routing
+// Conservative limits (95% of actual) to avoid hitting the wall
+// ─────────────────────────────────────────────────────────────────────────────
+
+const GROQ_MODEL_LIMITS: Record<string, { rpm: number; rpd: number }> = {
+  'openai/gpt-oss-120b': { rpm: 28, rpd: 950 }, // actual 30 RPM, 1K RPD
+  'qwen/qwen3.8-27b':    { rpm: 28, rpd: 950 }, // actual 30 RPM, 1K RPD
+  // 'openai/gpt-oss-20b': skipped — same limits, prefer 120b first
+  // 'openai/gpt-oss-safeguard-20b': SKIP — only 3 RPM, unusable at scale
+};
+
+const GEMINI_MODEL_LIMITS: Record<string, { rpm: number; rpd: number }> = {
+  'gemini-flash-lite-latest': { rpm: 13, rpd: 470 }, // "Gemini 3.5 Flash Lite": 15 RPM, 500 RPD — best
+  'gemini-3.1-flash-lite':    { rpm: 13, rpd: 470 }, // "Gemini 3.1 Flash Lite": 15 RPM, 500 RPD — same tier
+  'gemini-2.5-flash-lite':    { rpm:  8, rpd:  18 }, // 10 RPM, 20 RPD — absolute last resort
+};
+
+interface RateWindow { count: number; resetAt: number; }
+interface RateState {
+  minute: RateWindow;
+  day: RateWindow;
+  blockedUntil: number;    // hard block after confirmed 429
+  totalSuccesses: number;
+  total429s: number;
+}
+
+class ApiRateManager {
+  private states = new Map<string, RateState>();
+
+  private key(tail: string, model: string): string {
+    return `${tail}||${model}`;
+  }
+
+  private getOrCreate(tail: string, model: string): RateState {
+    const k = this.key(tail, model);
+    if (!this.states.has(k)) {
+      const now = Date.now();
+      this.states.set(k, {
+        minute: { count: 0, resetAt: now + 60_000 },
+        day:    { count: 0, resetAt: now + 86_400_000 },
+        blockedUntil: 0,
+        totalSuccesses: 0,
+        total429s: 0,
+      });
+    }
+    return this.states.get(k)!;
+  }
+
+  /** Returns true if this key+model combo has remaining RPM and RPD budget */
+  canUse(tail: string, model: string, limits: { rpm: number; rpd: number }): boolean {
+    const now = Date.now();
+    const s = this.getOrCreate(tail, model);
+    if (s.blockedUntil > now) return false;
+    if (s.minute.resetAt <= now) { s.minute.count = 0; s.minute.resetAt = now + 60_000; }
+    if (s.day.resetAt <= now)    { s.day.count = 0;    s.day.resetAt = now + 86_400_000; }
+    return s.minute.count < limits.rpm && s.day.count < limits.rpd;
+  }
+
+  /** Record a successful request */
+  record(tail: string, model: string): void {
+    const s = this.getOrCreate(tail, model);
+    s.minute.count++;
+    s.day.count++;
+    s.totalSuccesses++;
+  }
+
+  /** Mark this combo as rate-limited — block for 35 s, saturate the minute window */
+  markRateLimited(tail: string, model: string): void {
+    const s = this.getOrCreate(tail, model);
+    s.blockedUntil = Date.now() + 35_000;
+    s.minute.count = 9999;
+    s.total429s++;
+  }
+
+  /**
+   * Returns available Groq key+model combos sorted by least-used (day count) first.
+   * Ties broken by minute count → ensures we spread load evenly.
+   */
+  getAvailableGroqCombos(keys: string[]): Array<{ key: string; model: string }> {
+    const models = Object.keys(GROQ_MODEL_LIMITS);
+    type Candidate = { key: string; model: string; score: number };
+    const out: Candidate[] = [];
+    for (const key of keys) {
+      const tail = key.slice(-8);
+      for (const model of models) {
+        const limits = GROQ_MODEL_LIMITS[model];
+        if (this.canUse(tail, model, limits)) {
+          const s = this.getOrCreate(tail, model);
+          // Lower score = preferred (least used)
+          const score = s.day.count * 1000 + s.minute.count;
+          out.push({ key, model, score });
+        }
+      }
+    }
+    return out.sort((a, b) => a.score - b.score).map(({ key, model }) => ({ key, model }));
+  }
+
+  /**
+   * Returns available Gemini client-index+model combos sorted least-used first.
+   */
+  getAvailableGeminiCombos(idxList: number[]): Array<{ idx: number; model: string }> {
+    const models = Object.keys(GEMINI_MODEL_LIMITS);
+    type Candidate = { idx: number; model: string; score: number };
+    const out: Candidate[] = [];
+    for (const idx of idxList) {
+      const tail = `gm_${idx}`;
+      for (const model of models) {
+        const limits = GEMINI_MODEL_LIMITS[model];
+        if (this.canUse(tail, model, limits)) {
+          const s = this.getOrCreate(tail, model);
+          const score = s.day.count * 1000 + s.minute.count;
+          out.push({ idx, model, score });
+        }
+      }
+    }
+    return out.sort((a, b) => a.score - b.score).map(({ idx, model }) => ({ idx, model }));
+  }
+
+  recordGemini(idx: number, model: string): void     { this.record(`gm_${idx}`, model); }
+  markGeminiRL(idx: number, model: string): void     { this.markRateLimited(`gm_${idx}`, model); }
+
+  /** Diagnostic summary for logging */
+  getSummary(): Record<string, object> {
+    const out: Record<string, object> = {};
+    for (const [k, s] of this.states.entries()) {
+      out[k] = {
+        minuteUsed: s.minute.count,
+        dayUsed: s.day.count,
+        blocked: s.blockedUntil > Date.now(),
+        successes: s.totalSuccesses,
+        rateHits: s.total429s,
+      };
+    }
+    return out;
+  }
+}
+
+/** Module-level singleton — shared across every GeminiProvider instance */
+const rateManager = new ApiRateManager();
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 export class GeminiProvider implements AIProvider {
   private aiClients: GoogleGenAI[] = [];
   private static responseCache = new Map<string, { data: any; expiresAt: number }>();
@@ -13,7 +156,7 @@ export class GeminiProvider implements AIProvider {
       config.geminiApiKey,
       config.geminiApiKeyFallback,
       config.geminiApiKeyFallback2,
-      process.env.GEMINI_API_KEY_FALLBACK_2
+      process.env.GEMINI_API_KEY_FALLBACK_2,
     ].filter(Boolean);
 
     const keys = Array.from(new Set(rawKeys));
@@ -22,121 +165,156 @@ export class GeminiProvider implements AIProvider {
     });
 
     if (this.aiClients.length === 0 && !config.groqApiKey) {
-      console.warn("⚠️ Both GROQ_API_KEY and GEMINI_API_KEY are missing. AI functionality will use local heuristic fallback.");
+      console.warn('⚠️  Both GROQ_API_KEY and GEMINI_API_KEY are missing. AI functionality will use local heuristic fallback.');
+    } else {
+      logger.info(`[AI] Ready — Groq keys: ${[config.groqApiKey, config.groqApiKeyFallback, process.env.GROQ_API_KEY_FALLBACK].filter(Boolean).length}, Gemini clients: ${this.aiClients.length}`);
     }
   }
 
   private async generateJSON<T>(prompt: string, schema?: any): Promise<T | null> {
-    const finalPrompt = prompt + '\n\nCRITICAL FORMATTING INSTRUCTION: For any detailed text fields (like explanation, analysis, rootCause), ALWAYS format the content as a pointwise bulleted list using "- " for each point. Do NOT output dense paragraphs.';
-    
-    // 1. In-Memory Cache Lookup (0ms latency, zero API calls)
+    const finalPrompt =
+      prompt +
+      '\n\nCRITICAL FORMATTING INSTRUCTION: For any detailed text fields (like explanation, analysis, rootCause), ALWAYS format the content as a pointwise bulleted list using "- " for each point. Do NOT output dense paragraphs.';
+
+    // ── Tier 0: In-memory cache (0 ms, 0 API calls) ──────────────────────────
     const cacheKey = crypto.createHash('sha256').update(finalPrompt).digest('hex');
     const cached = GeminiProvider.responseCache.get(cacheKey);
     if (cached && cached.expiresAt > Date.now()) {
       return cached.data as T;
     }
 
-    // 2. High-Speed Primary Engine: Groq LPU (Sub-300ms, 14,400 free req/day)
+    // ── Tier 1: Groq LPU — multi-key × multi-model, rate-managed ─────────────
     const rawGroqKeys = [
       config.groqApiKey,
       config.groqApiKeyFallback,
-      process.env.GROQ_API_KEY_FALLBACK
-    ].filter(Boolean);
+      process.env.GROQ_API_KEY_FALLBACK,
+    ].filter(Boolean) as string[];
     const groqKeys = Array.from(new Set(rawGroqKeys));
 
     if (groqKeys.length > 0) {
-      const groqModels = ['openai/gpt-oss-120b', 'qwen/qwen3.8-27b'];
-      for (const groqKey of groqKeys) {
-        for (const model of groqModels) {
-          try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 4000);
-            const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${groqKey}`,
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({
-                model,
-                messages: [
-                  { 
-                    role: 'system', 
-                    content: 'You are an expert programming AI assistant. You MUST return ONLY a valid, parseable JSON object matching the requested schema. Do NOT include markdown code blocks, backticks, or conversational commentary.' 
-                  },
-                  { role: 'user', content: prompt }
-                ],
-                response_format: { type: 'json_object' },
-                temperature: 0.15
-              }),
-              signal: controller.signal
-            });
-            clearTimeout(timeoutId);
+      const availableGroq = rateManager.getAvailableGroqCombos(groqKeys);
 
-            if (response.ok) {
-              const data: any = await response.json();
-              const content = data.choices?.[0]?.message?.content;
-              if (content) {
-                const cleaned = content.replace(/^```json\s*/i, '').replace(/```\s*$/i, '').trim();
-                const parsed = JSON.parse(cleaned) as T;
-                // Cache for 30 minutes
-                if (GeminiProvider.responseCache.size > 1000) {
-                  const oldest = GeminiProvider.responseCache.keys().next().value;
-                  if (oldest) GeminiProvider.responseCache.delete(oldest);
-                }
-                GeminiProvider.responseCache.set(cacheKey, { data: parsed, expiresAt: Date.now() + 30 * 60 * 1000 });
-                return parsed;
-              }
-            }
-          } catch (err: any) {
-            logger.warn(`[Groq AI] ${model} attempt failed: ${err.message}. Trying next engine/key...`);
-          }
-        }
+      if (availableGroq.length === 0) {
+        logger.warn('[Groq] All key+model combos exhausted (RPM/RPD). Falling through to Gemini.');
       }
-    }
 
-    // 3. Secondary Engine: Google Gemini Verified Active Models
-    if (this.aiClients.length > 0) {
-      const geminiModels = [
-        'gemini-flash-lite-latest',
-        'gemini-3.5-flash-lite'
-      ];
+      for (const { key, model } of availableGroq) {
+        const tail = key.slice(-8);
+        try {
+          const controller = new AbortController();
+          const tid = setTimeout(() => controller.abort(), 4000);
 
-      for (const client of this.aiClients) {
-        for (const model of geminiModels) {
-          try {
-            const callPromise = client.models.generateContent({
+          const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${key}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
               model,
-              contents: prompt,
-              config: {
-                responseMimeType: 'application/json',
-                ...(schema ? { responseSchema: schema } : {})
-              }
-            });
-            const timeoutPromise = new Promise((_, reject) =>
-              setTimeout(() => reject(new Error(`Gemini ${model} timeout`)), 4500)
-            );
-            const response: any = await Promise.race([callPromise, timeoutPromise]);
+              messages: [
+                {
+                  role: 'system',
+                  content:
+                    'You are an expert programming AI assistant. You MUST return ONLY a valid, parseable JSON object matching the requested schema. Do NOT include markdown code blocks, backticks, or conversational commentary.',
+                },
+                { role: 'user', content: prompt },
+              ],
+              response_format: { type: 'json_object' },
+              temperature: 0.15,
+            }),
+            signal: controller.signal,
+          });
+          clearTimeout(tid);
 
-            if (response && response.text) {
-              const cleaned = response.text.replace(/^```json\s*/i, '').replace(/```\s*$/i, '').trim();
+          if (response.status === 429) {
+            logger.warn(`[Groq] 429 on key=...${tail} model=${model} — marking rate-limited for 35s`);
+            rateManager.markRateLimited(tail, model);
+            continue;
+          }
+
+          if (response.ok) {
+            const data: any = await response.json();
+            const content = data.choices?.[0]?.message?.content;
+            if (content) {
+              const cleaned = content.replace(/^```json\s*/i, '').replace(/```\s*$/i, '').trim();
               const parsed = JSON.parse(cleaned) as T;
-              // Cache for 15 minutes
-              if (GeminiProvider.responseCache.size > 500) {
-                const oldest = GeminiProvider.responseCache.keys().next().value;
-                if (oldest) GeminiProvider.responseCache.delete(oldest);
-              }
-              GeminiProvider.responseCache.set(cacheKey, { data: parsed, expiresAt: Date.now() + 15 * 60 * 1000 });
+              rateManager.record(tail, model);
+              this.cacheSet(cacheKey, parsed, 30 * 60 * 1000);
               return parsed;
             }
-          } catch (error: any) {
-            // Silently try next model or next key
+          } else {
+            logger.warn(`[Groq] HTTP ${response.status} on key=...${tail} model=${model}`);
+          }
+        } catch (err: any) {
+          if (err.name === 'AbortError') {
+            logger.warn(`[Groq] Timeout (4s) on key=...${tail} model=${model}`);
+          } else {
+            logger.warn(`[Groq] Error key=...${tail} model=${model}: ${err.message}`);
           }
         }
       }
     }
 
+    // ── Tier 2: Gemini — multi-key × multi-model, rate-managed ───────────────
+    if (this.aiClients.length > 0) {
+      const idxList = Array.from({ length: this.aiClients.length }, (_, i) => i);
+      const availableGemini = rateManager.getAvailableGeminiCombos(idxList);
+
+      if (availableGemini.length === 0) {
+        logger.warn('[Gemini] All client+model combos exhausted (RPM/RPD). Returning null.');
+      }
+
+      for (const { idx, model } of availableGemini) {
+        try {
+          const callPromise = this.aiClients[idx].models.generateContent({
+            model,
+            contents: prompt,
+            config: {
+              responseMimeType: 'application/json',
+              ...(schema ? { responseSchema: schema } : {}),
+            },
+          });
+
+          const response: any = await Promise.race([
+            callPromise,
+            new Promise<never>((_, rej) =>
+              setTimeout(() => rej(new Error(`Gemini timeout`)), 4500)
+            ),
+          ]);
+
+          if (response?.text) {
+            const cleaned = response.text.replace(/^```json\s*/i, '').replace(/```\s*$/i, '').trim();
+            const parsed = JSON.parse(cleaned) as T;
+            rateManager.recordGemini(idx, model);
+            this.cacheSet(cacheKey, parsed, 15 * 60 * 1000);
+            return parsed;
+          }
+        } catch (err: any) {
+          const msg: string = err?.message ?? '';
+          if (msg.includes('429') || msg.toLowerCase().includes('quota') || msg.toLowerCase().includes('resource_exhausted')) {
+            logger.warn(`[Gemini] 429/quota on idx=${idx} model=${model} — marking rate-limited for 35s`);
+            rateManager.markGeminiRL(idx, model);
+          } else if (msg.includes('timeout')) {
+            logger.warn(`[Gemini] Timeout (4.5s) on idx=${idx} model=${model}`);
+          } else {
+            logger.warn(`[Gemini] Error idx=${idx} model=${model}: ${msg}`);
+          }
+        }
+      }
+    }
+
+    logger.warn('[AI] All Groq and Gemini combos failed or exhausted. Returning null → heuristic fallback will apply.');
     return null;
+  }
+
+  /** LRU-style cache write — evict oldest entry when over limit */
+  private cacheSet(key: string, data: any, ttlMs: number): void {
+    if (GeminiProvider.responseCache.size >= 1000) {
+      const oldest = GeminiProvider.responseCache.keys().next().value;
+      if (oldest) GeminiProvider.responseCache.delete(oldest);
+    }
+    GeminiProvider.responseCache.set(key, { data, expiresAt: Date.now() + ttlMs });
   }
 
   async analyzeCode(code: string, language: string): Promise<CodeReviewResult> {
