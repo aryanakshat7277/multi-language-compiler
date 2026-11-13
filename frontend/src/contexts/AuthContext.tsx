@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { api } from '../services/api';
 import { 
   auth,
@@ -44,6 +44,10 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  // This ref prevents onAuthStateChanged(null) from kicking the user to /login
+  // while getRedirectResult() is still resolving (the classic Firebase redirect race condition).
+  const redirectCheckDone = useRef<boolean>(false);
+  const handledByRedirect = useRef<boolean>(false);
 
   const syncFirebaseUser = async (firebaseUser: any) => {
     try {
@@ -70,23 +74,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
-    // 1. Check for redirect results if user came back from Google accounts redirect
-    getRedirectResult(auth)
+    // 1. FIRST: Check for redirect result. If it exists, handle it and block
+    //    onAuthStateChanged from making any decisions until we're done.
+    const redirectPromise = getRedirectResult(auth)
       .then(async (result) => {
         if (result && result.user) {
+          handledByRedirect.current = true;
           await syncFirebaseUser(result.user);
         }
       })
       .catch((err) => {
         console.warn('getRedirectResult notice:', err);
+      })
+      .finally(() => {
+        redirectCheckDone.current = true;
       });
 
-    // 2. Primary listener: onAuthStateChanged maintains persistent Google/Firebase sessions
+    // 2. Primary listener: fires immediately (may fire with null while redirect resolves)
     const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
       if (fbUser) {
+        // Authenticated user — sync them (redirect handler may have already done this,
+        // but syncFirebaseUser is idempotent so running twice is safe)
         await syncFirebaseUser(fbUser);
       } else {
-        // If not authenticated via Firebase, check if an existing backend JWT token exists in localStorage
+        // No Firebase user yet. Wait for redirect check to complete before deciding.
+        await redirectPromise;
+
+        // If the redirect handler already authenticated & set a user, do nothing.
+        if (handledByRedirect.current) return;
+
+        // Check for existing backend JWT token
         const token = localStorage.getItem('token');
         if (token) {
           api.get<User>('/auth/me')

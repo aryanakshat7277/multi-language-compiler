@@ -42,14 +42,24 @@ export async function signInWithGoogle(): Promise<FirebaseUser> {
   if (!isFirebaseConfigured) {
     throw new Error('Firebase is not configured yet. Please provide your Firebase project keys in frontend/.env.');
   }
+
+  // On non-localhost environments (Vercel, production), always use redirect.
+  // Popups are blocked by default in production Vercel deployments.
+  const isLocalhost = window.location.hostname === 'localhost' ||
+    window.location.hostname === '127.0.0.1';
+
+  if (!isLocalhost) {
+    await signInWithRedirect(auth, googleProvider);
+    return new Promise(() => {}); // Page will navigate away; result handled by getRedirectResult
+  }
+
   try {
     const result = await signInWithPopup(auth, googleProvider);
     return result.user;
   } catch (err: any) {
     if (err?.code === 'auth/popup-blocked') {
-      // Automatic fallback: if browser popup blocker intervened, seamlessly use redirect flow
       await signInWithRedirect(auth, googleProvider);
-      return new Promise(() => {}); // Wait for browser page navigation
+      return new Promise(() => {});
     }
     throw err;
   }
