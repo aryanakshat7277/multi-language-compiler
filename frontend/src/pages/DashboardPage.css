@@ -38,6 +38,11 @@
 }
 
 /* Middle Row - Full Width Span */
+.cell-quick-actions-wide {
+  grid-column: 1 / span 2;
+  width: 100%;
+}
+
 .cell-metrics-wide {
   grid-column: 1 / span 2;
   width: 100%;
@@ -59,6 +64,7 @@
 
   .cell-telemetry,
   .cell-profile,
+  .cell-quick-actions-wide,
   .cell-metrics-wide,
   .cell-leaderboard-wide {
     grid-column: 1;

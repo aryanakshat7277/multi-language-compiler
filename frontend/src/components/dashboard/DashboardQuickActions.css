@@ -1,0 +1,216 @@
+/* ==========================================================================
+   DASHBOARD QUICK ACTIONS COMMAND CENTER (WARM CLAY LIGHT THEME)
+   ========================================================================== */
+
+.dashboard-quick-actions-card {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-surface);
+  border: 1.5px solid #C8B6A6;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-clay-flat);
+  padding: 20px;
+  gap: 16px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.quick-actions-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #E4D9CE;
+  padding-bottom: 12px;
+}
+
+.qa-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.qa-header-icon-box {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  background: var(--accent-terracotta-tint);
+  border: 1px solid rgba(200, 90, 50, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.qa-title {
+  font-family: var(--font-serif);
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.qa-subtext {
+  font-family: var(--font-serif);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  display: block;
+}
+
+.quick-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+
+.action-card-tile {
+  background: #FAF4EE;
+  border: 1.5px solid #E4D9CE;
+  border-radius: var(--radius-md);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  cursor: pointer;
+  box-shadow: var(--shadow-clay-card);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.action-card-tile:hover {
+  border-color: #C85A32;
+  box-shadow: var(--shadow-clay-flat);
+}
+
+.action-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.action-icon-circle {
+  width: 42px;
+  height: 42px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FAF4EE;
+  box-shadow: 2px 3px 6px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  flex-shrink: 0;
+}
+
+.action-badges-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.action-badge {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 4px;
+  letter-spacing: 0.04em;
+}
+
+.action-badge.terracotta {
+  background-color: #FDF0ED;
+  color: #C85A32;
+  border: 1px solid #F5C6B8;
+}
+
+.action-badge.amber {
+  background-color: #FEF3D6;
+  color: #B35E17;
+  border: 1px solid #F9D57C;
+}
+
+.action-badge.forest {
+  background-color: #EBF4EF;
+  color: #2A5A3D;
+  border: 1px solid #C3E2D1;
+}
+
+.action-badge.ochre {
+  background-color: #F7EDE4;
+  color: #7A4222;
+  border: 1px solid #E0D3C5;
+}
+
+.action-arrow-wrap {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--bg-surface-sunken);
+  border: 1px solid var(--border-hairline);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-tertiary);
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.action-card-tile:hover .action-arrow-wrap {
+  transform: translate(2px, -2px);
+  color: #C85A32;
+}
+
+.action-card-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.action-title {
+  font-family: var(--font-serif);
+  font-size: 14.5px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.action-desc {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  line-height: 1.4;
+  margin: 0;
+}
+
+.action-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid #EAE0D5;
+  padding-top: 8px;
+  margin-top: 4px;
+}
+
+.action-glyph {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 800;
+  color: #C85A32;
+}
+
+.action-cta {
+  font-family: var(--font-serif);
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #C85A32;
+  letter-spacing: -0.01em;
+}
+
+@media (max-width: 1200px) {
+  .quick-actions-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .quick-actions-grid {
+    grid-template-columns: 1fr;
+  }
+}

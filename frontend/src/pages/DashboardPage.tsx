@@ -2,6 +2,7 @@ import React from 'react';
 import { motion, Variants } from 'framer-motion';
 import CompilerTelemetryWindow from '../components/dashboard/CompilerTelemetryWindow';
 import ProfileStatsWindow from '../components/dashboard/ProfileStatsWindow';
+import DashboardQuickActions from '../components/dashboard/DashboardQuickActions';
 import MetricsWaveWindow from '../components/dashboard/MetricsWaveWindow';
 import LiveLeaderboardTickerWindow from '../components/dashboard/LiveLeaderboardTickerWindow';
 import './DashboardPage.css';
@@ -55,6 +56,15 @@ export default function DashboardPage() {
           whileHover={{ y: -4, transition: { duration: 0.2 } }}
         >
           <ProfileStatsWindow />
+        </motion.div>
+
+        {/* Quick Launchpad Command Center */}
+        <motion.div 
+          className="grid-cell cell-quick-actions-wide" 
+          variants={itemVariants}
+          whileHover={{ y: -4, transition: { duration: 0.2 } }}
+        >
+          <DashboardQuickActions />
         </motion.div>
 
         {/* Middle Row: Wide Metrics Waveform Graph */}

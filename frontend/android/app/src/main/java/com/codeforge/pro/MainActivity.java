@@ -3,6 +3,7 @@ package com.codeforge.pro;
 import android.app.Dialog;
 import android.os.Bundle;
 import android.os.Message;
+import android.webkit.CookieManager;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -21,6 +22,10 @@ public class MainActivity extends BridgeActivity {
         try {
             WebView webView = getBridge().getWebView();
             if (webView != null) {
+                CookieManager cookieManager = CookieManager.getInstance();
+                cookieManager.setAcceptCookie(true);
+                cookieManager.setAcceptThirdPartyCookies(webView, true);
+
                 WebSettings settings = webView.getSettings();
                 String ua = settings.getUserAgentString();
                 final String cleanUa;
@@ -41,6 +46,7 @@ public class MainActivity extends BridgeActivity {
                     @Override
                     public boolean onCreateWindow(WebView view, boolean isDialog, boolean isUserGesture, Message resultMsg) {
                         WebView popupWebView = new WebView(MainActivity.this);
+                        CookieManager.getInstance().setAcceptThirdPartyCookies(popupWebView, true);
                         WebSettings popupSettings = popupWebView.getSettings();
                         popupSettings.setJavaScriptEnabled(true);
                         popupSettings.setDomStorageEnabled(true);
