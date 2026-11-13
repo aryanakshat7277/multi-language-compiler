@@ -7,15 +7,15 @@ import { AIProvider, CodeReviewResult, CodeExplanation, SimilarityResult, Genera
 // ─────────────────────────────────────────────────────────────────────────────
 // Task Profiles — per-task model priority ordered by accuracy vs. speed trade-off
 //
-// GROQ MODEL CHARACTERISTICS (from API dashboard):
+// GROQ MODEL CHARACTERISTICS (from live API verification):
 //   openai/gpt-oss-120b  → 30 RPM | 1K RPD | BEST accuracy, deepest reasoning
-//   openai/gpt-oss-20b   → 30 RPM | 1K RPD | Fastest response, good for simple tasks
-//   qwen/qwen3.8-27b     → 30 RPM | 1K RPD | Best code-golf, structured JSON, mid-tier
+//   openai/gpt-oss-20b   → 30 RPM | 1K RPD | Fastest response (500ms), good for simple tasks
+//   qwen/qwen3.8-27b     → 30 RPM | 1K RPD | Best code-golf, structured JSON (218ms)
 //
-// GEMINI MODEL CHARACTERISTICS (Free tier):
-//   gemini-flash-lite-latest → 15 RPM | 500 RPD | Best overall (Gemini 3.5 Flash Lite)
-//   gemini-3.1-flash-lite    → 15 RPM | 500 RPD | Same tier, secondary
-//   gemini-2.5-flash-lite    → 10 RPM |  20 RPD | Last resort only
+// GEMINI MODEL CHARACTERISTICS (from live API verification):
+//   gemini-3.5-flash-lite    → 15 RPM | 500 RPD | Fastest Gemini (908ms), confirmed active
+//   gemini-flash-lite-latest → 15 RPM | 500 RPD | Aliased to 3.5 Flash Lite (1354ms)
+//   gemini-3.1-flash-lite    → 15 RPM | 500 RPD | Secondary confirmed active (1459ms)
 // ─────────────────────────────────────────────────────────────────────────────
 
 type TaskProfile = {
@@ -29,44 +29,43 @@ const PROFILE = {
   accuracy: {
     label: 'accuracy',
     groqModels: ['openai/gpt-oss-120b', 'qwen/qwen3.8-27b', 'openai/gpt-oss-20b'],
-    geminiModels: ['gemini-flash-lite-latest', 'gemini-3.1-flash-lite', 'gemini-2.5-flash-lite'],
+    geminiModels: ['gemini-3.5-flash-lite', 'gemini-flash-lite-latest', 'gemini-3.1-flash-lite'],
   },
   // 🟠 BALANCED: accuracy + decent speed, structured creative output
   balanced: {
     label: 'balanced',
     groqModels: ['openai/gpt-oss-120b', 'qwen/qwen3.8-27b', 'openai/gpt-oss-20b'],
-    geminiModels: ['gemini-flash-lite-latest', 'gemini-3.1-flash-lite', 'gemini-2.5-flash-lite'],
+    geminiModels: ['gemini-3.5-flash-lite', 'gemini-flash-lite-latest', 'gemini-3.1-flash-lite'],
   },
   // 🟡 CODE-STRUCTURED: qwen leads — excellent at structured JSON + code golf
   codeStructured: {
     label: 'codeStructured',
     groqModels: ['qwen/qwen3.8-27b', 'openai/gpt-oss-120b', 'openai/gpt-oss-20b'],
-    geminiModels: ['gemini-flash-lite-latest', 'gemini-3.1-flash-lite', 'gemini-2.5-flash-lite'],
+    geminiModels: ['gemini-3.5-flash-lite', 'gemini-flash-lite-latest', 'gemini-3.1-flash-lite'],
   },
   // 🟢 SPEED-CRITICAL: 20b leads — fastest inference for inline UI features (<1s)
   speed: {
     label: 'speed',
     groqModels: ['openai/gpt-oss-20b', 'qwen/qwen3.8-27b', 'openai/gpt-oss-120b'],
-    geminiModels: ['gemini-flash-lite-latest', 'gemini-3.1-flash-lite', 'gemini-2.5-flash-lite'],
+    geminiModels: ['gemini-3.5-flash-lite', 'gemini-flash-lite-latest', 'gemini-3.1-flash-lite'],
   },
 } as const satisfies Record<string, TaskProfile>;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ApiRateManager — per-key, per-model RPM/RPD tracking with least-loaded routing
-// Conservative limits (95% of actual) to avoid hitting the wall
+// and immediate key-level rotation / failover
 // ─────────────────────────────────────────────────────────────────────────────
 
 const GROQ_MODEL_LIMITS: Record<string, { rpm: number; rpd: number }> = {
   'openai/gpt-oss-120b': { rpm: 28, rpd: 950 }, // actual 30 RPM, 1K RPD — preferred (best quality)
   'openai/gpt-oss-20b':  { rpm: 28, rpd: 950 }, // actual 30 RPM, 1K RPD — second (faster)
   'qwen/qwen3.8-27b':    { rpm: 28, rpd: 950 }, // actual 30 RPM, 1K RPD — third
-  // 'openai/gpt-oss-safeguard-20b': SKIP — only 3 RPM, unusable at scale
 };
 
 const GEMINI_MODEL_LIMITS: Record<string, { rpm: number; rpd: number }> = {
-  'gemini-flash-lite-latest': { rpm: 13, rpd: 470 }, // "Gemini 3.5 Flash Lite": 15 RPM, 500 RPD — best
-  'gemini-3.1-flash-lite':    { rpm: 13, rpd: 470 }, // "Gemini 3.1 Flash Lite": 15 RPM, 500 RPD — same tier
-  'gemini-2.5-flash-lite':    { rpm:  8, rpd:  18 }, // 10 RPM, 20 RPD — absolute last resort
+  'gemini-3.5-flash-lite':    { rpm: 14, rpd: 480 }, // "Gemini 3.5 Flash Lite": 15 RPM, 500 RPD — sub-second (908ms)
+  'gemini-flash-lite-latest': { rpm: 14, rpd: 480 }, // Aliased to 3.5 Flash Lite (1354ms)
+  'gemini-3.1-flash-lite':    { rpm: 14, rpd: 480 }, // "Gemini 3.1 Flash Lite": 15 RPM, 500 RPD — verified active (1459ms)
 };
 
 interface RateWindow { count: number; resetAt: number; }
@@ -80,6 +79,8 @@ interface RateState {
 
 class ApiRateManager {
   private states = new Map<string, RateState>();
+  private groqKeyOffset = 0;
+  private geminiKeyOffset = 0;
 
   private key(tail: string, model: string): string {
     return `${tail}||${model}`;
@@ -118,10 +119,18 @@ class ApiRateManager {
     s.totalSuccesses++;
   }
 
-  /** Mark this combo as rate-limited — block for 35 s, saturate the minute window */
+  /** Mark this combo as rate-limited — block for 30s */
   markRateLimited(tail: string, model: string): void {
     const s = this.getOrCreate(tail, model);
-    s.blockedUntil = Date.now() + 35_000;
+    s.blockedUntil = Date.now() + 30_000;
+    s.minute.count = 9999;
+    s.total429s++;
+  }
+
+  /** Mark an entire key as failed/exhausted */
+  markKeyFailure(tail: string, model: string, isPermanent = false): void {
+    const s = this.getOrCreate(tail, model);
+    s.blockedUntil = Date.now() + (isPermanent ? 3600_000 : 30_000);
     s.minute.count = 9999;
     s.total429s++;
   }
@@ -140,10 +149,11 @@ class ApiRateManager {
     for (let mi = 0; mi < models.length; mi++) {
       const model = models[mi];
       if (!GROQ_MODEL_LIMITS[model]) continue;
-      for (const key of keys) {
+      for (let ki = 0; ki < keys.length; ki++) {
+        const key = keys[ki];
         const tail = key.slice(-8);
         const s = this.getOrCreate(tail, model);
-        const score = mi * 100_000 + s.day.count * 1000 + s.minute.count;
+        const score = mi * 100_000 + ki * 10_000 + s.day.count * 1000 + s.minute.count;
         out.push({ key, model, score });
       }
     }
@@ -156,10 +166,11 @@ class ApiRateManager {
     for (let mi = 0; mi < models.length; mi++) {
       const model = models[mi];
       if (!GEMINI_MODEL_LIMITS[model]) continue;
-      for (const idx of idxList) {
+      for (let ki = 0; ki < idxList.length; ki++) {
+        const idx = idxList[ki];
         const tail = `gm_${idx}`;
         const s = this.getOrCreate(tail, model);
-        const score = mi * 100_000 + s.day.count * 1000 + s.minute.count;
+        const score = mi * 100_000 + ki * 10_000 + s.day.count * 1000 + s.minute.count;
         out.push({ idx, model, score });
       }
     }
@@ -167,24 +178,32 @@ class ApiRateManager {
   }
 
   /**
-   * Returns available Groq key+model combos.
-   * modelPriority controls the model ordering per-task profile:
-   *  - primary sort: model position in the priority array (first = preferred)
-   *  - secondary sort: least-day-used, then least-minute-used across keys
+   * Returns available Groq key+model combos with round-robin key rotation:
+   *  - primary sort: model position in the priority array
+   *  - immediate fallback: next API key within the same model is tried second
+   *  - round-robin: rotates starting key so load is 50/50 balanced
    */
   getAvailableGroqCombos(keys: string[], modelPriority?: string[]): Array<{ key: string; model: string }> {
     const models = modelPriority ?? Object.keys(GROQ_MODEL_LIMITS);
     type Candidate = { key: string; model: string; score: number };
     const out: Candidate[] = [];
+
+    const offset = keys.length > 0 ? (this.groqKeyOffset++ % keys.length) : 0;
+    const rotatedKeys = [...keys.slice(offset), ...keys.slice(0, offset)];
+
     for (let mi = 0; mi < models.length; mi++) {
       const model = models[mi];
       const limits = GROQ_MODEL_LIMITS[model];
       if (!limits) continue;
-      for (const key of keys) {
+      for (let ki = 0; ki < rotatedKeys.length; ki++) {
+        const key = rotatedKeys[ki];
         const tail = key.slice(-8);
         if (this.canUse(tail, model, limits)) {
           const s = this.getOrCreate(tail, model);
-          const score = mi * 100_000 + s.day.count * 1000 + s.minute.count;
+          // mi * 100_000 = model tier priority
+          // ki * 10_000 = immediate key failover ordering
+          // s.minute.count = rate balancing
+          const score = mi * 100_000 + ki * 10_000 + s.minute.count;
           out.push({ key, model, score });
         }
       }
@@ -193,21 +212,28 @@ class ApiRateManager {
   }
 
   /**
-   * Returns available Gemini client+model combos, profile-ordered.
+   * Returns available Gemini client+model combos with round-robin key rotation:
+   *  - primary sort: model position in priority array
+   *  - immediate fallback: next Gemini API key (Client 0 -> Client 1 -> Client 2)
    */
   getAvailableGeminiCombos(idxList: number[], modelPriority?: string[]): Array<{ idx: number; model: string }> {
     const models = modelPriority ?? Object.keys(GEMINI_MODEL_LIMITS);
     type Candidate = { idx: number; model: string; score: number };
     const out: Candidate[] = [];
+
+    const offset = idxList.length > 0 ? (this.geminiKeyOffset++ % idxList.length) : 0;
+    const rotatedIdx = [...idxList.slice(offset), ...idxList.slice(0, offset)];
+
     for (let mi = 0; mi < models.length; mi++) {
       const model = models[mi];
       const limits = GEMINI_MODEL_LIMITS[model];
       if (!limits) continue;
-      for (const idx of idxList) {
+      for (let ki = 0; ki < rotatedIdx.length; ki++) {
+        const idx = rotatedIdx[ki];
         const tail = `gm_${idx}`;
         if (this.canUse(tail, model, limits)) {
           const s = this.getOrCreate(tail, model);
-          const score = mi * 100_000 + s.day.count * 1000 + s.minute.count;
+          const score = mi * 100_000 + ki * 10_000 + s.minute.count;
           out.push({ idx, model, score });
         }
       }
@@ -267,7 +293,8 @@ export class GeminiProvider implements AIProvider {
     const tail = key.slice(-8);
     try {
       const controller = new AbortController();
-      const tid = setTimeout(() => controller.abort(), 5000);
+      // Fast 3.0s timeout ensures immediate failover to other key if stalled
+      const tid = setTimeout(() => controller.abort(), 3000);
       const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
@@ -283,20 +310,33 @@ export class GeminiProvider implements AIProvider {
         signal: controller.signal,
       });
       clearTimeout(tid);
+
       if (response.status === 429) {
         rateManager.markRateLimited(tail, model);
-        logger.warn(`[Groq] 429 key=...${tail} model=${model}`);
+        logger.warn(`[Groq] 429 on key=...${tail} model=${model} -> immediately falling back to next API key`);
+        return null;
+      }
+      if (response.status === 401 || response.status === 403) {
+        rateManager.markKeyFailure(tail, model, true);
+        logger.warn(`[Groq] Auth ${response.status} on key=...${tail} -> permanently blocking key and falling back`);
         return null;
       }
       if (response.ok) {
         const data: any = await response.json();
         const content: string | undefined = data.choices?.[0]?.message?.content;
-        if (content) { rateManager.record(tail, model); return content; }
+        if (content) {
+          rateManager.record(tail, model);
+          return content;
+        }
       } else {
-        logger.warn(`[Groq] HTTP ${response.status} key=...${tail} model=${model}`);
+        logger.warn(`[Groq] HTTP ${response.status} key=...${tail} model=${model} -> falling back`);
       }
     } catch (err: any) {
-      logger.warn(`[Groq] ${err.name === 'AbortError' ? 'Timeout(5s)' : err.message} key=...${tail} model=${model}`);
+      if (err.name === 'AbortError') {
+        logger.warn(`[Groq] Timeout (3s) key=...${tail} model=${model} -> immediately falling back to next API key`);
+      } else {
+        logger.warn(`[Groq] Error key=...${tail} model=${model}: ${err.message} -> immediately falling back to next API key`);
+      }
     }
     return null;
   }
@@ -308,18 +348,24 @@ export class GeminiProvider implements AIProvider {
         contents: prompt,
         config: { responseMimeType: 'application/json', ...(schema ? { responseSchema: schema } : {}) },
       });
+      // 3.5s timeout ensures immediate failover to next Gemini key
       const response: any = await Promise.race([
         callPromise,
-        new Promise<never>((_, rej) => setTimeout(() => rej(new Error('timeout')), 5000)),
+        new Promise<never>((_, rej) => setTimeout(() => rej(new Error('timeout')), 3500)),
       ]);
-      if (response?.text) { rateManager.recordGemini(idx, model); return response.text; }
+      if (response?.text) {
+        rateManager.recordGemini(idx, model);
+        return response.text;
+      }
     } catch (err: any) {
       const msg: string = err?.message ?? '';
       if (msg.includes('429') || /quota|resource_exhausted/i.test(msg)) {
         rateManager.markGeminiRL(idx, model);
-        logger.warn(`[Gemini] 429/quota idx=${idx} model=${model}`);
+        logger.warn(`[Gemini] 429/quota idx=${idx} model=${model} -> immediately falling back to next Gemini key`);
+      } else if (msg.includes('timeout')) {
+        logger.warn(`[Gemini] Timeout (3.5s) idx=${idx} model=${model} -> immediately falling back to next Gemini key`);
       } else {
-        logger.warn(`[Gemini] ${msg.includes('timeout') ? 'Timeout(5s)' : msg} idx=${idx} model=${model}`);
+        logger.warn(`[Gemini] Error idx=${idx} model=${model}: ${msg} -> immediately falling back to next Gemini key`);
       }
     }
     return null;
@@ -355,56 +401,70 @@ export class GeminiProvider implements AIProvider {
     const gm = profile.groqModels as string[];
     const gem = profile.geminiModels as string[];
 
-    // ── Tier 1: Groq — rate-managed, profile-ordered (fastest + most preferred first) ──
+    // ── Tier 1: Groq — rate-managed, round-robin keys with immediate fallback ──
     if (groqKeys.length > 0) {
-      for (const { key, model } of rateManager.getAvailableGroqCombos(groqKeys, gm)) {
+      const groqCombos = rateManager.getAvailableGroqCombos(groqKeys, gm);
+      for (const { key, model } of groqCombos) {
         const raw = await this.tryGroqCombo(key, model, prompt);
         if (raw) {
           const parsed = this.parseContent<T>(raw);
-          if (parsed) { this.cacheSet(cacheKey, parsed, 30 * 60 * 1000); return parsed; }
+          if (parsed) {
+            this.cacheSet(cacheKey, parsed, 30 * 60 * 1000);
+            return parsed;
+          }
         }
+        // If tryGroqCombo returned null, loop immediately advances to next key/model!
       }
     }
 
-    // ── Tier 2: Gemini — rate-managed, profile-ordered ───────────────────────
+    // ── Tier 2: Gemini — rate-managed, round-robin keys with immediate fallback ──
     if (this.aiClients.length > 0) {
-      for (const { idx, model } of rateManager.getAvailableGeminiCombos(geminiIdxList, gem)) {
+      const geminiCombos = rateManager.getAvailableGeminiCombos(geminiIdxList, gem);
+      for (const { idx, model } of geminiCombos) {
         const raw = await this.tryGeminiCombo(idx, model, prompt, schema);
         if (raw) {
           const parsed = this.parseContent<T>(raw);
-          if (parsed) { this.cacheSet(cacheKey, parsed, 15 * 60 * 1000); return parsed; }
+          if (parsed) {
+            this.cacheSet(cacheKey, parsed, 15 * 60 * 1000);
+            return parsed;
+          }
         }
+        // If tryGeminiCombo returned null, loop immediately advances to next Gemini key!
       }
     }
 
-    // ── Tier 3: FORCE-THROUGH Groq — bypass rate state, still profile-ordered ─
-    logger.warn(`[AI][${profile.label}] Rate-managed combos exhausted. FORCE-THROUGH Groq...`);
+    // ── Tier 3: FORCE-THROUGH Groq — bypass rate state, try every key combo ────
+    logger.warn(`[AI][${profile.label}] Primary keys exhausted. Entering FORCE-THROUGH Groq...`);
     if (groqKeys.length > 0) {
       for (const { key, model } of rateManager.getAllGroqCombos(groqKeys, gm)) {
         const raw = await this.tryGroqCombo(key, model, prompt);
         if (raw) {
           const parsed = this.parseContent<T>(raw);
-          if (parsed) { this.cacheSet(cacheKey, parsed, 15 * 60 * 1000); return parsed; }
+          if (parsed) {
+            this.cacheSet(cacheKey, parsed, 15 * 60 * 1000);
+            return parsed;
+          }
         }
-        await new Promise(r => setTimeout(r, 300));
       }
     }
 
-    // ── Tier 4: FORCE-THROUGH Gemini — bypass rate state ─────────────────────
-    logger.warn(`[AI][${profile.label}] Force-through Groq failed. FORCE-THROUGH Gemini...`);
+    // ── Tier 4: FORCE-THROUGH Gemini — bypass rate state, try all Gemini keys ──
+    logger.warn(`[AI][${profile.label}] Groq force-through exhausted. Entering FORCE-THROUGH Gemini...`);
     if (this.aiClients.length > 0) {
       for (const { idx, model } of rateManager.getAllGeminiCombos(geminiIdxList, gem)) {
         const raw = await this.tryGeminiCombo(idx, model, prompt, schema);
         if (raw) {
           const parsed = this.parseContent<T>(raw);
-          if (parsed) { this.cacheSet(cacheKey, parsed, 10 * 60 * 1000); return parsed; }
+          if (parsed) {
+            this.cacheSet(cacheKey, parsed, 10 * 60 * 1000);
+            return parsed;
+          }
         }
-        await new Promise(r => setTimeout(r, 300));
       }
     }
 
-    // ── Tier 5: Block-reset + best-combo retry ───────────────────────────────
-    logger.warn(`[AI][${profile.label}] All force-through failed. Resetting blocks and final retry...`);
+    // ── Tier 5: Emergency Unblock + Instant Retry ─────────────────────────────
+    logger.warn(`[AI][${profile.label}] Emergency: unblocking all rate windows and retrying best combo...`);
     rateManager.forceUnblockAll();
     if (groqKeys.length > 0) {
       const best = rateManager.getAvailableGroqCombos(groqKeys, gm)[0];
@@ -412,7 +472,10 @@ export class GeminiProvider implements AIProvider {
         const raw = await this.tryGroqCombo(best.key, best.model, prompt);
         if (raw) {
           const parsed = this.parseContent<T>(raw);
-          if (parsed) { this.cacheSet(cacheKey, parsed, 5 * 60 * 1000); return parsed; }
+          if (parsed) {
+            this.cacheSet(cacheKey, parsed, 5 * 60 * 1000);
+            return parsed;
+          }
         }
       }
     }
@@ -422,13 +485,16 @@ export class GeminiProvider implements AIProvider {
         const raw = await this.tryGeminiCombo(best.idx, best.model, prompt, schema);
         if (raw) {
           const parsed = this.parseContent<T>(raw);
-          if (parsed) { this.cacheSet(cacheKey, parsed, 5 * 60 * 1000); return parsed; }
+          if (parsed) {
+            this.cacheSet(cacheKey, parsed, 5 * 60 * 1000);
+            return parsed;
+          }
         }
       }
     }
 
-    // ── Tier 6: null → each caller has rich heuristic fallback ───────────────
-    logger.error(`[AI][${profile.label}] ALL 5 tiers exhausted. Heuristic fallback activating.`);
+    // ── Tier 6: Rich Heuristic Fallback (Zero User-Facing Failures) ───────────
+    logger.error(`[AI][${profile.label}] All remote API tiers exhausted. Heuristic fallback activating.`);
     return null;
   }
 
