@@ -1,8 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import * as os from 'os';
-import * as path from 'path';
-import * as fs from 'fs';
 import { validate } from '../middleware/validation';
 import { authenticate, optionalAuth } from '../middleware/auth';
 import { requireRole } from '../middleware/rbac';
@@ -33,41 +31,6 @@ router.get('/health/ready', compilationControllerV1.getReadiness);
 
 // Phase 1 Unified Compilation Architecture (v1)
 router.use('/v1', v1CompilationRoutes);
-
-// Official AI Stress Test & Capacity Report (PDF)
-router.get('/reports/ai-stress-test', (_req, res) => {
-  const possibleNames = [
-    'CodeForge_Pro_AI_Stress_Test_Report.pdf',
-    'stress-test-report.pdf'
-  ];
-  const candidateDirs = [
-    process.cwd(),
-    path.resolve(process.cwd(), 'backend'),
-    path.resolve(process.cwd(), 'dist'),
-    path.resolve(process.cwd(), 'backend/dist'),
-    path.resolve(process.cwd(), 'frontend/public'),
-    path.resolve(process.cwd(), 'frontend/dist'),
-    path.resolve(process.cwd(), '../frontend/dist'),
-    path.resolve(process.cwd(), '..'),
-    path.resolve(__dirname, '.'),
-    path.resolve(__dirname, '..'),
-    path.resolve(__dirname, '../..'),
-    path.resolve(__dirname, '../../..'),
-    path.resolve(__dirname, '../../../..')
-  ];
-
-  for (const dir of candidateDirs) {
-    for (const name of possibleNames) {
-      const p = path.join(dir, name);
-      if (fs.existsSync(p)) {
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', 'inline; filename="CodeForge_Pro_AI_Stress_Test_Report.pdf"');
-        return res.sendFile(p);
-      }
-    }
-  }
-  res.status(404).json({ error: 'Stress test report PDF not found', cwd: process.cwd(), dirname: __dirname });
-});
 
 // Production System Telemetry & Health Monitoring
 router.get('/health/telemetry', (_req, res) => {
