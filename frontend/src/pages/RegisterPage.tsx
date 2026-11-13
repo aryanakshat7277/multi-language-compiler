@@ -42,20 +42,26 @@ export default function RegisterPage() {
     return msg || 'Authentication failed';
   };
 
-  const handleGoogleSignUp = async () => {
+  const handleGoogleSignUp = () => {
     setError('');
     setPopupBlocked(false);
+    
+    // Trigger popup immediately on the native synchronous user click gesture!
+    const authPromise = loginWithGoogle();
     setLoading(true);
-    try {
-      await loginWithGoogle();
-      const rawFrom = (location.state as any)?.from?.pathname;
-      const target = (rawFrom && rawFrom !== '/login' && rawFrom !== '/register') ? rawFrom : '/';
-      navigate(target, { replace: true });
-    } catch (err: any) {
-      setError(formatAuthError(err));
-    } finally {
-      setLoading(false);
-    }
+
+    authPromise
+      .then(() => {
+        const rawFrom = (location.state as any)?.from?.pathname;
+        const target = (rawFrom && rawFrom !== '/login' && rawFrom !== '/register') ? rawFrom : '/';
+        navigate(target, { replace: true });
+      })
+      .catch((err: any) => {
+        setError(formatAuthError(err));
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   };
 
   const handleRedirectSignUp = async () => {

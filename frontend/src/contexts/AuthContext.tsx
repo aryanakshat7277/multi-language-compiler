@@ -33,6 +33,7 @@ interface AuthContextType {
   register: (email: string, password: string, displayName: string) => Promise<void>;
   loginWithGoogle: () => Promise<void>;
   loginWithGoogleRedirect: () => Promise<void>;
+  syncFirebaseUser: (firebaseUser: any) => Promise<void>;
   loginWithGithub: () => Promise<void>;
   loginWithFirebaseEmail: (email: string, password: string) => Promise<void>;
   registerWithFirebaseEmail: (email: string, password: string, displayName: string) => Promise<void>;
@@ -143,11 +144,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(false);
   };
 
-  const loginWithGoogle = async () => {
-    const fbUser = await signInWithGoogle();
-    if (fbUser) {
-      await syncFirebaseUser(fbUser);
-    }
+  const loginWithGoogle = (): Promise<void> => {
+    return signInWithGoogle().then(async (fbUser) => {
+      if (fbUser) {
+        await syncFirebaseUser(fbUser);
+      }
+    });
   };
 
   const loginWithGoogleRedirect = async () => {
@@ -193,6 +195,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       register,
       loginWithGoogle,
       loginWithGoogleRedirect,
+      syncFirebaseUser,
       loginWithGithub,
       loginWithFirebaseEmail,
       registerWithFirebaseEmail,

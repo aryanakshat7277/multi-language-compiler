@@ -34,35 +34,18 @@ const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 export const auth = getAuth(app);
 
 const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({
+  prompt: 'select_account'
+});
 const githubProvider = new GithubAuthProvider();
 
 export { getRedirectResult, onAuthStateChanged };
 
-export async function signInWithGoogle(): Promise<FirebaseUser> {
+export function signInWithGoogle(): Promise<FirebaseUser> {
   if (!isFirebaseConfigured) {
-    throw new Error('Firebase is not configured yet. Please provide your Firebase project keys in frontend/.env.');
+    return Promise.reject(new Error('Firebase is not configured yet. Please provide your Firebase project keys in frontend/.env.'));
   }
-
-  // On non-localhost environments (Vercel, production), always use redirect.
-  // Popups are blocked by default in production Vercel deployments.
-  const isLocalhost = window.location.hostname === 'localhost' ||
-    window.location.hostname === '127.0.0.1';
-
-  if (!isLocalhost) {
-    await signInWithRedirect(auth, googleProvider);
-    return new Promise(() => {}); // Page will navigate away; result handled by getRedirectResult
-  }
-
-  try {
-    const result = await signInWithPopup(auth, googleProvider);
-    return result.user;
-  } catch (err: any) {
-    if (err?.code === 'auth/popup-blocked') {
-      await signInWithRedirect(auth, googleProvider);
-      return new Promise(() => {});
-    }
-    throw err;
-  }
+  return signInWithPopup(auth, googleProvider).then((result) => result.user);
 }
 
 export async function signInWithGoogleRedirect(): Promise<void> {

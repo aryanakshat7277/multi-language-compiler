@@ -1,7 +1,22 @@
 {
   "framework": "vite",
   "outputDirectory": "dist",
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Cross-Origin-Opener-Policy",
+          "value": "same-origin-allow-popups"
+        }
+      ]
+    }
+  ],
   "rewrites": [
+    {
+      "source": "/__/auth/:path*",
+      "destination": "https://codeforge-a.firebaseapp.com/__/auth/:path*"
+    },
     {
       "source": "/api/:path*",
       "destination": "https://codeforge-pro.onrender.com/api/:path*"
