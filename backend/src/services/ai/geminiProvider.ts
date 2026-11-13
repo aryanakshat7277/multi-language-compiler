@@ -29,25 +29,25 @@ const PROFILE = {
   accuracy: {
     label: 'accuracy',
     groqModels: ['openai/gpt-oss-120b', 'qwen/qwen3.8-27b', 'openai/gpt-oss-20b'],
-    geminiModels: ['gemini-3.5-flash-lite', 'gemini-flash-lite-latest', 'gemini-3.1-flash-lite', 'gemini-2.5-flash-lite', 'gemini-2.5-flash'],
+    geminiModels: ['gemini-3.5-flash-lite', 'gemini-flash-lite-latest', 'gemini-3.1-flash-lite'],
   },
   // 🟠 BALANCED: accuracy + decent speed, structured creative output
   balanced: {
     label: 'balanced',
     groqModels: ['openai/gpt-oss-120b', 'qwen/qwen3.8-27b', 'openai/gpt-oss-20b'],
-    geminiModels: ['gemini-3.5-flash-lite', 'gemini-flash-lite-latest', 'gemini-3.1-flash-lite', 'gemini-2.5-flash-lite', 'gemini-2.5-flash'],
+    geminiModels: ['gemini-3.5-flash-lite', 'gemini-flash-lite-latest', 'gemini-3.1-flash-lite'],
   },
   // 🟡 CODE-STRUCTURED: qwen leads — excellent at structured JSON + code golf
   codeStructured: {
     label: 'codeStructured',
     groqModels: ['qwen/qwen3.8-27b', 'openai/gpt-oss-120b', 'openai/gpt-oss-20b'],
-    geminiModels: ['gemini-3.5-flash-lite', 'gemini-flash-lite-latest', 'gemini-3.1-flash-lite', 'gemini-2.5-flash-lite', 'gemini-2.5-flash'],
+    geminiModels: ['gemini-3.5-flash-lite', 'gemini-flash-lite-latest', 'gemini-3.1-flash-lite'],
   },
   // 🟢 SPEED-CRITICAL: 20b leads — fastest inference for inline UI features (<1s)
   speed: {
     label: 'speed',
     groqModels: ['openai/gpt-oss-20b', 'qwen/qwen3.8-27b', 'openai/gpt-oss-120b'],
-    geminiModels: ['gemini-3.5-flash-lite', 'gemini-flash-lite-latest', 'gemini-3.1-flash-lite', 'gemini-2.5-flash-lite', 'gemini-2.5-flash'],
+    geminiModels: ['gemini-3.5-flash-lite', 'gemini-flash-lite-latest', 'gemini-3.1-flash-lite'],
   },
 } as const satisfies Record<string, TaskProfile>;
 
@@ -66,8 +66,6 @@ const GEMINI_MODEL_LIMITS: Record<string, { rpm: number; rpd: number }> = {
   'gemini-3.5-flash-lite':    { rpm: 14, rpd: 480 }, // "Gemini 3.5 Flash Lite": 15 RPM, 500 RPD — sub-second (908ms)
   'gemini-flash-lite-latest': { rpm: 14, rpd: 480 }, // Aliased to 3.5 Flash Lite (1354ms)
   'gemini-3.1-flash-lite':    { rpm: 14, rpd: 480 }, // "Gemini 3.1 Flash Lite": 15 RPM, 500 RPD — verified active (1459ms)
-  'gemini-2.5-flash-lite':    { rpm: 9,  rpd: 18  }, // "Gemini 2.5 Flash Lite": 10 RPM, 20 RPD — dashboard limit
-  'gemini-2.5-flash':         { rpm: 4,  rpd: 18  }, // "Gemini 2.5 Flash": 5 RPM, 20 RPD — dashboard limit
 };
 
 interface RateWindow { count: number; resetAt: number; }
@@ -365,9 +363,6 @@ export class GeminiProvider implements AIProvider {
       if (msg.includes('429') || /quota|resource_exhausted/i.test(msg)) {
         rateManager.markGeminiRL(idx, model);
         logger.warn(`[Gemini] 429/quota idx=${idx} model=${model} -> immediately falling back to next Gemini key`);
-      } else if (msg.includes('404') || /no longer available/i.test(msg)) {
-        rateManager.markKeyFailure(`gm_${idx}`, model, true);
-        logger.warn(`[Gemini] Model ${model} unavailable (404) -> 15m cooldown, immediately falling back to 3.5 Flash Lite`);
       } else if (msg.includes('timeout')) {
         logger.warn(`[Gemini] Timeout (3.5s) idx=${idx} model=${model} -> immediately falling back to next Gemini key`);
       } else {
