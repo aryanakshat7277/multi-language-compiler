@@ -5,8 +5,16 @@ const config: CapacitorConfig = {
   appName: 'CodeForge Pro',
   webDir: 'dist',
   server: {
+    url: 'https://codeforge-pro.onrender.com',
+    cleartext: true,
     androidScheme: 'https',
-    cleartext: true
+    allowNavigation: [
+      'codeforge-pro.onrender.com',
+      'codeforge-a.firebaseapp.com',
+      'accounts.google.com',
+      '*.googleapis.com',
+      '*.firebaseapp.com'
+    ]
   },
   android: {
     backgroundColor: '#FAF4EE',
