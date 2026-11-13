@@ -153,3 +153,116 @@
   color: var(--accent-terracotta);
   border-color: var(--border-strong);
 }
+
+/* --------------------------------------------------------------------------
+   Mobile-Only Elements (Hidden on Desktop)
+   -------------------------------------------------------------------------- */
+.compiler-mobile-tabs {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .compiler-page {
+    height: calc(100vh - 54px - 60px - env(safe-area-inset-bottom, 0px));
+    height: calc(100dvh - 54px - 60px - env(safe-area-inset-bottom, 0px));
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .compiler-mobile-tabs {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    height: 40px;
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border-hairline);
+    padding: 3px 6px;
+    gap: 6px;
+    z-index: 30;
+    flex-shrink: 0;
+  }
+
+  .compiler-mobile-tab-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 32px;
+    font-size: 12.5px;
+    font-weight: 700;
+    border-radius: var(--radius-xs);
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--duration-fast) var(--ease-spring);
+    position: relative;
+  }
+
+  .compiler-mobile-tab-btn.active {
+    background: var(--accent-terracotta-tint);
+    border-color: rgba(200, 90, 50, 0.35);
+    color: var(--accent-terracotta);
+    box-shadow: 1px 1px 3px rgba(166, 145, 127, 0.2);
+  }
+
+  .compiler-mobile-tab-btn:active {
+    transform: scale(0.96);
+  }
+
+  .mobile-running-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: var(--accent-terracotta);
+    animation: pulseDot 1.4s infinite;
+  }
+
+  .desktop-resize-handle {
+    display: none !important;
+  }
+
+  .sidebar-toggle-bar {
+    display: none;
+  }
+
+  .terminal-resize-bar {
+    display: none;
+  }
+
+  /* Full-bleed active pane toggle for mobile */
+  .mobile-pane-active {
+    display: flex !important;
+    flex: 1 !important;
+    height: 100% !important;
+    min-height: 0 !important;
+  }
+
+  .mobile-pane-hidden {
+    display: none !important;
+  }
+
+  .compiler-sidebar {
+    position: absolute;
+    top: 40px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100% !important;
+    max-width: 100% !important;
+    z-index: 40;
+    display: none;
+    background-color: var(--bg-surface);
+  }
+
+  .compiler-sidebar.mobile-visible {
+    display: flex !important;
+  }
+
+  .compiler-bottom {
+    height: 100% !important;
+    box-shadow: none;
+    border-top: none;
+  }
+}

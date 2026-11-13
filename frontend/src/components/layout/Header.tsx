@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { 
-  Search, Sparkles, Bell, ChevronLeft, Maximize2, Minimize2
+  Search, Sparkles, Bell, ChevronLeft, Maximize2, Minimize2, Menu
 } from 'lucide-react';
 import './Header.css';
 
@@ -9,12 +9,14 @@ interface HeaderProps {
   onOpenCommandPalette: () => void;
   collapsed?: boolean;
   onToggleSidebar?: () => void;
+  onOpenMobileDrawer?: () => void;
 }
 
 const Header: React.FC<HeaderProps> = ({ 
   onOpenCommandPalette, 
   collapsed = false, 
-  onToggleSidebar 
+  onToggleSidebar,
+  onOpenMobileDrawer
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -61,6 +63,17 @@ const Header: React.FC<HeaderProps> = ({
     <header className="clay-top-bar">
       {/* Left: Brand + Breadcrumb */}
       <div className="top-bar-left">
+        {onOpenMobileDrawer && (
+          <button 
+            className="mobile-hamburger-btn" 
+            onClick={onOpenMobileDrawer}
+            title="Open Menu"
+            aria-label="Open Navigation Menu"
+          >
+            <Menu size={20} />
+          </button>
+        )}
+
         <div className="brand-identity-lockup" onClick={() => navigate('/')}>
           <div className="brand-wood-square">
             <span className="brand-glyph">&gt;_</span>
@@ -100,12 +113,23 @@ const Header: React.FC<HeaderProps> = ({
 
       {/* Right: Direct Engine, AI Intelligence & Fullscreen Toggle */}
       <div className="top-bar-right">
+        {/* Mobile Search Icon Button */}
+        <button 
+          className="mobile-search-trigger-btn"
+          onClick={onOpenCommandPalette}
+          title="Search or Run Commands"
+          aria-label="Search or Run Actions"
+        >
+          <Search size={18} />
+        </button>
+
         <button
           className={`fullscreen-toggle-btn ${isFullscreen ? 'active' : ''}`}
           onClick={toggleFullscreen}
           title={isFullscreen ? "Exit Full Screen Mode (Esc)" : "Enter Full Screen Mode (F11)"}
         >
-          {isFullscreen ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
+          <Minimize2 size={15} className={isFullscreen ? '' : 'hide-fs-ico'} style={{ display: isFullscreen ? 'block' : 'none' }} />
+          <Maximize2 size={15} className={!isFullscreen ? '' : 'hide-fs-ico'} style={{ display: !isFullscreen ? 'block' : 'none' }} />
           <span className="fs-btn-text">{isFullscreen ? 'Exit Full Screen' : 'Full Screen'}</span>
         </button>
 

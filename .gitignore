@@ -47,3 +47,12 @@ backend/prisma/dev.db
 
 # Docker volumes
 data/
+
+# Local builds & artifacts
+*.apk
+*.zip
+*.pdf
+desktop/dist/
+scratch/
+frontend/public/*.apk
+

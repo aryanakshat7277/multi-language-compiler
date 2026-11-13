@@ -7,6 +7,10 @@ const getBaseUrl = (): string => {
     return raw.endsWith('/') ? raw.slice(0, -1) : raw;
   }
   if (typeof window !== 'undefined') {
+    const isCapacitor = !!(window as any).Capacitor || window.location.protocol === 'capacitor:' || window.location.protocol === 'file:';
+    if (isCapacitor) {
+      return 'https://codeforge-pro.onrender.com/api';
+    }
     const host = window.location.hostname;
     if (host && host !== 'localhost' && host !== '127.0.0.1') {
       return '/api';

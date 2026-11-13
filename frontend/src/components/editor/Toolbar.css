@@ -112,3 +112,32 @@
   font-size: 13px;
   font-weight: 500;
 }
+
+@media (max-width: 768px) {
+  .toolbar {
+    padding: 0 8px;
+    gap: 6px;
+    height: 44px;
+  }
+
+  .kbd-shortcut {
+    display: none;
+  }
+
+  .lang-select {
+    height: 32px;
+    font-size: 12px;
+    padding: 0 22px 0 28px;
+  }
+
+  .btn-run {
+    height: 32px;
+    padding: 0 10px;
+    font-size: 12px;
+  }
+
+  .btn-icon-only {
+    width: 32px;
+    height: 32px;
+  }
+}

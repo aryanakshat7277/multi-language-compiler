@@ -12,7 +12,12 @@ class WebSocketService {
       this.url = import.meta.env.VITE_WS_URL;
     } else if (import.meta.env.DEV) {
       this.url = `ws://localhost:3001/ws`;
-    } else if (typeof window !== 'undefined' && window.location.hostname.endsWith('.vercel.app')) {
+    } else if (typeof window !== 'undefined' && (
+      (window as any).Capacitor || 
+      window.location.protocol === 'capacitor:' || 
+      window.location.protocol === 'file:' ||
+      window.location.hostname.endsWith('.vercel.app')
+    )) {
       this.url = `wss://codeforge-pro.onrender.com/ws`;
     } else {
       this.url = `${protocol}//${host}/ws`;

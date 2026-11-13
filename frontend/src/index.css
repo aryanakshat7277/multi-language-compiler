@@ -469,3 +469,33 @@ table td{font-size:15px!important;font-weight:600!important;color:var(--text-pri
   to { background-color: rgba(42, 90, 61, 0.32); }
 }
 
+/* ==========================================================================
+   MOBILE-OPTIMIZED UTILITIES & RESPONSIVE CONSTRAINTS
+   Strictly scoped under max-width: 768px — 100% Zero Impact on Desktop Web App
+   ========================================================================== */
+@media (max-width: 768px) {
+  html, body {
+    overflow-x: hidden;
+    position: relative;
+    width: 100%;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .clay-dashboard-page-container {
+    padding: 12px 12px 28px !important;
+  }
+
+  .table-card-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .light-data-table {
+    min-width: 520px;
+  }
+
+  button, .btn, a, input, select {
+    touch-action: manipulation;
+  }
+}
+

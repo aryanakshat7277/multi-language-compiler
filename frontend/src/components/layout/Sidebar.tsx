@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Terminal, Code2, FileCheck, 
   BarChart3, GitBranch, GitCompare, Brain, Zap,
   ClipboardCheck, Trophy, User, Shield, LogOut, 
-  FolderKanban
+  FolderKanban, X
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import './Sidebar.css';
@@ -12,11 +12,15 @@ import './Sidebar.css';
 interface SidebarProps {
   collapsed?: boolean;
   onToggleCollapse?: () => void;
+  mobileOpen?: boolean;
+  onCloseMobile?: () => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ 
   collapsed = false, 
-  onToggleCollapse 
+  onToggleCollapse,
+  mobileOpen = false,
+  onCloseMobile
 }) => {
   const { user, isAdmin, logout } = useAuth();
   const navigate = useNavigate();
@@ -24,6 +28,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const handleLogout = () => {
     logout();
     navigate('/login');
+    onCloseMobile?.();
   };
 
   const navSections = [
@@ -62,7 +67,27 @@ const Sidebar: React.FC<SidebarProps> = ({
   ];
 
   return (
-    <aside className={`clay-sidebar ${collapsed ? 'collapsed' : ''}`}>
+    <aside className={`clay-sidebar ${collapsed ? 'collapsed' : ''} ${mobileOpen ? 'mobile-open' : ''}`}>
+      {/* Mobile-Only Drawer Header */}
+      <div className="mobile-drawer-header">
+        <div className="mobile-drawer-brand">
+          <div className="brand-wood-square">
+            <span className="brand-glyph">&gt;_</span>
+          </div>
+          <div className="brand-text-col">
+            <span className="brand-name">CodeForge</span>
+            <span className="brand-pro-tag">PRO v2.5</span>
+          </div>
+        </div>
+        <button 
+          className="mobile-drawer-close-btn" 
+          onClick={onCloseMobile} 
+          aria-label="Close navigation drawer"
+        >
+          <X size={20} />
+        </button>
+      </div>
+
       {/* Navigation Groups */}
       <nav className="clay-sidebar-nav">
         {navSections.map((section, sIdx) => (
@@ -78,6 +103,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                   className={({ isActive }) => `clay-nav-item ${isActive ? 'active' : ''}`}
                   title={collapsed ? item.label : undefined}
                   end={item.path === '/'}
+                  onClick={() => onCloseMobile?.()}
                 >
                   <span className="nav-item-icon">{item.icon}</span>
                   {!collapsed && <span className="nav-item-label">{item.label}</span>}
@@ -110,7 +136,11 @@ const Sidebar: React.FC<SidebarProps> = ({
             </button>
           </div>
         ) : (
-          <NavLink to="/login" className="btn btn-primary sidebar-login-btn">
+          <NavLink 
+            to="/login" 
+            className="btn btn-primary sidebar-login-btn"
+            onClick={() => onCloseMobile?.()}
+          >
             {!collapsed ? 'Sign In / Register' : <User size={16} />}
           </NavLink>
         )}

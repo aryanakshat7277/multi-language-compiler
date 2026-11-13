@@ -1,0 +1,24 @@
+{
+  "name": "CodeForge Pro",
+  "short_name": "CodeForge",
+  "description": "Multi-Language Compiler & Cloud IDE",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FAF4EE",
+  "theme_color": "#FAF4EE",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

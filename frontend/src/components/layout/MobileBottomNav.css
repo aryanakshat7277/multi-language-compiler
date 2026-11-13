@@ -1,0 +1,89 @@
+/* ==========================================================================
+   CODEFORGE PRO — MOBILE BOTTOM NAVIGATION
+   Strictly hidden on desktop to preserve 100% desktop web app styling.
+   ========================================================================== */
+
+.mobile-bottom-nav {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .mobile-bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: calc(60px + env(safe-area-inset-bottom, 0px));
+    padding: 4px 6px calc(4px + env(safe-area-inset-bottom, 0px)) 6px;
+    background-color: var(--bg-surface);
+    border-top: 1px solid rgba(214, 198, 183, 0.95);
+    box-shadow: 0 -4px 18px rgba(166, 145, 127, 0.22);
+    z-index: 999;
+    align-items: center;
+    justify-content: space-around;
+    user-select: none;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .mobile-nav-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    height: 100%;
+    min-height: 48px;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    text-decoration: none;
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    transition: all var(--duration-fast) var(--ease-spring);
+    padding: 4px 0;
+    touch-action: manipulation;
+  }
+
+  .mobile-nav-icon-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 28px;
+    border-radius: var(--radius-xs);
+    transition: transform var(--duration-fast) var(--ease-spring), background-color var(--duration-fast) var(--ease-smooth);
+  }
+
+  .mobile-nav-label {
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    line-height: 1;
+    color: var(--text-secondary);
+    transition: color var(--duration-fast) var(--ease-smooth);
+  }
+
+  /* Active State (Clay Terracotta Pill) */
+  .mobile-nav-btn.active {
+    color: var(--accent-terracotta);
+  }
+
+  .mobile-nav-btn.active .mobile-nav-icon-wrap {
+    background-color: var(--accent-terracotta-tint);
+    color: var(--accent-terracotta);
+    box-shadow: inset 0 1px 2px rgba(200, 90, 50, 0.2);
+    transform: translateY(-1px);
+  }
+
+  .mobile-nav-btn.active .mobile-nav-label {
+    color: var(--accent-terracotta);
+    font-weight: 800;
+  }
+
+  .mobile-nav-btn:active {
+    transform: scale(0.94);
+  }
+}

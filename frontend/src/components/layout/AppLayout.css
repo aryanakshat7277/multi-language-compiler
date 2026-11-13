@@ -98,3 +98,46 @@
 .light-data-table tbody tr:hover {
   background-color: var(--bg-surface-hover);
 }
+
+/* --------------------------------------------------------------------------
+   Mobile Backdrop & Navigation Safe Area Spacing
+   Strictly scoped to max-width 768px - Zero impact on desktop!
+   -------------------------------------------------------------------------- */
+.mobile-drawer-backdrop {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .app-layout {
+    height: 100vh;
+    height: 100dvh;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .main-container {
+    border-left: none;
+    width: 100%;
+    height: 100%;
+  }
+
+  .mobile-drawer-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background-color: rgba(15, 10, 8, 0.48);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    z-index: 1040;
+    animation: drawerBackdropFade 0.22s ease-out;
+  }
+
+  .main-content {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+@keyframes drawerBackdropFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
