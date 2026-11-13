@@ -36,21 +36,37 @@ router.use('/v1', v1CompilationRoutes);
 
 // Official AI Stress Test & Capacity Report (PDF)
 router.get('/reports/ai-stress-test', (_req, res) => {
-  const candidatePaths = [
-    path.resolve(process.cwd(), 'CodeForge_Pro_AI_Stress_Test_Report.pdf'),
-    path.resolve(process.cwd(), 'backend/CodeForge_Pro_AI_Stress_Test_Report.pdf'),
-    path.resolve(process.cwd(), '../CodeForge_Pro_AI_Stress_Test_Report.pdf'),
-    path.resolve(__dirname, '../../CodeForge_Pro_AI_Stress_Test_Report.pdf'),
-    path.resolve(__dirname, '../CodeForge_Pro_AI_Stress_Test_Report.pdf'),
-    path.resolve(__dirname, '../../../CodeForge_Pro_AI_Stress_Test_Report.pdf')
+  const possibleNames = [
+    'CodeForge_Pro_AI_Stress_Test_Report.pdf',
+    'stress-test-report.pdf'
   ];
-  const pdfPath = candidatePaths.find(p => fs.existsSync(p));
-  if (pdfPath) {
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', 'inline; filename="CodeForge_Pro_AI_Stress_Test_Report.pdf"');
-    return res.sendFile(pdfPath);
+  const candidateDirs = [
+    process.cwd(),
+    path.resolve(process.cwd(), 'backend'),
+    path.resolve(process.cwd(), 'dist'),
+    path.resolve(process.cwd(), 'backend/dist'),
+    path.resolve(process.cwd(), 'frontend/public'),
+    path.resolve(process.cwd(), 'frontend/dist'),
+    path.resolve(process.cwd(), '../frontend/dist'),
+    path.resolve(process.cwd(), '..'),
+    path.resolve(__dirname, '.'),
+    path.resolve(__dirname, '..'),
+    path.resolve(__dirname, '../..'),
+    path.resolve(__dirname, '../../..'),
+    path.resolve(__dirname, '../../../..')
+  ];
+
+  for (const dir of candidateDirs) {
+    for (const name of possibleNames) {
+      const p = path.join(dir, name);
+      if (fs.existsSync(p)) {
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', 'inline; filename="CodeForge_Pro_AI_Stress_Test_Report.pdf"');
+        return res.sendFile(p);
+      }
+    }
   }
-  res.status(404).json({ error: 'Stress test report PDF not found' });
+  res.status(404).json({ error: 'Stress test report PDF not found', cwd: process.cwd(), dirname: __dirname });
 });
 
 // Production System Telemetry & Health Monitoring
