@@ -2,6 +2,8 @@ import { initializeApp, getApps, getApp } from 'firebase/app';
 import { 
   getAuth, 
   signInWithPopup, 
+  signInWithRedirect,
+  getRedirectResult,
   GoogleAuthProvider, 
   GithubAuthProvider, 
   signInWithEmailAndPassword,
@@ -33,12 +35,30 @@ export const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
 const githubProvider = new GithubAuthProvider();
 
+export { getRedirectResult };
+
 export async function signInWithGoogle(): Promise<FirebaseUser> {
   if (!isFirebaseConfigured) {
     throw new Error('Firebase is not configured yet. Please provide your Firebase project keys in frontend/.env.');
   }
-  const result = await signInWithPopup(auth, googleProvider);
-  return result.user;
+  try {
+    const result = await signInWithPopup(auth, googleProvider);
+    return result.user;
+  } catch (err: any) {
+    if (err?.code === 'auth/popup-blocked') {
+      // Automatic fallback: if browser popup blocker intervened, seamlessly use redirect flow
+      await signInWithRedirect(auth, googleProvider);
+      return new Promise(() => {}); // Wait for browser page navigation
+    }
+    throw err;
+  }
+}
+
+export async function signInWithGoogleRedirect(): Promise<void> {
+  if (!isFirebaseConfigured) {
+    throw new Error('Firebase is not configured yet. Please provide your Firebase project keys in frontend/.env.');
+  }
+  await signInWithRedirect(auth, googleProvider);
 }
 
 export async function signInWithGithub(): Promise<FirebaseUser> {

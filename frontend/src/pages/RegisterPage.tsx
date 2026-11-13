@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { UserPlus } from 'lucide-react';
+import { UserPlus, AlertCircle, ArrowRight } from 'lucide-react';
 import './RegisterPage.css';
 
 export default function RegisterPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [popupBlocked, setPopupBlocked] = useState(false);
   
-  const { loginWithGoogle, isAuthenticated, isLoading } = useAuth();
+  const { loginWithGoogle, loginWithGoogleRedirect, isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -23,6 +24,10 @@ export default function RegisterPage() {
   const formatAuthError = (err: any) => {
     const code = err?.code || '';
     const msg = err?.message || '';
+    if (code === 'auth/popup-blocked') {
+      setPopupBlocked(true);
+      return 'Your browser blocked the sign-up popup. Allow popups for this site, or use the direct redirect button below.';
+    }
     if (code === 'auth/unauthorized-domain' || msg.includes('unauthorized-domain')) {
       const host = window.location.hostname;
       if (host === '127.0.0.1') {
@@ -38,6 +43,7 @@ export default function RegisterPage() {
 
   const handleGoogleSignUp = async () => {
     setError('');
+    setPopupBlocked(false);
     setLoading(true);
     try {
       await loginWithGoogle();
@@ -46,6 +52,17 @@ export default function RegisterPage() {
     } catch (err: any) {
       setError(formatAuthError(err));
     } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRedirectSignUp = async () => {
+    setError('');
+    setLoading(true);
+    try {
+      await loginWithGoogleRedirect();
+    } catch (err: any) {
+      setError(formatAuthError(err));
       setLoading(false);
     }
   };
@@ -63,7 +80,18 @@ export default function RegisterPage() {
         
         {error && (
           <div className="register-error">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+              <AlertCircle size={16} />
+              <strong style={{ fontSize: '13px' }}>Authentication Alert</strong>
+            </div>
             <div>{error}</div>
+
+            {popupBlocked && (
+              <div style={{ marginTop: '10px', fontSize: '12px', background: 'rgba(0,0,0,0.04)', padding: '8px', borderRadius: '6px' }}>
+                💡 <b>Quick Fix:</b> Click the <b>Pop-up blocked icon</b> in the right corner of your Chrome URL bar and select <i>"Always allow pop-ups"</i>.
+              </div>
+            )}
+
             {isLocalIp && (
               <div style={{ marginTop: '8px' }}>
                 <a 
@@ -103,8 +131,26 @@ export default function RegisterPage() {
               <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
               <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
             </svg>
-            <span>{loading ? 'Signing in...' : 'Sign up with Google'}</span>
+            <span>{loading ? 'Connecting...' : 'Sign up with Google'}</span>
           </button>
+
+          {popupBlocked && (
+            <button
+              type="button"
+              className="btn-social-auth"
+              onClick={handleRedirectSignUp}
+              style={{
+                marginTop: '10px',
+                background: '#4a2511',
+                color: '#fff',
+                borderColor: '#4a2511'
+              }}
+              disabled={loading}
+            >
+              <span>Sign up via Full-Page Redirect</span>
+              <ArrowRight size={16} style={{ marginLeft: '6px' }} />
+            </button>
+          )}
         </div>
       </div>
     </div>

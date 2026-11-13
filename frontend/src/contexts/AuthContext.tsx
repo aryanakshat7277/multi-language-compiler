@@ -1,7 +1,10 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { api } from '../services/api';
 import { 
+  auth,
+  getRedirectResult,
   signInWithGoogle, 
+  signInWithGoogleRedirect,
   signInWithGithub, 
   signInWithFirebaseEmail, 
   signUpWithFirebaseEmail, 
@@ -28,6 +31,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, displayName: string) => Promise<void>;
   loginWithGoogle: () => Promise<void>;
+  loginWithGoogleRedirect: () => Promise<void>;
   loginWithGithub: () => Promise<void>;
   loginWithFirebaseEmail: (email: string, password: string) => Promise<void>;
   registerWithFirebaseEmail: (email: string, password: string, displayName: string) => Promise<void>;
@@ -40,25 +44,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      api.get<User>('/auth/me')
-        .then((userData) => {
-          setUser(userData);
-        })
-        .catch(() => {
-          localStorage.removeItem('token');
-          setUser(null);
-        })
-        .finally(() => {
-          setIsLoading(false);
-        });
-    } else {
-      setIsLoading(false);
-    }
-  }, []);
-
   const syncFirebaseUser = async (firebaseUser: any) => {
     const idToken = await firebaseUser.getIdToken();
     const res = await api.post<{ token: string; user?: User }>('/auth/firebase', { idToken });
@@ -67,6 +52,50 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(userData);
     setIsLoading(false);
   };
+
+  useEffect(() => {
+    // 1. Check if user is returning from a Google redirect authentication
+    getRedirectResult(auth)
+      .then(async (result) => {
+        if (result && result.user) {
+          await syncFirebaseUser(result.user);
+          return;
+        }
+
+        // 2. Otherwise verify existing JWT session
+        const token = localStorage.getItem('token');
+        if (token) {
+          api.get<User>('/auth/me')
+            .then((userData) => {
+              setUser(userData);
+            })
+            .catch(() => {
+              localStorage.removeItem('token');
+              setUser(null);
+            })
+            .finally(() => {
+              setIsLoading(false);
+            });
+        } else {
+          setIsLoading(false);
+        }
+      })
+      .catch((err) => {
+        console.warn('Redirect auth check error:', err);
+        const token = localStorage.getItem('token');
+        if (token) {
+          api.get<User>('/auth/me')
+            .then((userData) => setUser(userData))
+            .catch(() => {
+              localStorage.removeItem('token');
+              setUser(null);
+            })
+            .finally(() => setIsLoading(false));
+        } else {
+          setIsLoading(false);
+        }
+      });
+  }, []);
 
   const login = async (email: string, password: string) => {
     const res = await api.post<{ token: string }>('/auth/login', { email, password });
@@ -86,12 +115,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const loginWithGoogle = async () => {
     const fbUser = await signInWithGoogle();
-    await syncFirebaseUser(fbUser);
+    if (fbUser) {
+      await syncFirebaseUser(fbUser);
+    }
+  };
+
+  const loginWithGoogleRedirect = async () => {
+    await signInWithGoogleRedirect();
   };
 
   const loginWithGithub = async () => {
     const fbUser = await signInWithGithub();
-    await syncFirebaseUser(fbUser);
+    if (fbUser) {
+      await syncFirebaseUser(fbUser);
+    }
   };
 
   const loginWithFirebaseEmail = async (email: string, password: string) => {
@@ -125,6 +162,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       login,
       register,
       loginWithGoogle,
+      loginWithGoogleRedirect,
       loginWithGithub,
       loginWithFirebaseEmail,
       registerWithFirebaseEmail,
