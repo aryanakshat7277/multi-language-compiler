@@ -4,6 +4,7 @@ import {
   signInWithPopup, 
   signInWithRedirect,
   getRedirectResult,
+  onAuthStateChanged,
   GoogleAuthProvider, 
   GithubAuthProvider, 
   signInWithEmailAndPassword,
@@ -35,7 +36,7 @@ export const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
 const githubProvider = new GithubAuthProvider();
 
-export { getRedirectResult };
+export { getRedirectResult, onAuthStateChanged };
 
 export async function signInWithGoogle(): Promise<FirebaseUser> {
   if (!isFirebaseConfigured) {

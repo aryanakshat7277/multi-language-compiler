@@ -13,11 +13,12 @@ export default function RegisterPage() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // If already authenticated and not loading, navigate immediately into the app
+  // If already authenticated and not loading, navigate immediately into the app (never redirect to /login)
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
-      const from = (location.state as any)?.from?.pathname || '/';
-      navigate(from, { replace: true });
+      const rawFrom = (location.state as any)?.from?.pathname;
+      const target = (rawFrom && rawFrom !== '/login' && rawFrom !== '/register') ? rawFrom : '/';
+      navigate(target, { replace: true });
     }
   }, [isAuthenticated, isLoading, navigate, location]);
 
@@ -47,8 +48,9 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       await loginWithGoogle();
-      const from = (location.state as any)?.from?.pathname || '/';
-      navigate(from, { replace: true });
+      const rawFrom = (location.state as any)?.from?.pathname;
+      const target = (rawFrom && rawFrom !== '/login' && rawFrom !== '/register') ? rawFrom : '/';
+      navigate(target, { replace: true });
     } catch (err: any) {
       setError(formatAuthError(err));
     } finally {
