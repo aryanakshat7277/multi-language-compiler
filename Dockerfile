@@ -77,9 +77,10 @@ RUN npm install --omit=dev --workspace=compiler-backend
 # Copy built frontend SPA assets (served by Express on single port 3001)
 COPY --from=builder /app/frontend/dist ./frontend/dist
 
-# Copy compiled backend output & Prisma artifacts (including baked SQLite dev.db)
+# Copy compiled backend output & Prisma artifacts
 COPY --from=builder /app/backend/dist ./backend/dist
 COPY --from=builder /app/backend/prisma ./backend/prisma
+COPY --from=builder /app/backend/prisma ./prisma
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 

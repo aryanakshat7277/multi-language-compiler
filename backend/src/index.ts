@@ -151,18 +151,39 @@ async function bootstrap() {
     if (process.env.DATABASE_URL && !process.env.DATABASE_URL.startsWith('file:')) {
       try {
         const { execSync } = await import('child_process');
-        logger.info('Verifying and synchronizing database schema via Prisma...');
-        execSync('npx prisma db push --skip-generate --accept-data-loss', {
-          stdio: 'inherit',
-          env: process.env
-        });
-        logger.info('Database schema verified & synchronized.');
+        
+        // Find schema path across different working directories (/app, /app/backend, local, etc.)
+        const schemaCandidates = [
+          path.resolve(__dirname, '../prisma/schema.prisma'),
+          path.resolve(__dirname, '../../prisma/schema.prisma'),
+          path.resolve(process.cwd(), 'backend/prisma/schema.prisma'),
+          path.resolve(process.cwd(), 'prisma/schema.prisma')
+        ];
+        const schemaPath = schemaCandidates.find(p => fs.existsSync(p));
+        
+        const seedCandidates = [
+          path.resolve(__dirname, '../prisma/seed.js'),
+          path.resolve(process.cwd(), 'backend/prisma/seed.js'),
+          path.resolve(process.cwd(), 'prisma/seed.js')
+        ];
+        const seedPath = seedCandidates.find(p => fs.existsSync(p));
+
+        if (schemaPath) {
+          logger.info(`Synchronizing database schema via Prisma with schema: ${schemaPath}...`);
+          execSync(`npx prisma db push --schema="${schemaPath}" --skip-generate --accept-data-loss`, {
+            stdio: 'inherit',
+            env: process.env
+          });
+          logger.info('Database schema verified & synchronized.');
+        } else {
+          logger.warn('Prisma schema file not found among candidates.');
+        }
 
         // Seed master admin & default languages if empty
         const langCount = await prisma.language.count();
-        if (langCount === 0) {
-          logger.info('Seeding default languages and problems...');
-          execSync('node prisma/seed.js', { stdio: 'inherit', env: process.env });
+        if (langCount === 0 && seedPath) {
+          logger.info(`Seeding default languages and problems with seed: ${seedPath}...`);
+          execSync(`node "${seedPath}"`, { stdio: 'inherit', env: process.env });
           logger.info('Database successfully seeded.');
         }
       } catch (syncErr: any) {
