@@ -24,8 +24,35 @@ interface CodeContextType {
 const CodeContext = createContext<CodeContextType | undefined>(undefined);
 
 export function CodeProvider({ children }: { children: ReactNode }) {
-  const [code, setCode] = useState(DEFAULT_GENETIC_CODE);
-  const [language, setLanguage] = useState("python");
+  const [code, setCodeState] = useState(() => {
+    try {
+      return localStorage.getItem('codeforge_active_code') || DEFAULT_GENETIC_CODE;
+    } catch {
+      return DEFAULT_GENETIC_CODE;
+    }
+  });
+
+  const [language, setLanguageState] = useState(() => {
+    try {
+      return localStorage.getItem('codeforge_active_lang') || 'python';
+    } catch {
+      return 'python';
+    }
+  });
+
+  const setCode = (newCode: string) => {
+    setCodeState(newCode);
+    try {
+      localStorage.setItem('codeforge_active_code', newCode);
+    } catch {}
+  };
+
+  const setLanguage = (newLang: string) => {
+    setLanguageState(newLang);
+    try {
+      localStorage.setItem('codeforge_active_lang', newLang);
+    } catch {}
+  };
 
   return (
     <CodeContext.Provider value={{ code, setCode, language, setLanguage }}>

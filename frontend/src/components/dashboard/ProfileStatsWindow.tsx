@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Shield, Mail, Calendar } from 'lucide-react';
 import { ResponsiveContainer, BarChart, Bar, Tooltip } from 'recharts';
 import { getCurrentUser, getMyStats, UserProfile, UserStats } from '../../services/api';
+import { useAuth } from '../../contexts/AuthContext';
 import './ProfileStatsWindow.css';
 
 export default function ProfileStatsWindow() {
+  const { user: authUser } = useAuth();
   const [user, setUser] = useState<UserProfile | null>(null);
   const [stats, setStats] = useState<UserStats | null>(null);
   const [needleAngle, setNeedleAngle] = useState(-90);
@@ -26,9 +28,9 @@ export default function ProfileStatsWindow() {
     }
   }, []);
 
-  const displayName = user?.displayName || (user ? 'Developer' : 'Loading Profile...');
-  const role = user?.role || 'Developer';
-  const email = user?.email || 'No email provided';
+  const displayName = user?.displayName || authUser?.displayName || 'Developer';
+  const role = user?.role || authUser?.role || 'Developer';
+  const email = user?.email || authUser?.email || 'No email provided';
   const bio = user?.bio || 'Welcome to CodeForge PRO.';
   const memberDate = user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A';
 

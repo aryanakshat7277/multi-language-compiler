@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 export interface EditorFile {
   id: string;
@@ -155,7 +156,9 @@ interface EditorState {
   resetEditor: () => void;
 }
 
-export const useEditorStore = create<EditorState>((set) => ({
+export const useEditorStore = create<EditorState>()(
+  persist(
+    (set) => ({
   files: [{ 
     id: 'main', 
     name: STARTER_TEMPLATES.python.filename, 
@@ -302,4 +305,19 @@ export const useEditorStore = create<EditorState>((set) => ({
       statusMessage: ''
     };
   })
-}));
+    }),
+    {
+      name: 'codeforge-ide-files-v1',
+      partialize: (state) => ({
+        files: state.files,
+        activeFileId: state.activeFileId,
+        language: state.language,
+        languageVersion: state.languageVersion,
+        stdin: state.stdin,
+        stdout: state.stdout,
+        stderr: state.stderr,
+        compileOutput: state.compileOutput
+      })
+    }
+  )
+);
