@@ -20,6 +20,7 @@ export interface User {
 
 interface AuthContextType {
   isAuthenticated: boolean;
+  isLoading: boolean;
   user: User | null;
   isAdmin: boolean;
   isInstructor: boolean;
@@ -37,16 +38,24 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
       api.get<User>('/auth/me')
-        .then((userData) => setUser(userData))
+        .then((userData) => {
+          setUser(userData);
+        })
         .catch(() => {
           localStorage.removeItem('token');
           setUser(null);
+        })
+        .finally(() => {
+          setIsLoading(false);
         });
+    } else {
+      setIsLoading(false);
     }
   }, []);
 
@@ -56,6 +65,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem('token', res.token);
     const userData = res.user || await api.get<User>('/auth/me');
     setUser(userData);
+    setIsLoading(false);
   };
 
   const login = async (email: string, password: string) => {
@@ -63,6 +73,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem('token', res.token);
     const userData = await api.get<User>('/auth/me');
     setUser(userData);
+    setIsLoading(false);
   };
 
   const register = async (email: string, password: string, displayName: string) => {
@@ -70,6 +81,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem('token', res.token);
     const userData = await api.get<User>('/auth/me');
     setUser(userData);
+    setIsLoading(false);
   };
 
   const loginWithGoogle = async () => {
@@ -95,6 +107,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = () => {
     localStorage.removeItem('token');
     setUser(null);
+    setIsLoading(false);
     signOutFirebase().catch(() => {});
   };
 
@@ -104,6 +117,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   return (
     <AuthContext.Provider value={{
       isAuthenticated: !!user,
+      isLoading,
       user,
       isAdmin: isMasterAdmin,
       isInstructor: isMasterAdmin || role === 'INSTRUCTOR' || role === 'ADMIN',
