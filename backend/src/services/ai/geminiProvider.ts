@@ -5,14 +5,61 @@ import { logger } from '../../utils/logger';
 import { AIProvider, CodeReviewResult, CodeExplanation, SimilarityResult, GeneratedTests, AiDetectionResult, DebugResult, GeneratedAssessment, GeneratedDailyProblem, AssessmentGradeResult, GeneratedQuestion, CodeMetricsResult, ShortestCodeResult, HoverExplanationResult } from './aiProvider';
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Task Profiles — per-task model priority ordered by accuracy vs. speed trade-off
+//
+// GROQ MODEL CHARACTERISTICS (from API dashboard):
+//   openai/gpt-oss-120b  → 30 RPM | 1K RPD | BEST accuracy, deepest reasoning
+//   openai/gpt-oss-20b   → 30 RPM | 1K RPD | Fastest response, good for simple tasks
+//   qwen/qwen3.8-27b     → 30 RPM | 1K RPD | Best code-golf, structured JSON, mid-tier
+//
+// GEMINI MODEL CHARACTERISTICS (Free tier):
+//   gemini-flash-lite-latest → 15 RPM | 500 RPD | Best overall (Gemini 3.5 Flash Lite)
+//   gemini-3.1-flash-lite    → 15 RPM | 500 RPD | Same tier, secondary
+//   gemini-2.5-flash-lite    → 10 RPM |  20 RPD | Last resort only
+// ─────────────────────────────────────────────────────────────────────────────
+
+type TaskProfile = {
+  groqModels: string[];   // Groq models in priority order (first = most preferred)
+  geminiModels: string[]; // Gemini models in priority order
+  label: string;
+};
+
+const PROFILE = {
+  // 🔴 ACCURACY-CRITICAL: needs deep reasoning, correct fixes, fair grading
+  accuracy: {
+    label: 'accuracy',
+    groqModels: ['openai/gpt-oss-120b', 'qwen/qwen3.8-27b', 'openai/gpt-oss-20b'],
+    geminiModels: ['gemini-flash-lite-latest', 'gemini-3.1-flash-lite', 'gemini-2.5-flash-lite'],
+  },
+  // 🟠 BALANCED: accuracy + decent speed, structured creative output
+  balanced: {
+    label: 'balanced',
+    groqModels: ['openai/gpt-oss-120b', 'qwen/qwen3.8-27b', 'openai/gpt-oss-20b'],
+    geminiModels: ['gemini-flash-lite-latest', 'gemini-3.1-flash-lite', 'gemini-2.5-flash-lite'],
+  },
+  // 🟡 CODE-STRUCTURED: qwen leads — excellent at structured JSON + code golf
+  codeStructured: {
+    label: 'codeStructured',
+    groqModels: ['qwen/qwen3.8-27b', 'openai/gpt-oss-120b', 'openai/gpt-oss-20b'],
+    geminiModels: ['gemini-flash-lite-latest', 'gemini-3.1-flash-lite', 'gemini-2.5-flash-lite'],
+  },
+  // 🟢 SPEED-CRITICAL: 20b leads — fastest inference for inline UI features (<1s)
+  speed: {
+    label: 'speed',
+    groqModels: ['openai/gpt-oss-20b', 'qwen/qwen3.8-27b', 'openai/gpt-oss-120b'],
+    geminiModels: ['gemini-flash-lite-latest', 'gemini-3.1-flash-lite', 'gemini-2.5-flash-lite'],
+  },
+} as const satisfies Record<string, TaskProfile>;
+
+// ─────────────────────────────────────────────────────────────────────────────
 // ApiRateManager — per-key, per-model RPM/RPD tracking with least-loaded routing
 // Conservative limits (95% of actual) to avoid hitting the wall
 // ─────────────────────────────────────────────────────────────────────────────
 
 const GROQ_MODEL_LIMITS: Record<string, { rpm: number; rpd: number }> = {
-  'openai/gpt-oss-120b': { rpm: 28, rpd: 950 }, // actual 30 RPM, 1K RPD
-  'qwen/qwen3.8-27b':    { rpm: 28, rpd: 950 }, // actual 30 RPM, 1K RPD
-  // 'openai/gpt-oss-20b': skipped — same limits, prefer 120b first
+  'openai/gpt-oss-120b': { rpm: 28, rpd: 950 }, // actual 30 RPM, 1K RPD — preferred (best quality)
+  'openai/gpt-oss-20b':  { rpm: 28, rpd: 950 }, // actual 30 RPM, 1K RPD — second (faster)
+  'qwen/qwen3.8-27b':    { rpm: 28, rpd: 950 }, // actual 30 RPM, 1K RPD — third
   // 'openai/gpt-oss-safeguard-20b': SKIP — only 3 RPM, unusable at scale
 };
 
@@ -79,22 +126,65 @@ class ApiRateManager {
     s.total429s++;
   }
 
+  /** Force-unblock all combos for a given key tail (emergency fallback override) */
+  forceUnblockAll(): void {
+    for (const s of this.states.values()) {
+      s.blockedUntil = 0;
+    }
+  }
+
+  /** Return ALL combos regardless of rate state — used as last-resort force path */
+  getAllGroqCombos(keys: string[], modelPriority?: string[]): Array<{ key: string; model: string }> {
+    const models = modelPriority ?? Object.keys(GROQ_MODEL_LIMITS);
+    const out: Array<{ key: string; model: string; score: number }> = [];
+    for (let mi = 0; mi < models.length; mi++) {
+      const model = models[mi];
+      if (!GROQ_MODEL_LIMITS[model]) continue;
+      for (const key of keys) {
+        const tail = key.slice(-8);
+        const s = this.getOrCreate(tail, model);
+        const score = mi * 100_000 + s.day.count * 1000 + s.minute.count;
+        out.push({ key, model, score });
+      }
+    }
+    return out.sort((a, b) => a.score - b.score).map(({ key, model }) => ({ key, model }));
+  }
+
+  getAllGeminiCombos(idxList: number[], modelPriority?: string[]): Array<{ idx: number; model: string }> {
+    const models = modelPriority ?? Object.keys(GEMINI_MODEL_LIMITS);
+    const out: Array<{ idx: number; model: string; score: number }> = [];
+    for (let mi = 0; mi < models.length; mi++) {
+      const model = models[mi];
+      if (!GEMINI_MODEL_LIMITS[model]) continue;
+      for (const idx of idxList) {
+        const tail = `gm_${idx}`;
+        const s = this.getOrCreate(tail, model);
+        const score = mi * 100_000 + s.day.count * 1000 + s.minute.count;
+        out.push({ idx, model, score });
+      }
+    }
+    return out.sort((a, b) => a.score - b.score).map(({ idx, model }) => ({ idx, model }));
+  }
+
   /**
-   * Returns available Groq key+model combos sorted by least-used (day count) first.
-   * Ties broken by minute count → ensures we spread load evenly.
+   * Returns available Groq key+model combos.
+   * modelPriority controls the model ordering per-task profile:
+   *  - primary sort: model position in the priority array (first = preferred)
+   *  - secondary sort: least-day-used, then least-minute-used across keys
    */
-  getAvailableGroqCombos(keys: string[]): Array<{ key: string; model: string }> {
-    const models = Object.keys(GROQ_MODEL_LIMITS);
+  getAvailableGroqCombos(keys: string[], modelPriority?: string[]): Array<{ key: string; model: string }> {
+    const models = modelPriority ?? Object.keys(GROQ_MODEL_LIMITS);
     type Candidate = { key: string; model: string; score: number };
     const out: Candidate[] = [];
-    for (const key of keys) {
-      const tail = key.slice(-8);
-      for (const model of models) {
-        const limits = GROQ_MODEL_LIMITS[model];
+    for (let mi = 0; mi < models.length; mi++) {
+      const model = models[mi];
+      const limits = GROQ_MODEL_LIMITS[model];
+      if (!limits) continue;
+      for (const key of keys) {
+        const tail = key.slice(-8);
         if (this.canUse(tail, model, limits)) {
           const s = this.getOrCreate(tail, model);
-          // Lower score = preferred (least used)
-          const score = s.day.count * 1000 + s.minute.count;
+          const score = mi * 100_000 + s.day.count * 1000 + s.minute.count;
           out.push({ key, model, score });
         }
       }
@@ -103,19 +193,21 @@ class ApiRateManager {
   }
 
   /**
-   * Returns available Gemini client-index+model combos sorted least-used first.
+   * Returns available Gemini client+model combos, profile-ordered.
    */
-  getAvailableGeminiCombos(idxList: number[]): Array<{ idx: number; model: string }> {
-    const models = Object.keys(GEMINI_MODEL_LIMITS);
+  getAvailableGeminiCombos(idxList: number[], modelPriority?: string[]): Array<{ idx: number; model: string }> {
+    const models = modelPriority ?? Object.keys(GEMINI_MODEL_LIMITS);
     type Candidate = { idx: number; model: string; score: number };
     const out: Candidate[] = [];
-    for (const idx of idxList) {
-      const tail = `gm_${idx}`;
-      for (const model of models) {
-        const limits = GEMINI_MODEL_LIMITS[model];
+    for (let mi = 0; mi < models.length; mi++) {
+      const model = models[mi];
+      const limits = GEMINI_MODEL_LIMITS[model];
+      if (!limits) continue;
+      for (const idx of idxList) {
+        const tail = `gm_${idx}`;
         if (this.canUse(tail, model, limits)) {
           const s = this.getOrCreate(tail, model);
-          const score = s.day.count * 1000 + s.minute.count;
+          const score = mi * 100_000 + s.day.count * 1000 + s.minute.count;
           out.push({ idx, model, score });
         }
       }
@@ -171,140 +263,172 @@ export class GeminiProvider implements AIProvider {
     }
   }
 
-  private async generateJSON<T>(prompt: string, schema?: any): Promise<T | null> {
+  private async tryGroqCombo(key: string, model: string, prompt: string): Promise<string | null> {
+    const tail = key.slice(-8);
+    try {
+      const controller = new AbortController();
+      const tid = setTimeout(() => controller.abort(), 5000);
+      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: 'system', content: 'You are an expert programming AI assistant. Return ONLY valid parseable JSON. No markdown, no backticks, no commentary.' },
+            { role: 'user', content: prompt },
+          ],
+          response_format: { type: 'json_object' },
+          temperature: 0.15,
+        }),
+        signal: controller.signal,
+      });
+      clearTimeout(tid);
+      if (response.status === 429) {
+        rateManager.markRateLimited(tail, model);
+        logger.warn(`[Groq] 429 key=...${tail} model=${model}`);
+        return null;
+      }
+      if (response.ok) {
+        const data: any = await response.json();
+        const content: string | undefined = data.choices?.[0]?.message?.content;
+        if (content) { rateManager.record(tail, model); return content; }
+      } else {
+        logger.warn(`[Groq] HTTP ${response.status} key=...${tail} model=${model}`);
+      }
+    } catch (err: any) {
+      logger.warn(`[Groq] ${err.name === 'AbortError' ? 'Timeout(5s)' : err.message} key=...${tail} model=${model}`);
+    }
+    return null;
+  }
+
+  private async tryGeminiCombo(idx: number, model: string, prompt: string, schema?: any): Promise<string | null> {
+    try {
+      const callPromise = this.aiClients[idx].models.generateContent({
+        model,
+        contents: prompt,
+        config: { responseMimeType: 'application/json', ...(schema ? { responseSchema: schema } : {}) },
+      });
+      const response: any = await Promise.race([
+        callPromise,
+        new Promise<never>((_, rej) => setTimeout(() => rej(new Error('timeout')), 5000)),
+      ]);
+      if (response?.text) { rateManager.recordGemini(idx, model); return response.text; }
+    } catch (err: any) {
+      const msg: string = err?.message ?? '';
+      if (msg.includes('429') || /quota|resource_exhausted/i.test(msg)) {
+        rateManager.markGeminiRL(idx, model);
+        logger.warn(`[Gemini] 429/quota idx=${idx} model=${model}`);
+      } else {
+        logger.warn(`[Gemini] ${msg.includes('timeout') ? 'Timeout(5s)' : msg} idx=${idx} model=${model}`);
+      }
+    }
+    return null;
+  }
+
+  private parseContent<T>(raw: string): T | null {
+    try {
+      const cleaned = raw.replace(/^```json\s*/i, '').replace(/```\s*$/i, '').trim();
+      return JSON.parse(cleaned) as T;
+    } catch {
+      return null;
+    }
+  }
+
+  private async generateJSON<T>(prompt: string, schema?: any, profile: TaskProfile = PROFILE.balanced): Promise<T | null> {
     const finalPrompt =
       prompt +
       '\n\nCRITICAL FORMATTING INSTRUCTION: For any detailed text fields (like explanation, analysis, rootCause), ALWAYS format the content as a pointwise bulleted list using "- " for each point. Do NOT output dense paragraphs.';
 
-    // ── Tier 0: In-memory cache (0 ms, 0 API calls) ──────────────────────────
+    // ── Tier 0: In-memory cache (0 ms, zero API cost) ────────────────────────
     const cacheKey = crypto.createHash('sha256').update(finalPrompt).digest('hex');
     const cached = GeminiProvider.responseCache.get(cacheKey);
-    if (cached && cached.expiresAt > Date.now()) {
-      return cached.data as T;
-    }
+    if (cached && cached.expiresAt > Date.now()) return cached.data as T;
 
-    // ── Tier 1: Groq LPU — multi-key × multi-model, rate-managed ─────────────
+    // Build key lists
     const rawGroqKeys = [
       config.groqApiKey,
       config.groqApiKeyFallback,
       process.env.GROQ_API_KEY_FALLBACK,
     ].filter(Boolean) as string[];
     const groqKeys = Array.from(new Set(rawGroqKeys));
+    const geminiIdxList = Array.from({ length: this.aiClients.length }, (_, i) => i);
+    const gm = profile.groqModels as string[];
+    const gem = profile.geminiModels as string[];
 
+    // ── Tier 1: Groq — rate-managed, profile-ordered (fastest + most preferred first) ──
     if (groqKeys.length > 0) {
-      const availableGroq = rateManager.getAvailableGroqCombos(groqKeys);
-
-      if (availableGroq.length === 0) {
-        logger.warn('[Groq] All key+model combos exhausted (RPM/RPD). Falling through to Gemini.');
-      }
-
-      for (const { key, model } of availableGroq) {
-        const tail = key.slice(-8);
-        try {
-          const controller = new AbortController();
-          const tid = setTimeout(() => controller.abort(), 4000);
-
-          const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${key}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              model,
-              messages: [
-                {
-                  role: 'system',
-                  content:
-                    'You are an expert programming AI assistant. You MUST return ONLY a valid, parseable JSON object matching the requested schema. Do NOT include markdown code blocks, backticks, or conversational commentary.',
-                },
-                { role: 'user', content: prompt },
-              ],
-              response_format: { type: 'json_object' },
-              temperature: 0.15,
-            }),
-            signal: controller.signal,
-          });
-          clearTimeout(tid);
-
-          if (response.status === 429) {
-            logger.warn(`[Groq] 429 on key=...${tail} model=${model} — marking rate-limited for 35s`);
-            rateManager.markRateLimited(tail, model);
-            continue;
-          }
-
-          if (response.ok) {
-            const data: any = await response.json();
-            const content = data.choices?.[0]?.message?.content;
-            if (content) {
-              const cleaned = content.replace(/^```json\s*/i, '').replace(/```\s*$/i, '').trim();
-              const parsed = JSON.parse(cleaned) as T;
-              rateManager.record(tail, model);
-              this.cacheSet(cacheKey, parsed, 30 * 60 * 1000);
-              return parsed;
-            }
-          } else {
-            logger.warn(`[Groq] HTTP ${response.status} on key=...${tail} model=${model}`);
-          }
-        } catch (err: any) {
-          if (err.name === 'AbortError') {
-            logger.warn(`[Groq] Timeout (4s) on key=...${tail} model=${model}`);
-          } else {
-            logger.warn(`[Groq] Error key=...${tail} model=${model}: ${err.message}`);
-          }
+      for (const { key, model } of rateManager.getAvailableGroqCombos(groqKeys, gm)) {
+        const raw = await this.tryGroqCombo(key, model, prompt);
+        if (raw) {
+          const parsed = this.parseContent<T>(raw);
+          if (parsed) { this.cacheSet(cacheKey, parsed, 30 * 60 * 1000); return parsed; }
         }
       }
     }
 
-    // ── Tier 2: Gemini — multi-key × multi-model, rate-managed ───────────────
+    // ── Tier 2: Gemini — rate-managed, profile-ordered ───────────────────────
     if (this.aiClients.length > 0) {
-      const idxList = Array.from({ length: this.aiClients.length }, (_, i) => i);
-      const availableGemini = rateManager.getAvailableGeminiCombos(idxList);
-
-      if (availableGemini.length === 0) {
-        logger.warn('[Gemini] All client+model combos exhausted (RPM/RPD). Returning null.');
-      }
-
-      for (const { idx, model } of availableGemini) {
-        try {
-          const callPromise = this.aiClients[idx].models.generateContent({
-            model,
-            contents: prompt,
-            config: {
-              responseMimeType: 'application/json',
-              ...(schema ? { responseSchema: schema } : {}),
-            },
-          });
-
-          const response: any = await Promise.race([
-            callPromise,
-            new Promise<never>((_, rej) =>
-              setTimeout(() => rej(new Error(`Gemini timeout`)), 4500)
-            ),
-          ]);
-
-          if (response?.text) {
-            const cleaned = response.text.replace(/^```json\s*/i, '').replace(/```\s*$/i, '').trim();
-            const parsed = JSON.parse(cleaned) as T;
-            rateManager.recordGemini(idx, model);
-            this.cacheSet(cacheKey, parsed, 15 * 60 * 1000);
-            return parsed;
-          }
-        } catch (err: any) {
-          const msg: string = err?.message ?? '';
-          if (msg.includes('429') || msg.toLowerCase().includes('quota') || msg.toLowerCase().includes('resource_exhausted')) {
-            logger.warn(`[Gemini] 429/quota on idx=${idx} model=${model} — marking rate-limited for 35s`);
-            rateManager.markGeminiRL(idx, model);
-          } else if (msg.includes('timeout')) {
-            logger.warn(`[Gemini] Timeout (4.5s) on idx=${idx} model=${model}`);
-          } else {
-            logger.warn(`[Gemini] Error idx=${idx} model=${model}: ${msg}`);
-          }
+      for (const { idx, model } of rateManager.getAvailableGeminiCombos(geminiIdxList, gem)) {
+        const raw = await this.tryGeminiCombo(idx, model, prompt, schema);
+        if (raw) {
+          const parsed = this.parseContent<T>(raw);
+          if (parsed) { this.cacheSet(cacheKey, parsed, 15 * 60 * 1000); return parsed; }
         }
       }
     }
 
-    logger.warn('[AI] All Groq and Gemini combos failed or exhausted. Returning null → heuristic fallback will apply.');
+    // ── Tier 3: FORCE-THROUGH Groq — bypass rate state, still profile-ordered ─
+    logger.warn(`[AI][${profile.label}] Rate-managed combos exhausted. FORCE-THROUGH Groq...`);
+    if (groqKeys.length > 0) {
+      for (const { key, model } of rateManager.getAllGroqCombos(groqKeys, gm)) {
+        const raw = await this.tryGroqCombo(key, model, prompt);
+        if (raw) {
+          const parsed = this.parseContent<T>(raw);
+          if (parsed) { this.cacheSet(cacheKey, parsed, 15 * 60 * 1000); return parsed; }
+        }
+        await new Promise(r => setTimeout(r, 300));
+      }
+    }
+
+    // ── Tier 4: FORCE-THROUGH Gemini — bypass rate state ─────────────────────
+    logger.warn(`[AI][${profile.label}] Force-through Groq failed. FORCE-THROUGH Gemini...`);
+    if (this.aiClients.length > 0) {
+      for (const { idx, model } of rateManager.getAllGeminiCombos(geminiIdxList, gem)) {
+        const raw = await this.tryGeminiCombo(idx, model, prompt, schema);
+        if (raw) {
+          const parsed = this.parseContent<T>(raw);
+          if (parsed) { this.cacheSet(cacheKey, parsed, 10 * 60 * 1000); return parsed; }
+        }
+        await new Promise(r => setTimeout(r, 300));
+      }
+    }
+
+    // ── Tier 5: Block-reset + best-combo retry ───────────────────────────────
+    logger.warn(`[AI][${profile.label}] All force-through failed. Resetting blocks and final retry...`);
+    rateManager.forceUnblockAll();
+    if (groqKeys.length > 0) {
+      const best = rateManager.getAvailableGroqCombos(groqKeys, gm)[0];
+      if (best) {
+        const raw = await this.tryGroqCombo(best.key, best.model, prompt);
+        if (raw) {
+          const parsed = this.parseContent<T>(raw);
+          if (parsed) { this.cacheSet(cacheKey, parsed, 5 * 60 * 1000); return parsed; }
+        }
+      }
+    }
+    if (this.aiClients.length > 0) {
+      const best = rateManager.getAvailableGeminiCombos(geminiIdxList, gem)[0];
+      if (best) {
+        const raw = await this.tryGeminiCombo(best.idx, best.model, prompt, schema);
+        if (raw) {
+          const parsed = this.parseContent<T>(raw);
+          if (parsed) { this.cacheSet(cacheKey, parsed, 5 * 60 * 1000); return parsed; }
+        }
+      }
+    }
+
+    // ── Tier 6: null → each caller has rich heuristic fallback ───────────────
+    logger.error(`[AI][${profile.label}] ALL 5 tiers exhausted. Heuristic fallback activating.`);
     return null;
   }
 
@@ -327,7 +451,8 @@ Return ONLY JSON matching schema: { "issues": [{ "line": number, "message": stri
 
 Code:
 ${code}`;
-    const result = await this.generateJSON<CodeReviewResult>(prompt);
+    // 🔴 ACCURACY — deep code insight, needs 120b reasoning
+    const result = await this.generateJSON<CodeReviewResult>(prompt, undefined, PROFILE.accuracy);
     if (result && Array.isArray(result.issues)) {
       if (typeof result.overallQuality !== 'number') {
         const issuesCount = result.issues.length;
@@ -375,7 +500,8 @@ Return ONLY JSON matching schema: { "explanation": "string (formatted strictly a
 
 Code:
 ${code}`;
-    const result = await this.generateJSON<CodeExplanation>(prompt);
+    // 🔴 ACCURACY — explanation quality and correctness matters
+    const result = await this.generateJSON<CodeExplanation>(prompt, undefined, PROFILE.accuracy);
     if (result && result.explanation) return result;
 
     // Deep Dynamic Code Analyzer
@@ -442,7 +568,8 @@ ${codeA}
 
 Program B:
 ${codeB}`;
-    const result = await this.generateJSON<any>(prompt);
+    // 🔴 ACCURACY — semantic + structural comparison needs deep reasoning
+    const result = await this.generateJSON<any>(prompt, undefined, PROFILE.accuracy);
     if (result && (typeof result.overallScore === 'number' || typeof result.score === 'number')) {
       const overall = typeof result.overallScore === 'number' ? (result.overallScore > 1 ? result.overallScore / 100 : result.overallScore) : (result.score > 1 ? result.score / 100 : result.score);
       const lexical = typeof result.lexicalScore === 'number' ? (result.lexicalScore > 1 ? result.lexicalScore / 100 : result.lexicalScore) : +(overall * 0.85).toFixed(2);
@@ -516,7 +643,8 @@ Language: ${language}
 
 Code:
 ${code}`;
-    const result = await this.generateJSON<GeneratedTests>(prompt);
+    // 🟠 BALANCED — correct I/O pairs require solid reasoning
+    const result = await this.generateJSON<GeneratedTests>(prompt, undefined, PROFILE.balanced);
     if (result && Array.isArray(result.testCases) && result.testCases.length > 0) return result;
 
     return {
@@ -537,7 +665,8 @@ Return ONLY JSON matching schema: { "probability": number, "explanation": "strin
 
 Code:
 ${code}`;
-    const result = await this.generateJSON<AiDetectionResult>(prompt);
+    // 🟢 SPEED — simple classification, 20b is fastest and sufficient
+    const result = await this.generateJSON<AiDetectionResult>(prompt, undefined, PROFILE.speed);
     if (result && typeof result.probability === 'number') return result;
 
     return {
@@ -581,7 +710,8 @@ Error / Stack Trace:
 ${errorOutput || 'Syntax or runtime error detected during execution'}`;
 
     try {
-      const result = await this.generateJSON<DebugResult>(prompt);
+      // 🔴 ACCURACY — must produce working fixed code, most critical task
+      const result = await this.generateJSON<DebugResult>(prompt, undefined, PROFILE.accuracy);
       if (result && result.fix) {
         return {
           rootCause: result.rootCause || 'Runtime / Syntax Issue Detected',
@@ -676,7 +806,8 @@ Return ONLY JSON matching schema:
     }
   ]
 }`;
-    const result = await this.generateJSON<GeneratedAssessment>(prompt);
+    // 🟠 BALANCED — structured output + creative problem design
+    const result = await this.generateJSON<GeneratedAssessment>(prompt, undefined, PROFILE.balanced);
     if (result && Array.isArray(result.questions) && result.questions.length > 0) return result;
 
     return {
@@ -751,7 +882,8 @@ Return ONLY JSON matching this EXACT schema:
   }
 ]`;
 
-    const result = await this.generateJSON<GeneratedDailyProblem[]>(prompt);
+    // 🟠 BALANCED — creative + accurate problem generation
+    const result = await this.generateJSON<GeneratedDailyProblem[]>(prompt, undefined, PROFILE.balanced);
     if (Array.isArray(result) && result.length >= 3) {
       return result.map((p, idx) => ({
         ...p,
@@ -896,7 +1028,8 @@ Return ONLY JSON matching schema:
     }
   ]
 }`;
-    const result = await this.generateJSON<AssessmentGradeResult>(prompt);
+    // 🔴 ACCURACY — grading fairness requires deep code understanding
+    const result = await this.generateJSON<AssessmentGradeResult>(prompt, undefined, PROFILE.accuracy);
     if (result && typeof result.totalScore === 'number') return result;
 
     const attemptedCount = Object.keys(answers).filter(k => answers[k]?.trim()).length;
@@ -972,7 +1105,8 @@ Return ONLY JSON matching this EXACT schema:
 Code:
 ${code}`;
 
-    const result = await this.generateJSON<CodeMetricsResult>(prompt);
+    // 🟡 CODE-STRUCTURED — qwen excels at deep structured metric analysis
+    const result = await this.generateJSON<CodeMetricsResult>(prompt, undefined, PROFILE.codeStructured);
     if (result && typeof result.cyclomaticComplexity === 'number') return result;
 
     // Dynamic Code Metrics Inspection
@@ -1103,7 +1237,8 @@ ${expectedOutput || 'Matches original program output'}
 Original Source Code:
 ${code}`;
 
-    let result = await this.generateJSON<{ shortestCode: string; techniquesUsed: string[]; explanation: string }>(prompt);
+    // 🟡 CODE-STRUCTURED — qwen excels at code golf and compression
+    let result = await this.generateJSON<{ shortestCode: string; techniquesUsed: string[]; explanation: string }>(prompt, undefined, PROFILE.codeStructured);
 
     let sCode = result?.shortestCode || '';
     const isHardcodedCheat = sCode.includes('console.log("Student Marks Report\\n--------------------\\nAman : 85\\nRahul : 78\\nPriya : 92\\nNeha : 88\\n--------------------\\nAverage Marks: 85.75")') ||
@@ -1190,7 +1325,8 @@ Return ONLY JSON matching this EXACT schema:
 Code:
 ${code}`;
 
-    const result = await this.generateJSON<any>(prompt);
+    // 🔴 ACCURACY — semantic + structural comparison needs deep reasoning
+    const result = await this.generateJSON<any>(prompt, undefined, PROFILE.accuracy);
     if (result && result.type && Array.isArray(result.children)) return result;
 
     // Deep Dynamic Code-Specific AST Tree Generator
@@ -1340,7 +1476,8 @@ Return ONLY JSON matching schema:
   "category": "string (e.g. 'Control Flow', 'Variable', 'Standard Library', 'Type')"
 }`;
 
-    const result = await this.generateJSON<HoverExplanationResult>(prompt);
+    // 🟢 SPEED — inline hover must return in <1s, 20b is fastest
+    const result = await this.generateJSON<HoverExplanationResult>(prompt, undefined, PROFILE.speed);
     if (result && result.title && result.explanation) return result;
 
     return {
