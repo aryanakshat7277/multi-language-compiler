@@ -9,6 +9,7 @@ export const config = {
   redisUrl: process.env.REDIS_URL || 'redis://localhost:6379',
   geminiApiKey: process.env.GEMINI_API_KEY || '',
   geminiApiKeyFallback: process.env.GEMINI_API_KEY_FALLBACK || '',
+  geminiApiKeyFallback2: process.env.GEMINI_API_KEY_FALLBACK_2 || '',
   groqApiKey: process.env.GROQ_API_KEY || '',
   logLevel: process.env.LOG_LEVEL || 'info',
   rateLimitWindowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '60000', 10),

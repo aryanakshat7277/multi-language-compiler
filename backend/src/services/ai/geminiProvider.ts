@@ -12,6 +12,7 @@ export class GeminiProvider implements AIProvider {
     const rawKeys = [
       config.geminiApiKey,
       config.geminiApiKeyFallback,
+      config.geminiApiKeyFallback2,
       process.env.GEMINI_API_KEY_FALLBACK_2
     ].filter(Boolean);
 
