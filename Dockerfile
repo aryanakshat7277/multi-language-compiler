@@ -40,8 +40,8 @@ ENV VITE_FIREBASE_MESSAGING_SENDER_ID=$VITE_FIREBASE_MESSAGING_SENDER_ID
 ENV VITE_FIREBASE_APP_ID=$VITE_FIREBASE_APP_ID
 ENV VITE_FIREBASE_MEASUREMENT_ID=$VITE_FIREBASE_MEASUREMENT_ID
 
-# Generate Prisma Client, build database schema and seed
-RUN cd backend && npx prisma generate && npx prisma db push && npx prisma db seed
+# Generate Prisma Client (build phase)
+RUN cd backend && npx prisma generate
 RUN npm run build:frontend
 RUN npm run build:backend
 

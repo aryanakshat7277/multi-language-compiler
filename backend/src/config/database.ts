@@ -5,26 +5,23 @@ const prisma = new PrismaClient({
   log: process.env.NODE_ENV === 'development' ? ['warn', 'error'] : ['error']
 });
 
-// Configure High-Concurrency SQLite PRAGMAs (WAL Mode, Busy Timeout, Synchronous Normal)
-(async () => {
-  try {
-    // WAL (Write-Ahead Logging): non-blocking concurrent readers & writers
-    await prisma.$queryRawUnsafe('PRAGMA journal_mode = WAL;');
-    // Set 10-second busy timeout so concurrent transactions wait instead of erroring with SQLITE_BUSY
-    await prisma.$queryRawUnsafe('PRAGMA busy_timeout = 10000;');
-    // Synchronous = NORMAL: safe and high performance on modern SSDs
-    await prisma.$queryRawUnsafe('PRAGMA synchronous = NORMAL;');
-    // Cache size = 10,000 pages (~40MB RAM cache for instant reads)
-    await prisma.$queryRawUnsafe('PRAGMA cache_size = 10000;');
-    // In-memory temp store for sort/group-by operations
-    await prisma.$queryRawUnsafe('PRAGMA temp_store = MEMORY;');
-    // Memory-mapped I/O (up to 30GB) for zero-copy kernel reads
-    await prisma.$queryRawUnsafe('PRAGMA mmap_size = 30000000000;');
-    await prisma.$queryRawUnsafe('PRAGMA foreign_keys = ON;');
-    logger.info('Database initialized with High-Concurrency WAL mode (busy_timeout=10s, mmap enabled)');
-  } catch (err: any) {
-    logger.warn(`SQLite PRAGMA tuning notice: ${err.message}`);
-  }
-})();
+// SQLite-only PRAGMAs (only execute if explicitly running SQLite)
+if (process.env.DATABASE_URL?.startsWith('file:')) {
+  (async () => {
+    try {
+      await prisma.$queryRawUnsafe('PRAGMA journal_mode = WAL;');
+      await prisma.$queryRawUnsafe('PRAGMA busy_timeout = 10000;');
+      await prisma.$queryRawUnsafe('PRAGMA synchronous = NORMAL;');
+      await prisma.$queryRawUnsafe('PRAGMA cache_size = 10000;');
+      await prisma.$queryRawUnsafe('PRAGMA temp_store = MEMORY;');
+      await prisma.$queryRawUnsafe('PRAGMA foreign_keys = ON;');
+      logger.info('Database initialized with High-Concurrency SQLite WAL mode');
+    } catch (err: any) {
+      logger.warn(`SQLite PRAGMA tuning notice: ${err.message}`);
+    }
+  })();
+} else {
+  logger.info('Database initialized with Production PostgreSQL engine');
+}
 
 export default prisma;

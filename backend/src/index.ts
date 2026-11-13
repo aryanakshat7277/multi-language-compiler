@@ -142,10 +142,33 @@ async function bootstrap() {
   // 6. Setup WebSocket Server on same HTTP port
   setupWebSocket(server);
 
-  // 7. Database Connection
+  // 7. Database Connection & Schema Sync
   try {
     await prisma.$connect();
     logger.info('Connected to database via Prisma');
+
+    // Automatically synchronize schema & ensure seed data in production PostgreSQL
+    if (process.env.DATABASE_URL && !process.env.DATABASE_URL.startsWith('file:')) {
+      try {
+        const { execSync } = await import('child_process');
+        logger.info('Verifying and synchronizing database schema via Prisma...');
+        execSync('npx prisma db push --skip-generate --accept-data-loss', {
+          stdio: 'inherit',
+          env: process.env
+        });
+        logger.info('Database schema verified & synchronized.');
+
+        // Seed master admin & default languages if empty
+        const langCount = await prisma.language.count();
+        if (langCount === 0) {
+          logger.info('Seeding default languages and problems...');
+          execSync('node prisma/seed.js', { stdio: 'inherit', env: process.env });
+          logger.info('Database successfully seeded.');
+        }
+      } catch (syncErr: any) {
+        logger.warn(`Database sync notice: ${syncErr.message}`);
+      }
+    }
   } catch (err) {
     logger.error('Failed to connect to database', err);
     process.exit(1);

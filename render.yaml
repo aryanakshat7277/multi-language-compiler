@@ -1,3 +1,10 @@
+databases:
+  - name: codeforge-postgres
+    databaseName: codeforge
+    user: codeforge_admin
+    plan: free
+    region: oregon
+
 services:
   - type: web
     name: codeforge-pro
@@ -11,7 +18,9 @@ services:
       - key: PORT
         value: 3001
       - key: DATABASE_URL
-        value: file:/app/backend/prisma/dev.db
+        fromDatabase:
+          name: codeforge-postgres
+          property: connectionString
       - key: JWT_SECRET
         generateValue: true
       - key: JWT_EXPIRES_IN
