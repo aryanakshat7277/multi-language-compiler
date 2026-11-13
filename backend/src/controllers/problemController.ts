@@ -2,12 +2,32 @@ import { Request, Response, NextFunction } from 'express';
 import { ProblemService } from '../services/problemService';
 import { AuthRequest } from '../middleware/auth';
 
+// In-memory cache for high-concurrency problem browsing across 500-800+ concurrent users
+interface CacheEntry<T> {
+  data: T;
+  expiresAt: number;
+}
+const problemsCache = new Map<string, CacheEntry<any>>();
+const invalidateProblemsCache = () => problemsCache.clear();
+
 export const getProblems = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const page = parseInt(req.query.page as string) || 1;
     const pageSize = parseInt(req.query.pageSize as string) || 20;
     const filters = { difficulty: req.query.difficulty as string | undefined, search: req.query.search as string | undefined };
+    
+    const cacheKey = `${page}_${pageSize}_${filters.difficulty || ''}_${filters.search || ''}`;
+    const now = Date.now();
+    const cached = problemsCache.get(cacheKey);
+    if (cached && cached.expiresAt > now) {
+      res.setHeader('X-Cache', 'HIT');
+      res.status(200).json(cached.data);
+      return;
+    }
+
     const result = await ProblemService.getProblems(filters, page, pageSize);
+    problemsCache.set(cacheKey, { data: result, expiresAt: now + 25000 }); // 25s TTL
+    res.setHeader('X-Cache', 'MISS');
     res.status(200).json(result);
   } catch (error) { next(error); }
 };
@@ -25,6 +45,7 @@ export const getProblemById = async (req: AuthRequest, res: Response, next: Next
 export const createProblem = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const problem = await ProblemService.createProblem(req.user!.id, req.body);
+    invalidateProblemsCache();
     res.status(201).json(problem);
   } catch (error) { next(error); }
 };
@@ -33,6 +54,7 @@ export const updateProblem = async (req: AuthRequest, res: Response, next: NextF
   try {
     const id = req.params.id as string;
     const problem = await ProblemService.updateProblem(id, req.body);
+    invalidateProblemsCache();
     res.status(200).json(problem);
   } catch (error) { next(error); }
 };
@@ -41,6 +63,7 @@ export const deleteProblem = async (req: AuthRequest, res: Response, next: NextF
   try {
     const id = req.params.id as string;
     await ProblemService.deleteProblem(id);
+    invalidateProblemsCache();
     res.status(204).send();
   } catch (error) { next(error); }
 };

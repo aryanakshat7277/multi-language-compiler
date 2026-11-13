@@ -16,6 +16,9 @@ async function bootstrap() {
   const app = express();
   const server = http.createServer(app);
 
+  // Trust first proxy hop (Render / Cloudflare reverse proxy)
+  app.set('trust proxy', 1);
+
   // 1. Security Headers (Monaco Editor, OAuth Popup & WebSocket friendly CSP)
   app.use(
     helmet({
