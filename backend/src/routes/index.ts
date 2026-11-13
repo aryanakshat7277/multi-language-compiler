@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import * as os from 'os';
+import * as path from 'path';
+import * as fs from 'fs';
 import { validate } from '../middleware/validation';
 import { authenticate, optionalAuth } from '../middleware/auth';
 import { requireRole } from '../middleware/rbac';
@@ -31,6 +33,25 @@ router.get('/health/ready', compilationControllerV1.getReadiness);
 
 // Phase 1 Unified Compilation Architecture (v1)
 router.use('/v1', v1CompilationRoutes);
+
+// Official AI Stress Test & Capacity Report (PDF)
+router.get('/reports/ai-stress-test', (_req, res) => {
+  const candidatePaths = [
+    path.resolve(process.cwd(), 'CodeForge_Pro_AI_Stress_Test_Report.pdf'),
+    path.resolve(process.cwd(), 'backend/CodeForge_Pro_AI_Stress_Test_Report.pdf'),
+    path.resolve(process.cwd(), '../CodeForge_Pro_AI_Stress_Test_Report.pdf'),
+    path.resolve(__dirname, '../../CodeForge_Pro_AI_Stress_Test_Report.pdf'),
+    path.resolve(__dirname, '../CodeForge_Pro_AI_Stress_Test_Report.pdf'),
+    path.resolve(__dirname, '../../../CodeForge_Pro_AI_Stress_Test_Report.pdf')
+  ];
+  const pdfPath = candidatePaths.find(p => fs.existsSync(p));
+  if (pdfPath) {
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'inline; filename="CodeForge_Pro_AI_Stress_Test_Report.pdf"');
+    return res.sendFile(pdfPath);
+  }
+  res.status(404).json({ error: 'Stress test report PDF not found' });
+});
 
 // Production System Telemetry & Health Monitoring
 router.get('/health/telemetry', (_req, res) => {
