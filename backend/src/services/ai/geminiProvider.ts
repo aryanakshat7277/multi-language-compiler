@@ -37,51 +37,60 @@ export class GeminiProvider implements AIProvider {
     }
 
     // 2. High-Speed Primary Engine: Groq LPU (Sub-300ms, 14,400 free req/day)
-    if (config.groqApiKey) {
-      const groqModels = ['openai/gpt-oss-120b', 'qwen/qwen3.8-27b'];
-      for (const model of groqModels) {
-        try {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 4000);
-          const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${config.groqApiKey}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              model,
-              messages: [
-                { 
-                  role: 'system', 
-                  content: 'You are an expert programming AI assistant. You MUST return ONLY a valid, parseable JSON object matching the requested schema. Do NOT include markdown code blocks, backticks, or conversational commentary.' 
-                },
-                { role: 'user', content: prompt }
-              ],
-              response_format: { type: 'json_object' },
-              temperature: 0.15
-            }),
-            signal: controller.signal
-          });
-          clearTimeout(timeoutId);
+    const rawGroqKeys = [
+      config.groqApiKey,
+      config.groqApiKeyFallback,
+      process.env.GROQ_API_KEY_FALLBACK
+    ].filter(Boolean);
+    const groqKeys = Array.from(new Set(rawGroqKeys));
 
-          if (response.ok) {
-            const data: any = await response.json();
-            const content = data.choices?.[0]?.message?.content;
-            if (content) {
-              const cleaned = content.replace(/^```json\s*/i, '').replace(/```\s*$/i, '').trim();
-              const parsed = JSON.parse(cleaned) as T;
-              // Cache for 30 minutes
-              if (GeminiProvider.responseCache.size > 1000) {
-                const oldest = GeminiProvider.responseCache.keys().next().value;
-                if (oldest) GeminiProvider.responseCache.delete(oldest);
+    if (groqKeys.length > 0) {
+      const groqModels = ['openai/gpt-oss-120b', 'qwen/qwen3.8-27b'];
+      for (const groqKey of groqKeys) {
+        for (const model of groqModels) {
+          try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 4000);
+            const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${groqKey}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                model,
+                messages: [
+                  { 
+                    role: 'system', 
+                    content: 'You are an expert programming AI assistant. You MUST return ONLY a valid, parseable JSON object matching the requested schema. Do NOT include markdown code blocks, backticks, or conversational commentary.' 
+                  },
+                  { role: 'user', content: prompt }
+                ],
+                response_format: { type: 'json_object' },
+                temperature: 0.15
+              }),
+              signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+
+            if (response.ok) {
+              const data: any = await response.json();
+              const content = data.choices?.[0]?.message?.content;
+              if (content) {
+                const cleaned = content.replace(/^```json\s*/i, '').replace(/```\s*$/i, '').trim();
+                const parsed = JSON.parse(cleaned) as T;
+                // Cache for 30 minutes
+                if (GeminiProvider.responseCache.size > 1000) {
+                  const oldest = GeminiProvider.responseCache.keys().next().value;
+                  if (oldest) GeminiProvider.responseCache.delete(oldest);
+                }
+                GeminiProvider.responseCache.set(cacheKey, { data: parsed, expiresAt: Date.now() + 30 * 60 * 1000 });
+                return parsed;
               }
-              GeminiProvider.responseCache.set(cacheKey, { data: parsed, expiresAt: Date.now() + 30 * 60 * 1000 });
-              return parsed;
             }
+          } catch (err: any) {
+            logger.warn(`[Groq AI] ${model} attempt failed: ${err.message}. Trying next engine/key...`);
           }
-        } catch (err: any) {
-          logger.warn(`[Groq AI] ${model} attempt failed: ${err.message}. Trying next engine...`);
         }
       }
     }

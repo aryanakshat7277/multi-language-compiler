@@ -11,6 +11,7 @@ export const config = {
   geminiApiKeyFallback: process.env.GEMINI_API_KEY_FALLBACK || '',
   geminiApiKeyFallback2: process.env.GEMINI_API_KEY_FALLBACK_2 || '',
   groqApiKey: process.env.GROQ_API_KEY || '',
+  groqApiKeyFallback: process.env.GROQ_API_KEY_FALLBACK || '',
   logLevel: process.env.LOG_LEVEL || 'info',
   rateLimitWindowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '60000', 10),
   rateLimitMax: parseInt(process.env.RATE_LIMIT_MAX || '20000', 10),
