@@ -4,6 +4,18 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>CodeForge — Multi-Language Compiler Platform</title>
+    <!-- Preconnect to Render backend and warm it up immediately upon page load -->
+    <link rel="preconnect" href="https://codeforge-pro.onrender.com" crossorigin />
+    <link rel="dns-prefetch" href="https://codeforge-pro.onrender.com" />
+    <script>
+      (function() {
+        try {
+          // Immediately ping Render backend to trigger cold start while page renders
+          fetch('/api/compiler/health', { cache: 'no-store' }).catch(function(){});
+          fetch('https://codeforge-pro.onrender.com/api/compiler/health', { mode: 'no-cors', cache: 'no-store' }).catch(function(){});
+        } catch(e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

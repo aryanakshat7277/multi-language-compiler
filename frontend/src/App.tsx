@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import AppLayout from './components/layout/AppLayout';
 import DashboardPage from './pages/DashboardPage';
@@ -22,6 +23,17 @@ import { CodeProvider } from './contexts/CodeContext';
 import { ProtectedRoute } from './components/common/ProtectedRoute';
 
 function App() {
+  // Pre-warm backend on initial visit and keep it awake while user is active
+  useEffect(() => {
+    const pingBackend = () => {
+      fetch('/api/compiler/health', { cache: 'no-store' }).catch(() => {});
+    };
+    pingBackend();
+    // Ping every 10 minutes (Render free tier sleeps after 15 minutes of inactivity)
+    const interval = setInterval(pingBackend, 10 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <AuthProvider>
       <CodeProvider>

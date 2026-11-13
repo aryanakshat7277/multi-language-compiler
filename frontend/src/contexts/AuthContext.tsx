@@ -69,6 +69,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         role: firebaseUser.email?.toLowerCase() === 'aryanakshat7277@gmail.com' ? 'ADMIN' : 'STUDENT',
         avatarUrl: firebaseUser.photoURL || undefined
       });
+
+      // Background retry: if backend was cold-starting on Render, retry token exchange after 6 seconds
+      setTimeout(async () => {
+        try {
+          const retryToken = await firebaseUser.getIdToken();
+          const retryRes = await api.post<{ token: string; user?: User }>('/auth/firebase', { idToken: retryToken });
+          if (retryRes?.token) {
+            localStorage.setItem('token', retryRes.token);
+          }
+          if (retryRes?.user) {
+            setUser(retryRes.user);
+          }
+        } catch (_) {}
+      }, 6000);
     } finally {
       setIsLoading(false);
     }
