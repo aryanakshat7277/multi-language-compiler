@@ -105,6 +105,16 @@ router.post('/ast/parse', analysisRateLimiter, async (req: any, res: any, next: 
     const { code, language } = req.body;
     if (!code) return res.status(400).json({ error: 'code is required' });
     const ast = await parseCode(code, language || 'python');
+    if (ast && (ast.error || ast.type === 'SyntaxError')) {
+      return res.json({ 
+        success: false, 
+        error: ast.error || ast.type, 
+        message: ast.message || ast.name || 'Syntax error in source code', 
+        line: ast.line || 1, 
+        column: ast.column || 1, 
+        language: language || 'python' 
+      });
+    }
     res.json({ success: true, ast, language: language || 'python' });
   } catch (e) { next(e); }
 });

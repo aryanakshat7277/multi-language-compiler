@@ -44,34 +44,48 @@ function fromBabel(n: any, idGen: () => string): AstNode | null {
   return r;
 }
 
-function parseJsTs(code: string, lang: string): AstNode {
+function parseJsTs(code: string, lang: string): AstNode | { error: string; message: string; line: number; column: number } {
   const idGen = createIdGenerator("n");
-  const ast = P.parse(code, {
-    sourceType: "module",
-    errorRecovery: true,
-    plugins: lang === "typescript" ? ["typescript", "decorators-legacy"] : ["jsx", "decorators-legacy"]
-  });
-  return fromBabel(ast.program, idGen) ?? { id: idGen(), name: "Program", type: "File" };
+  try {
+    const ast = P.parse(code, {
+      sourceType: "module",
+      errorRecovery: false,
+      plugins: lang === "typescript" ? ["typescript", "decorators-legacy"] : ["jsx", "decorators-legacy"]
+    });
+    return fromBabel(ast.program, idGen) ?? { id: idGen(), name: "Program", type: "File" };
+  } catch (err: any) {
+    return {
+      error: "SyntaxError",
+      message: err.message?.split('\n')[0] || "JavaScript/TypeScript syntax error",
+      line: err.loc?.line || 1,
+      column: err.loc?.column || 1
+    };
+  }
 }
 
-function parsePython(code: string): Promise<AstNode> {
+function parsePython(code: string): Promise<AstNode | { error: string; message: string; line: number; column: number }> {
   return new Promise(resolve => {
     const idGen = createIdGenerator("n");
     const script = `
-import ast,json,sys
-def cv(n,c=[0]):
- c[0]+=1; nid=f"n{c[0]}"
- if not isinstance(n,ast.AST):return{"id":nid,"name":str(n),"type":type(n).__name__} if not isinstance(n,(list,type(None))) else None
- nm=type(n).__name__
- for a in["name","id","attr","arg"]:
-  if hasattr(n,a) and isinstance(getattr(n,a),str): nm=getattr(n,a); break
- ch=[x for f,v in ast.iter_fields(n) for x in ([cv(i,c) for i in v] if isinstance(v,list) else [cv(v,c)]) if x]
- r={"id":nid,"name":nm,"type":type(n).__name__}
- if hasattr(n,"lineno"):r["line"]=n.lineno
- if ch:r["children"]=ch
+import ast, json, sys
+def cv(n, c=[0]):
+ c[0] += 1; nid = f"n{c[0]}"
+ if not isinstance(n, ast.AST): return {"id": nid, "name": str(n), "type": type(n).__name__} if not isinstance(n, (list, type(None))) else None
+ nm = type(n).__name__
+ for a in ["name", "id", "attr", "arg"]:
+  if hasattr(n, a) and isinstance(getattr(n, a), str): nm = getattr(n, a); break
+ ch = [x for f, v in ast.iter_fields(n) for x in ([cv(i, c) for i in v] if isinstance(v, list) else [cv(v, c)]) if x]
+ r = {"id": nid, "name": nm, "type": type(n).__name__}
+ if hasattr(n, "lineno"): r["line"] = n.lineno
+ if ch: r["children"] = ch
  return r
-try:print(json.dumps(cv(ast.parse(sys.stdin.read()))))
-except Exception as e:print(json.dumps({"id":"n1","name":str(e),"type":"SyntaxError"}))
+try:
+ tree = ast.parse(sys.stdin.read())
+ print(json.dumps(cv(tree)))
+except SyntaxError as e:
+ print(json.dumps({"error": "SyntaxError", "message": e.msg or str(e), "line": e.lineno or 1, "column": e.offset or 1}))
+except Exception as e:
+ print(json.dumps({"error": "SyntaxError", "message": str(e), "line": 1, "column": 1}))
 `;
     const proc = spawn("python", ["-c", script]);
     let out = "";
@@ -80,7 +94,8 @@ except Exception as e:print(json.dumps({"id":"n1","name":str(e),"type":"SyntaxEr
     proc.stdin.end();
     proc.on("close", () => {
       try {
-        resolve(JSON.parse(out.trim()));
+        const parsed = JSON.parse(out.trim());
+        resolve(parsed);
       } catch {
         resolve({ id: idGen(), name: "ParseError", type: "Error" });
       }
@@ -110,12 +125,24 @@ function fallback(code: string, lang: string): AstNode {
 
 export async function parseCode(code: string, language: string): Promise<any> {
   if (!code?.trim()) return { id: "n1", type: "EmptyFile", value: "Empty" };
+
+  const l = (language || "javascript").toLowerCase();
+
+  // 1. Strict Syntax Verification for JavaScript / TypeScript / Python
+  if (l === "javascript" || l === "js" || l === "typescript" || l === "ts") {
+    const res = parseJsTs(code, l.includes("ts") ? "typescript" : "javascript");
+    if ((res as any)?.error) return res;
+  } else if (l === "python" || l === "python3" || l === "py") {
+    const res = await parsePython(code);
+    if ((res as any)?.error) return res;
+  }
+
+  // 2. If syntax is valid, generate rich AST
   try {
     const geminiAst = await aiProvider.generateAst(code, language);
-    if (geminiAst) return geminiAst;
+    if (geminiAst && !geminiAst.error) return geminiAst;
   } catch (e) {}
 
-  const l = language.toLowerCase();
   if (l === "javascript" || l === "js") return parseJsTs(code, "javascript");
   if (l === "typescript" || l === "ts") return parseJsTs(code, "typescript");
   if (l === "python" || l === "python3" || l === "py") return parsePython(code);

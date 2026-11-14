@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Editor from '@monaco-editor/react';
 import { 
-  Zap, Sparkles, Loader2, FileCode, Play, Terminal, CheckCircle2, Copy, Check, ArrowRight
+  Zap, Sparkles, Loader2, FileCode, Play, Terminal, CheckCircle2, Copy, Check, ArrowRight, AlertTriangle
 } from 'lucide-react';
 import { getShortestCode, ShortestCodeResult, api } from '../services/api';
 import { useToast } from '../contexts/ToastContext';
@@ -39,6 +39,7 @@ export default function CodeShortenerPage() {
   const [result, setResult] = useState<ShortestCodeResult | null>(null);
   const [origOutput, setOrigOutput] = useState<string | null>(null);
   const [shortOutput, setShortOutput] = useState<string | null>(null);
+  const [hasError, setHasError] = useState<boolean>(false);
 
   const { showToast } = useToast();
 
@@ -63,20 +64,34 @@ export default function CodeShortenerPage() {
     setResult(null);
     setOrigOutput(null);
     setShortOutput(null);
+    setHasError(false);
 
     const fn = getFilename(language);
 
     try {
-      // 1. Run user's original code on backend compiler to get baseline stdout output
+      // 1. Run user's original code on backend compiler to verify correctness & get baseline stdout
       const resA = await api.post('/compiler/execute', {
         language,
         files: [{ name: fn, content: code }],
         stdin: stdinInput
       });
 
+      const isCompileErr = resA?.status === 'COMPILATION_ERROR' || (resA?.compile && resA?.compile.code !== 0);
+      const isRuntimeErr = resA?.status === 'RUNTIME_ERROR' || (resA?.run && resA?.run.code !== 0);
       const stdOutA = resA?.run?.stdout || resA?.compile?.stdout || '';
-      const stdErrA = resA?.run?.stderr || resA?.compile?.stderr || '';
-      const finalOrigOut = (stdOutA ? stdOutA : '') + (stdErrA ? (stdOutA ? '\n' : '') + 'Errors:\n' + stdErrA : '') || '➜ Executed cleanly with no stdout';
+      const stdErrA = resA?.compile?.stderr || resA?.run?.stderr || '';
+
+      if (isCompileErr || isRuntimeErr || stdErrA) {
+        const errorMsg = stdErrA || 'Code execution failed with non-zero exit code.';
+        setHasError(true);
+        setOrigOutput(errorMsg);
+        setShortOutput('⚠️ Cannot generate shortest code for erroneous or non-compiling programs. Please fix errors first.');
+        showToast('Original code contains errors! Please write working code first.', 'error');
+        setLoading(false);
+        return;
+      }
+
+      const finalOrigOut = stdOutA || '➜ Executed cleanly with no stdout';
       setOrigOutput(finalOrigOut);
 
       // 2. Call AI model API to generate the shortest code producing exact same output
@@ -327,6 +342,24 @@ export default function CodeShortenerPage() {
               </div>
             </div>
           </>
+        ) : hasError ? (
+          <div style={{ background: '#FCE8E0', border: '1.5px solid #C85A32', borderRadius: 8, padding: '18px 20px', color: '#8A2A0B', margin: '20px 0' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 800, fontSize: 14 }}>
+              <AlertTriangle size={18} style={{ color: '#C85A32' }} />
+              <span>Original Code Execution Failed: Cannot Generate Shortest Code</span>
+            </div>
+            <p style={{ margin: '8px 0 12px', fontSize: 12.5, lineHeight: 1.45, color: '#5C4E44' }}>
+              CodeForge AI requires your original program to compile and run cleanly with valid stdout before it can synthesize and verify the shortest golfed version. Please resolve the compilation / runtime error below:
+            </p>
+            <div style={{ background: '#2D231E', borderRadius: 6, padding: '12px 14px', border: '1px solid #3F332C' }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#DE7048', marginBottom: 6, fontFamily: 'var(--font-mono)' }}>
+                ● COMPILER / RUNTIME OUTPUT:
+              </div>
+              <pre style={{ margin: 0, color: '#F5ECE3', fontSize: 12, overflowX: 'auto', fontFamily: 'var(--font-mono)', whiteSpace: 'pre-wrap' }}>
+                {origOutput}
+              </pre>
+            </div>
+          </div>
         ) : (
           <div className="empty-shortener-state">
             Write or paste any code above and click <strong>Run & Generate Shortest Code</strong>. CodeForge AI will execute your code, analyze its exact stdout, and synthesize the shortest possible program in that language!

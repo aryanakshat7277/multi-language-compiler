@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import Editor, { useMonaco } from '@monaco-editor/react';
 import { 
   GitBranch, Search, CornerDownRight, 
-  Code2, Sparkles, Loader2, Layers, Cpu
+  Code2, Sparkles, Loader2, Layers, Cpu, AlertTriangle
 } from 'lucide-react';
 import { api } from '../services/api';
 import { useToast } from '../contexts/ToastContext';
@@ -37,6 +37,7 @@ export default function AstVisualizationPage() {
   const [filterQuery, setFilterQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [hasGenerated, setHasGenerated] = useState(true);
+  const [syntaxError, setSyntaxError] = useState<{ message: string; line: number; column: number } | null>(null);
   const editorRef = useRef<any>(null);
   const monaco = useMonaco();
   const decorationsRef = useRef<string[]>([]);
@@ -145,18 +146,57 @@ export default function AstVisualizationPage() {
 
   const handleGenerate = async () => {
     setLoading(true);
+    setSyntaxError(null);
     try {
       const res = await api.post('/ast/parse', { code, language });
+
+      if (res && res.success === false) {
+        const line = res.line || 1;
+        const col = res.column || 1;
+        const msg = res.message || 'Syntax error in source code.';
+        setSyntaxError({ message: msg, line, column: col });
+
+        // Highlight error on Monaco editor
+        if (editorRef.current && monaco) {
+          const model = editorRef.current.getModel();
+          if (model) {
+            monaco.editor.setModelMarkers(model, 'ast-syntax-error', [
+              {
+                startLineNumber: line,
+                startColumn: col,
+                endLineNumber: line,
+                endColumn: col + 10,
+                message: msg,
+                severity: monaco.MarkerSeverity.Error
+              }
+            ]);
+            editorRef.current.revealLineInCenter(line);
+          }
+        }
+        showToast(`⚠️ Syntax error at line ${line}: ${msg}`, 'error');
+        setHasGenerated(true);
+        return;
+      }
+
+      // If valid, clear editor markers
+      if (editorRef.current && monaco) {
+        const model = editorRef.current.getModel();
+        if (model) {
+          monaco.editor.setModelMarkers(model, 'ast-syntax-error', []);
+        }
+      }
+
       if (res && res.ast) {
         setAstTree(res.ast);
-        showToast('AI AST Hierarchy parsed successfully!', 'success');
+        showToast('✓ AST Hierarchy parsed successfully!', 'success');
       } else if (res && res.astJson) {
         setAstTree(res.astJson);
-        showToast('AST Hierarchy parsed successfully!', 'success');
+        showToast('✓ AST Hierarchy parsed successfully!', 'success');
       }
       setHasGenerated(true);
     } catch (e: any) {
       setHasGenerated(true);
+      setSyntaxError({ message: e.message || 'Error parsing AST tree', line: 1, column: 1 });
       showToast(e.message || 'Error parsing AST tree', 'error');
     } finally {
       setLoading(false);
@@ -269,13 +309,31 @@ export default function AstVisualizationPage() {
             </div>
           )}
 
-          {hasGenerated && (
+          {hasGenerated && syntaxError && (
+            <div style={{ padding: '24px', margin: '16px', background: '#FCE8E0', border: '1.5px solid #C85A32', borderRadius: '8px', color: '#8A2A0B' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 800, fontSize: '14px', marginBottom: '8px' }}>
+                <AlertTriangle size={18} style={{ color: '#C85A32' }} />
+                <span>Cannot Build AST: Syntax Error Detected</span>
+              </div>
+              <p style={{ margin: '0 0 12px', fontSize: '12.5px', color: '#5C4E44', lineHeight: 1.45 }}>
+                An Abstract Syntax Tree (AST) can only be generated for syntactically correct programs. The parser encountered a fatal syntax violation:
+              </p>
+              <div style={{ background: '#2D231E', color: '#F5ECE3', padding: '10px 14px', borderRadius: '6px', fontFamily: 'var(--font-mono)', fontSize: '12px' }}>
+                ● Line {syntaxError.line}, Col {syntaxError.column}: {syntaxError.message}
+              </div>
+              <div style={{ marginTop: '12px', fontSize: '11.5px', color: '#7A6B61', fontWeight: 600 }}>
+                💡 Fix the syntax error highlighted with the red marker in the left editor and click "Generate AST" again.
+              </div>
+            </div>
+          )}
+
+          {hasGenerated && !syntaxError && astTree && (
             <div className="ast-tree-scroll-list">
               {renderAstBranch(astTree)}
             </div>
           )}
 
-          {hasGenerated && selectedNode && (
+          {hasGenerated && !syntaxError && selectedNode && (
             <div className="node-detail-dock">
               <div className="detail-node-name">Selected AST Node: <strong>{selectedNode.type}</strong></div>
               <div className="detail-node-meta">

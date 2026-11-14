@@ -11,7 +11,7 @@ import {
   ResponsiveContainer, CartesianGrid, RadarChart, 
   PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar 
 } from 'recharts';
-import { getCodeMetrics } from '../services/api';
+import { getCodeMetrics, validateCodeCorrectness } from '../services/api';
 import { useCode } from '../contexts/CodeContext';
 import { useToast } from '../contexts/ToastContext';
 import { registerMonacoThemes } from '../utils/monacoThemes';
@@ -99,6 +99,10 @@ export default function CodeAnalysisPage() {
   const [selectedMetric, setSelectedMetric] = useState<string>('complexity');
   const [vulnerabilitiesCount, setVulnerabilitiesCount] = useState<number>(0);
   const [maxConfidence, setMaxConfidence] = useState<string>('99.2% Max');
+  const [validationError, setValidationError] = useState<string | null>(null);
+  const [validationLine, setValidationLine] = useState<number | undefined>(undefined);
+  const editorRef = React.useRef<any>(null);
+  const monacoRef = React.useRef<any>(null);
 
   const [radarData, setRadarData] = useState([
     { subject: 'Cyclomatic', value: 85, fullMark: 100 },
@@ -136,15 +140,115 @@ export default function CodeAnalysisPage() {
 
   const handleAnalyze = async () => {
     setLoading(true);
-    setScanningStep('1/3: Transmitting code to CodeForge AI...');
+    setScanningStep('1/3: Validating code compilation & syntax...');
 
     try {
-      const stepTimer1 = setTimeout(() => setScanningStep('2/3: Computing Cyclomatic & Maintainability Metrics...'), 400);
-      const stepTimer2 = setTimeout(() => setScanningStep('3/3: Synthesizing Security Vulnerabilities & Radar Graph...'), 800);
+      // Step 1: Pre-flight Code Correctness & Compilation Validation
+      const valRes = await validateCodeCorrectness(code, language);
 
+      if (!valRes.isValid) {
+        const errorText = valRes.error || 'Code failed compilation or syntax validation.';
+        setValidationError(errorText);
+        setValidationLine(valRes.line);
+
+        // Highlight error line on Monaco editor
+        if (editorRef.current && monacoRef.current) {
+          const model = editorRef.current.getModel();
+          if (model) {
+            monacoRef.current.editor.setModelMarkers(model, 'compiler-validation', [
+              {
+                startLineNumber: valRes.line || 1,
+                startColumn: 1,
+                endLineNumber: valRes.line || 1,
+                endColumn: 100,
+                message: errorText,
+                severity: monacoRef.current.MarkerSeverity.Error
+              }
+            ]);
+            if (valRes.line) {
+              editorRef.current.revealLineInCenter(valRes.line);
+            }
+          }
+        }
+
+        // Drop metrics to F/Invalid status — do NOT give good metrics for wrong code!
+        setMetricsDef({
+          complexity: {
+            id: 'complexity',
+            title: 'Cyclomatic Complexity',
+            score: 0,
+            grade: 'N/A (Syntax Error)',
+            statusText: 'Unparsable Flow Graph',
+            color: '#C85A32',
+            percent: 0,
+            analysis: `Control flow graph cannot be constructed due to compilation error: ${errorText}`,
+            location: valRes.line ? `Line ${valRes.line}` : 'Syntax error',
+            recommendation: 'Fix compiler errors to evaluate branching paths.'
+          },
+          maintainability: {
+            id: 'maintainability',
+            title: 'Maintainability Index',
+            score: 0,
+            grade: 'F (Invalid Code)',
+            statusText: 'Compilation Failed • 0/100',
+            color: '#C85A32',
+            percent: 0,
+            analysis: `Code contains critical compilation errors and cannot be built or executed. Maintainability cannot be calculated for an invalid program.`,
+            location: valRes.line ? `Line ${valRes.line}` : 'Global scope',
+            recommendation: 'Resolve the compilation or syntax error shown above.'
+          },
+          duplication: {
+            id: 'duplication',
+            title: 'Code Duplication',
+            score: 0,
+            grade: 'Inconclusive',
+            statusText: 'Invalid Code',
+            color: '#8B5A2B',
+            percent: 0,
+            analysis: 'Duplication analysis requires valid syntax tokens.',
+            location: 'N/A',
+            recommendation: 'Fix code errors first.'
+          },
+          similarity: {
+            id: 'similarity',
+            title: 'Code Similarity',
+            score: 0,
+            grade: 'Inconclusive',
+            statusText: 'Invalid Code',
+            color: '#8B5A2B',
+            percent: 0,
+            analysis: 'Code DNA comparison cannot compare uncompilable code.',
+            location: 'N/A',
+            recommendation: 'Fix code errors first.'
+          }
+        });
+
+        setRadarData([
+          { subject: 'Cyclomatic', value: 0, fullMark: 100 },
+          { subject: 'Maintainability', value: 0, fullMark: 100 },
+          { subject: 'Duplication', value: 0, fullMark: 100 },
+          { subject: 'Similarity', value: 0, fullMark: 100 },
+        ]);
+        setMaxConfidence('0% (Code Invalid)');
+        setVulnerabilitiesCount(1);
+        showToast('⚠️ Code compilation failed! Please fix syntax errors.', 'error');
+        setLoading(false);
+        setScanningStep('');
+        return;
+      }
+
+      // Step 2: Code is valid! Clear markers & errors, then compute full metrics
+      setValidationError(null);
+      setValidationLine(undefined);
+      if (editorRef.current && monacoRef.current) {
+        const model = editorRef.current.getModel();
+        if (model) {
+          monacoRef.current.editor.setModelMarkers(model, 'compiler-validation', []);
+        }
+      }
+
+      setScanningStep('2/3: Computing Cyclomatic & Maintainability Metrics...');
       const response = await getCodeMetrics(code, language);
-      clearTimeout(stepTimer1);
-      clearTimeout(stepTimer2);
 
       if (response) {
         // Token stats
@@ -308,6 +412,8 @@ export default function CodeAnalysisPage() {
               registerMonacoHoverProvider(monaco, language);
             }}
             onMount={(editor, monaco) => {
+              editorRef.current = editor;
+              monacoRef.current = monaco;
               registerMonacoHoverProvider(monaco, language);
             }}
             value={code}
@@ -354,17 +460,62 @@ export default function CodeAnalysisPage() {
           </div>
 
           <div className="header-chips-row">
-            <span className={vulnerabilitiesCount === 0 ? "clay-pill pill-forest" : "clay-pill pill-terracotta"}>
-              {vulnerabilitiesCount === 0 ? <CheckCircle2 size={12} /> : <AlertCircle size={12} />}
-              <span>{vulnerabilitiesCount === 0 ? "0 Vulnerabilities" : `${vulnerabilitiesCount} Vulnerability Detected`}</span>
+            {validationError ? (
+              <span className="clay-pill pill-terracotta" style={{ fontWeight: 800 }}>
+                <AlertCircle size={12} />
+                <span>Compilation / Syntax Error</span>
+              </span>
+            ) : (
+              <span className="clay-pill pill-forest" style={{ fontWeight: 800 }}>
+                <CheckCircle2 size={12} />
+                <span>Compilation Validated</span>
+              </span>
+            )}
+            <span className={vulnerabilitiesCount === 0 && !validationError ? "clay-pill pill-forest" : "clay-pill pill-terracotta"}>
+              {vulnerabilitiesCount === 0 && !validationError ? <CheckCircle2 size={12} /> : <AlertCircle size={12} />}
+              <span>{validationError ? "Code Invalid" : vulnerabilitiesCount === 0 ? "0 Vulnerabilities" : `${vulnerabilitiesCount} Vulnerability Detected`}</span>
             </span>
           </div>
         </div>
 
         <div className="metrics-body-scroll">
+          {/* Validation Alert Banner for Invalid Code */}
+          {validationError && (
+            <div style={{ 
+              background: '#FCE8E0', 
+              border: '1.5px solid #C85A32', 
+              borderRadius: '8px', 
+              padding: '12px 16px', 
+              marginBottom: '16px', 
+              color: '#8A2A0B',
+              boxShadow: '0 2px 8px rgba(200, 90, 50, 0.15)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 800, fontSize: '13.5px' }}>
+                <AlertCircle size={16} style={{ color: '#C85A32' }} />
+                <span>Code Correctness Check Failed: Compilation Error Detected</span>
+              </div>
+              <p style={{ margin: '6px 0 8px', fontSize: '12px', lineHeight: 1.4, color: '#5C4E44' }}>
+                Quality metrics (Maintainability, Cyclomatic Complexity, and Radar Graph) require valid compilable code. Please fix the compiler error below:
+              </p>
+              <pre style={{ 
+                background: '#2D231E', 
+                color: '#F5ECE3', 
+                padding: '8px 12px', 
+                borderRadius: '6px', 
+                fontSize: '11.5px', 
+                overflowX: 'auto', 
+                margin: 0,
+                fontFamily: 'var(--font-mono)',
+                whiteSpace: 'pre-wrap'
+              }}>
+                {validationError}
+              </pre>
+            </div>
+          )}
+
           {/* 1. Interactive 4 Metric Gauge Tiles with Circular Rings */}
           <div className="interactive-metrics-grid">
-            {Object.entries(METRIC_DEFINITIONS).map(([key, item]) => {
+            {Object.entries(metricsDef).map(([key, item]) => {
               const isAct = selectedMetric === key;
               return (
                 <motion.div 

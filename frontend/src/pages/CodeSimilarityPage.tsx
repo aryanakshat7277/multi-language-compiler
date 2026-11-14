@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import Editor from '@monaco-editor/react';
 import { 
-  GitCompare, Sparkles, Loader2, FileCode, Play, Terminal
+  GitCompare, Sparkles, Loader2, FileCode, Play, Terminal, AlertTriangle, CheckCircle2
 } from 'lucide-react';
-import { getCodeSimilarity, SimilarityResult, api } from '../services/api';
+import { getCodeSimilarity, validateCodeCorrectness, SimilarityResult, api } from '../services/api';
 import { useToast } from '../contexts/ToastContext';
 import { registerMonacoThemes } from '../utils/monacoThemes';
 import { formatToPoints } from '../utils/bulletPoints';
@@ -39,6 +39,7 @@ export default function CodeSimilarityPage() {
   const [language, setLanguage] = useState('javascript');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<SimilarityResult | null>(null);
+  const [validationFailed, setValidationFailed] = useState<boolean>(false);
 
   // Execution Outputs for Program A & B
   const [outputA, setOutputA] = useState<string | null>(null);
@@ -66,40 +67,45 @@ export default function CodeSimilarityPage() {
 
   const handleCompareAndRun = async () => {
     setLoading(true);
+    setValidationFailed(false);
+
     try {
-      // 1. Instantly get real AI Code Similarity
+      // Step 1: Pre-flight Code Correctness Validation for BOTH Program A & B
+      const [valA, valB] = await Promise.all([
+        validateCodeCorrectness(codeA, language, stdinInput),
+        validateCodeCorrectness(codeB, language, stdinInput)
+      ]);
+
+      setOutputA(valA.isValid ? (valA.stdout || '➜ Program A executed cleanly') : `❌ Program A Compilation/Runtime Error:\n${valA.error}`);
+      setOutputB(valB.isValid ? (valB.stdout || '➜ Program B executed cleanly') : `❌ Program B Compilation/Runtime Error:\n${valB.error}`);
+
+      if (!valA.isValid || !valB.isValid) {
+        setValidationFailed(true);
+        setResult({
+          lexicalScore: 0,
+          structuralScore: 0,
+          astScore: 0,
+          semanticScore: 0,
+          algorithmScore: 0,
+          overallScore: 0,
+          explanation: `⚠️ Code DNA Analysis Inconclusive: One or both programs failed compilation/execution. Program A is ${valA.isValid ? 'valid' : 'invalid (compilation error)'} and Program B is ${valB.isValid ? 'valid' : 'invalid (compilation error)'}. Algorithmic DNA similarity requires both programs to be syntactically valid and executable.`,
+          details: {
+            lexicalDetails: valA.isValid ? 'Program A verified clean' : 'Program A failed compilation',
+            structuralDetails: valB.isValid ? 'Program B verified clean' : 'Program B failed compilation',
+            astDetails: 'Inconclusive comparison'
+          }
+        });
+        showToast('⚠️ Cannot compare: One or both programs contain errors!', 'error');
+        setLoading(false);
+        return;
+      }
+
+      // Step 2: Both programs verified valid! Proceed with full similarity calculation
       const simRes = await getCodeSimilarity(codeA, codeB, language);
       if (simRes) {
         setResult(simRes);
-        showToast('AI Code DNA Comparison complete!', 'success');
+        showToast('✓ AI Code DNA Comparison verified & complete!', 'success');
       }
-
-      // 2. Concurrently execute Program A and B in background
-      const fn = getFilename(language);
-      api.post('/compiler/execute', {
-        language,
-        files: [{ name: fn, content: codeA }],
-        stdin: stdinInput
-      }).then(resA => {
-        const outA = resA?.run?.stdout || resA?.compile?.stdout || '';
-        const errA = resA?.run?.stderr || resA?.compile?.stderr || '';
-        setOutputA((outA ? outA : '') + (errA ? (outA ? '\n' : '') + 'Errors:\n' + errA : '') || '➜ Program A executed cleanly');
-      }).catch(e => {
-        setOutputA(`➜ Execution error: ${e.message || 'Error running Program A'}`);
-      });
-
-      api.post('/compiler/execute', {
-        language,
-        files: [{ name: fn, content: codeB }],
-        stdin: stdinInput
-      }).then(resB => {
-        const outB = resB?.run?.stdout || resB?.compile?.stdout || '';
-        const errB = resB?.run?.stderr || resB?.compile?.stderr || '';
-        setOutputB((outB ? outB : '') + (errB ? (outB ? '\n' : '') + 'Errors:\n' + errB : '') || '➜ Program B executed cleanly');
-      }).catch(e => {
-        setOutputB(`➜ Execution error: ${e.message || 'Error running Program B'}`);
-      });
-
     } catch (e: any) {
       showToast(e.message || 'Error computing similarity', 'error');
     } finally {
@@ -208,17 +214,33 @@ export default function CodeSimilarityPage() {
 
       {/* Bottom Diagnostics & Live Outputs */}
       <div className="similarity-bottom-stats-card">
+        {validationFailed && (
+          <div style={{ background: '#FCE8E0', border: '1.5px solid #C85A32', borderRadius: '8px', padding: '12px 16px', margin: '0 0 16px', color: '#8A2A0B' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 800, fontSize: '13.5px' }}>
+              <AlertTriangle size={16} style={{ color: '#C85A32' }} />
+              <span>Code Correctness Check Failed: One or Both Programs Contain Errors</span>
+            </div>
+            <p style={{ margin: '6px 0 0', fontSize: '12px', color: '#5C4E44', lineHeight: 1.4 }}>
+              Algorithmic DNA similarity requires both programs to be syntactically valid and executable. Check the console outputs below to see the exact compiler or runtime errors.
+            </p>
+          </div>
+        )}
+
         {result ? (
           <>
             <div className="stats-top-row">
               <div className="stats-score-left">
-                <div className={`score-badge-circle ${isHighRisk ? 'high-risk' : 'low-risk'}`}>
+                <div className={`score-badge-circle ${validationFailed ? 'high-risk' : isHighRisk ? 'high-risk' : 'low-risk'}`}>
                   <span className="score-huge">{overallScorePct}%</span>
-                  <span className="score-label">MATCH</span>
+                  <span className="score-label">{validationFailed ? 'ERROR' : 'MATCH'}</span>
                 </div>
                 <div className="verdict-summary">
-                  <h4 style={{ color: isHighRisk ? '#C85A32' : '#2A5A3D' }}>
-                    {isHighRisk ? '⚠️ High Structural Similarity / Plagiarism Risk' : '✓ Low Similarity / Distinct Implementations'}
+                  <h4 style={{ color: validationFailed ? '#C85A32' : isHighRisk ? '#C85A32' : '#2A5A3D' }}>
+                    {validationFailed 
+                      ? '⚠️ Inconclusive: Code Execution / Compilation Failure' 
+                      : isHighRisk 
+                      ? '⚠️ High Structural Similarity / Plagiarism Risk' 
+                      : '✓ Low Similarity / Distinct Implementations'}
                   </h4>
                   <ul className="verdict-points-list">
                     {formatToPoints(result.explanation || (isHighRisk 

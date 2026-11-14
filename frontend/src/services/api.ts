@@ -152,6 +152,89 @@ export async function getCodeMetrics(sourceCode: string, languageId: string): Pr
   return api.post('/code-analysis', { sourceCode, languageId });
 }
 
+// ─── Code Correctness & Validation ───────────────────────────────────────────
+export interface CodeValidationResult {
+  isValid: boolean;
+  status: 'SUCCESS' | 'COMPILATION_ERROR' | 'RUNTIME_ERROR' | 'SYNTAX_ERROR' | 'UNKNOWN';
+  error?: string;
+  line?: number;
+  column?: number;
+  stdout?: string;
+  stderr?: string;
+}
+
+export const getFilenameForLang = (lang: string): string => {
+  const l = (lang || '').toLowerCase();
+  if (l === 'python' || l === 'py') return 'main.py';
+  if (l === 'cpp' || l === 'c++') return 'main.cpp';
+  if (l === 'c') return 'main.c';
+  if (l === 'java') return 'Main.java';
+  if (l === 'typescript' || l === 'ts') return 'main.ts';
+  if (l === 'go') return 'main.go';
+  if (l === 'rust' || l === 'rs') return 'main.rs';
+  if (l === 'php') return 'main.php';
+  if (l === 'ruby' || l === 'rb') return 'main.rb';
+  return 'main.js';
+};
+
+export async function validateCodeCorrectness(
+  sourceCode: string,
+  languageId: string,
+  stdin: string = ''
+): Promise<CodeValidationResult> {
+  if (!sourceCode || !sourceCode.trim()) {
+    return {
+      isValid: false,
+      status: 'SYNTAX_ERROR',
+      error: 'Source code is empty.',
+      line: 1
+    };
+  }
+
+  try {
+    const fn = getFilenameForLang(languageId);
+    const res = await api.post('/compiler/execute', {
+      language: languageId,
+      files: [{ name: fn, content: sourceCode }],
+      stdin
+    });
+
+    const isCompileErr = res?.status === 'COMPILATION_ERROR' || (res?.compile && res?.compile.code !== 0);
+    const isRuntimeErr = res?.status === 'RUNTIME_ERROR' || (res?.run && res?.run.code !== 0);
+    const compileErr = res?.compile?.stderr || res?.compile?.output || '';
+    const runErr = res?.run?.stderr || res?.run?.output || '';
+    const errText = compileErr || (isRuntimeErr ? runErr : '');
+
+    if (isCompileErr || isRuntimeErr || errText) {
+      let lineNum: number | undefined;
+      const lineMatch = errText.match(/(?:line\s+|:)(\d+)(?::|\b)/i);
+      if (lineMatch) {
+        lineNum = parseInt(lineMatch[1], 10);
+      }
+
+      return {
+        isValid: false,
+        status: isCompileErr ? 'COMPILATION_ERROR' : 'RUNTIME_ERROR',
+        error: errText.trim() || 'Code contains compilation or runtime errors.',
+        line: lineNum,
+        stderr: errText
+      };
+    }
+
+    return {
+      isValid: true,
+      status: 'SUCCESS',
+      stdout: res?.run?.stdout || res?.compile?.stdout || ''
+    };
+  } catch (err: any) {
+    return {
+      isValid: false,
+      status: 'UNKNOWN',
+      error: err.message || 'Execution error during validation'
+    };
+  }
+}
+
 // ─── Code Similarity ─────────────────────────────────────────────────────────
 export interface SimilarityResult {
   lexicalScore: number;

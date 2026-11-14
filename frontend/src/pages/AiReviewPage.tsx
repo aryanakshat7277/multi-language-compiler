@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
 import Editor from '@monaco-editor/react';
 import { Brain, Sparkles, Loader2, Bug, CheckCircle2, Zap, AlertTriangle, Tag, Play } from 'lucide-react';
-import { getAiExplanation, getAiTests, getAiDebug, getAiReview, ExplanationResult, TestsResult, DebugResult, ReviewResult } from '../services/api';
+import { 
+  getAiExplanation, getAiTests, getAiDebug, getAiReview, 
+  validateCodeCorrectness,
+  ExplanationResult, TestsResult, DebugResult, ReviewResult 
+} from '../services/api';
 import { useToast } from '../contexts/ToastContext';
 import { registerMonacoThemes } from '../utils/monacoThemes';
 import { formatToPoints } from '../utils/bulletPoints';
@@ -30,6 +34,7 @@ export default function AiReviewPage() {
   const [result, setResult] = useState<any>(null);
   const [errorOutput, setErrorOutput] = useState('');
   const [problemDesc, setProblemDesc] = useState('');
+  const [compilationWarning, setCompilationWarning] = useState<string | null>(null);
   const { showToast } = useToast();
 
   const modes = [
@@ -42,14 +47,54 @@ export default function AiReviewPage() {
   const handleAnalyze = async () => {
     setLoading(true);
     setResult(null);
+    setCompilationWarning(null);
+
     try {
+      // Step 1: Pre-flight Code Correctness Validation
+      const valRes = await validateCodeCorrectness(code, language);
+
+      let activeErr = errorOutput;
+      if (!valRes.isValid) {
+        setCompilationWarning(valRes.error || 'Code failed compilation/syntax check.');
+        if (mode === 'debug') {
+          // If debugging and no error was manually typed, auto-populate real compiler error!
+          if (!activeErr && valRes.error) {
+            activeErr = valRes.error;
+            setErrorOutput(valRes.error);
+          }
+        } else if (mode === 'tests') {
+          // Cannot generate valid test cases for uncompilable code!
+          setLoading(false);
+          showToast('⚠️ Code fails compilation! Fix code before generating tests.', 'error');
+          return;
+        }
+      }
+
       let res: any;
-      if (mode === 'explain') res = await getAiExplanation(code, language);
-      else if (mode === 'tests') res = await getAiTests(code, language, problemDesc);
-      else if (mode === 'debug') res = await getAiDebug(code, errorOutput, language);
-      else if (mode === 'review') res = await getAiReview(code, language);
+      if (mode === 'explain') {
+        res = await getAiExplanation(code, language);
+      } else if (mode === 'tests') {
+        res = await getAiTests(code, language, problemDesc);
+      } else if (mode === 'debug') {
+        res = await getAiDebug(code, activeErr, language);
+      } else if (mode === 'review') {
+        res = await getAiReview(code, language);
+        if (!valRes.isValid && res) {
+          // Inject compilation failure as the primary critical issue
+          res.issues = [
+            { 
+              line: valRes.line || 1, 
+              message: `Fatal Compilation/Syntax Error: ${valRes.error}`, 
+              severity: 'high' 
+            },
+            ...(res.issues || [])
+          ];
+          res.overallQuality = 0; // Uncompilable code cannot have a high quality score
+        }
+      }
+
       setResult(res);
-      showToast('AI Analysis complete!', 'success');
+      showToast(valRes.isValid ? 'AI Analysis complete!' : '⚠️ Analysis completed with compilation warnings', valRes.isValid ? 'success' : 'warning');
     } catch (e: any) {
       showToast(e.message || 'Error contacting AI service', 'error');
     } finally {
@@ -148,6 +193,23 @@ export default function AiReviewPage() {
         </div>
 
         <div className="ai-output-scroll-container">
+          {compilationWarning && (
+            <div style={{ background: '#FCE8E0', border: '1.5px solid #C85A32', borderRadius: 8, padding: '14px 18px', margin: '16px', color: '#8A2A0B' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 800, fontSize: 13.5 }}>
+                <AlertTriangle size={16} style={{ color: '#C85A32' }} />
+                <span>Code Correctness Warning: Compilation / Syntax Error</span>
+              </div>
+              <p style={{ margin: '6px 0 0', fontSize: 12, color: '#5C4E44', lineHeight: 1.4 }}>
+                {mode === 'tests' 
+                  ? 'Test generation cannot validate broken code. Please fix the compiler error below:' 
+                  : 'This code contains syntax or compilation errors and will fail to execute:'}
+              </p>
+              <pre style={{ background: '#2D231E', color: '#F5ECE3', padding: '8px 12px', borderRadius: 6, margin: '8px 0 0', fontSize: 11.5, fontFamily: 'var(--font-mono)', overflowX: 'auto', whiteSpace: 'pre-wrap' }}>
+                {compilationWarning}
+              </pre>
+            </div>
+          )}
+
           {!result && !loading && (
             <div className="empty-state-container">
               <div className="empty-state-circle violet"><Brain size={48} className="empty-state-icon" /></div>
