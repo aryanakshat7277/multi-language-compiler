@@ -174,7 +174,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
             </div>
             <div>
               <h3 className="modal-title">Feedback &amp; Issue Reporting</h3>
-              <p className="modal-sub">Direct Line to Platform Administrators</p>
+              <p className="modal-sub">Direct Line to Platform Administrator: <strong style={{ color: '#BA4F27', letterSpacing: '0.04em' }}>AKSHAT ARYAN</strong></p>
             </div>
           </div>
           <button className="modal-close-btn" onClick={onClose} title="Close">
@@ -189,7 +189,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
             </div>
             <h4>Report Successfully Dispatched!</h4>
             <p>
-              Thank you for helping us elevate CodeForge Pro. Your submission has been securely recorded and sent to the platform administrators for review.
+              Thank you for helping us elevate CodeForge Pro. Your submission has been securely recorded and sent to Platform Administrator <strong>AKSHAT ARYAN</strong> for review.
             </p>
             <div className="success-meta-card">
               <div className="meta-row">
@@ -442,7 +442,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
             <div className="feedback-modal-footer">
               <div className="footer-admin-note">
                 <HelpCircle size={13} />
-                <span>Submissions are encrypted and only accessible to system administrators.</span>
+                <span>Submissions are encrypted and only accessible to Administrator <strong>AKSHAT ARYAN</strong>.</span>
               </div>
 
               <div className="footer-btn-group">

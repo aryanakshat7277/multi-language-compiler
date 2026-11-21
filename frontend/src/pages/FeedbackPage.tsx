@@ -156,11 +156,11 @@ export default function FeedbackPage() {
             <h1>Feedback, Bug Reports &amp; Feature Proposals</h1>
             <span className="confidential-badge">
               <ShieldCheck size={13} />
-              <span>Admin Confidential</span>
+              <span>Admin: AKSHAT ARYAN</span>
             </span>
           </div>
           <p className="hero-subtitle">
-            Encountered an issue or have ideas on how a section should be modified? Submit your feedback or feature suggestions below. Uploading a screenshot is optional. All reports are delivered exclusively to system administrators.
+            Encountered an issue or have ideas on how a section should be modified? Submit your feedback or feature suggestions below. Uploading a screenshot is optional. All reports are delivered directly to Platform Administrator <strong>AKSHAT ARYAN</strong>.
           </p>
         </div>
       </div>
@@ -172,7 +172,7 @@ export default function FeedbackPage() {
           </div>
           <h2>Thank You! Your Submission Has Been Recorded</h2>
           <p>
-            Your report has been securely registered in the platform database and routed directly to the administrator control center.
+            Your report has been securely registered in the platform database and routed directly to Administrator <strong>AKSHAT ARYAN</strong>.
           </p>
           <div className="success-meta-card">
             <div className="meta-row">
@@ -427,7 +427,7 @@ export default function FeedbackPage() {
             <div className="page-form-footer">
               <div className="security-notice">
                 <HelpCircle size={14} />
-                <span>Confidential: Only administrators can view submitted reports and screenshots.</span>
+                <span>Confidential: Only Platform Administrator <strong>AKSHAT ARYAN</strong> can view submitted reports and screenshots.</span>
               </div>
 
               <button 

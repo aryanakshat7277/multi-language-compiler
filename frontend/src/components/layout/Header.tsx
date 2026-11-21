@@ -157,7 +157,7 @@ const Header: React.FC<HeaderProps> = ({
         {onOpenFeedback && (
           <button 
             className="feedback-header-btn" 
-            title="Report an issue or suggest a feature to administrators" 
+            title="Report an issue or suggest a feature to Administrator AKSHAT ARYAN" 
             onClick={() => onOpenFeedback('BUG_REPORT')}
           >
             <MessageSquarePlus size={16} />
