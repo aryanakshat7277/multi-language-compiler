@@ -7,7 +7,7 @@
 FROM node:20-slim AS builder
 WORKDIR /app
 
-ENV DATABASE_URL="file:/app/backend/prisma/dev.db"
+ENV DATABASE_URL="postgresql://postgres:postgres@localhost:5432/codeforge?schema=public"
 
 # Install build tools & openssl for Prisma
 RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
@@ -40,7 +40,8 @@ ENV VITE_FIREBASE_MESSAGING_SENDER_ID=$VITE_FIREBASE_MESSAGING_SENDER_ID
 ENV VITE_FIREBASE_APP_ID=$VITE_FIREBASE_APP_ID
 ENV VITE_FIREBASE_MEASUREMENT_ID=$VITE_FIREBASE_MEASUREMENT_ID
 
-# Generate Prisma Client (build phase)
+# Ensure Prisma schema is configured for PostgreSQL and generate client
+RUN node scripts/switch-database.js postgres
 RUN cd backend && npx prisma generate
 RUN npm run build:frontend
 RUN npm run build:backend
@@ -51,7 +52,7 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV PORT=3001
-ENV DATABASE_URL="file:/app/backend/prisma/dev.db"
+ENV DATABASE_URL="postgresql://postgres:postgres@localhost:5432/codeforge?schema=public"
 
 # Install standard compiler toolchains for local sandbox execution
 RUN apt-get update && apt-get install -y --no-install-recommends \

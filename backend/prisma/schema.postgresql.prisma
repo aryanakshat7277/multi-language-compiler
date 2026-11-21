@@ -92,6 +92,7 @@ model User {
   assessments    Assessment[]
   assessmentSub  AssessmentSubmission[]
   progress       UserProgress?
+  feedbacks      Feedback[]
 }
 
 model Language {
@@ -319,4 +320,43 @@ model UserProgress {
   successRate      Float        @default(0)
   avgScore         Float        @default(0)
   codeQuality      Float        @default(0)
+}
+
+enum FeedbackType {
+  BUG_REPORT
+  FEATURE_REQUEST
+  IMPROVEMENT
+}
+
+enum FeedbackStatus {
+  PENDING
+  UNDER_REVIEW
+  RESOLVED
+  DISMISSED
+}
+
+enum FeedbackSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+model Feedback {
+  id             String           @id @default(uuid())
+  userId         String?
+  user           User?            @relation(fields: [userId], references: [id])
+  userName       String?
+  userEmail      String?
+  type           FeedbackType     @default(BUG_REPORT)
+  section        String
+  title          String
+  description    String
+  suggestedFix   String?
+  screenshotUrl  String?
+  severity       FeedbackSeverity @default(MEDIUM)
+  status         FeedbackStatus   @default(PENDING)
+  adminNotes     String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
 }
