@@ -183,8 +183,11 @@ async function bootstrap() {
         }
 
         // Seed master admin & default languages if empty
-        const langCount = await prisma.language.count();
-        if (langCount === 0 && seedPath) {
+        const [langCount, problemCount] = await Promise.all([
+          prisma.language.count().catch(() => 0),
+          prisma.problem.count().catch(() => 0)
+        ]);
+        if ((langCount === 0 || problemCount === 0) && seedPath) {
           logger.info(`Seeding default languages and problems with seed: ${seedPath}...`);
           execSync(`node "${seedPath}"`, { stdio: 'inherit', env: process.env });
           logger.info('Database successfully seeded.');

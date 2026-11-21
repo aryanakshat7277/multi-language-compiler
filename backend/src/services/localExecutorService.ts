@@ -351,8 +351,35 @@ export class LocalExecutorService {
         cmd = this.findBinary('node');
         args = [mainFilePath, ...(request.args || [])];
       } else if (lang.includes('ts') || lang === 'typescript') {
-        cmd = this.findBinary('node');
-        args = ['--experimental-strip-types', mainFilePath, ...(request.args || [])];
+        try {
+          const ts = await import('typescript');
+          for (const f of (request.files || [])) {
+            const fileName = f?.name;
+            if (fileName && (fileName.endsWith('.ts') || fileName.endsWith('.tsx'))) {
+              const fullTsPath = path.join(tempDir, fileName);
+              if (fs.existsSync(fullTsPath)) {
+                const tsCode = fs.readFileSync(fullTsPath, 'utf8');
+                const transpiled = ts.transpileModule(tsCode, {
+                  compilerOptions: {
+                    module: ts.ModuleKind.CommonJS,
+                    target: ts.ScriptTarget.ES2022,
+                    esModuleInterop: true,
+                    allowJs: true
+                  }
+                });
+                const jsPath = fullTsPath.replace(/\.tsx?$/, '.js');
+                fs.writeFileSync(jsPath, transpiled.outputText, 'utf8');
+              }
+            }
+          }
+          const jsMain = mainFilePath.replace(/\.tsx?$/, '.js');
+          cmd = this.findBinary('node');
+          args = [fs.existsSync(jsMain) ? jsMain : mainFilePath, ...(request.args || [])];
+        } catch (tsErr: any) {
+          logger.warn(`TypeScript in-memory transpilation notice: ${tsErr.message}`);
+          cmd = this.findBinary('node');
+          args = [mainFilePath, ...(request.args || [])];
+        }
       } else if (lang === 'c' || lang === 'gcc') {
         const isWin = process.platform === 'win32';
         const outBin = path.join(tempDir, isWin ? 'main.exe' : 'main.out');

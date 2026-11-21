@@ -4,7 +4,7 @@
 # ==============================================================================
 
 # ─── STAGE 1: Frontend & Backend Builder ──────────────────────────────────────
-FROM node:20-slim AS builder
+FROM node:22-slim AS builder
 WORKDIR /app
 
 ENV DATABASE_URL="postgresql://postgres:postgres@localhost:5432/codeforge?schema=public"
@@ -47,7 +47,7 @@ RUN npm run build:frontend
 RUN npm run build:backend
 
 # ─── STAGE 2: Production Container Runtime ────────────────────────────────────
-FROM node:20-slim AS runner
+FROM node:22-slim AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production

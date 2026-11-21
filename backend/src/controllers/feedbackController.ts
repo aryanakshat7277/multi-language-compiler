@@ -211,3 +211,29 @@ export const deleteFeedback = async (req: Request, res: Response, next: NextFunc
     next(error);
   }
 };
+
+/**
+ * GET /api/feedback/stats
+ * Aggregate metrics and counts for feedback & issue reports
+ */
+export const getFeedbackStats = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const [total, pending, bugs, features, resolved] = await Promise.all([
+      prisma.feedback.count(),
+      prisma.feedback.count({ where: { status: 'PENDING' } }),
+      prisma.feedback.count({ where: { type: 'BUG_REPORT' } }),
+      prisma.feedback.count({ where: { type: 'FEATURE_REQUEST' } }),
+      prisma.feedback.count({ where: { status: 'RESOLVED' } })
+    ]);
+
+    res.status(200).json({
+      total,
+      pending,
+      bugs,
+      features,
+      resolved
+    });
+  } catch (error) {
+    next(error);
+  }
+};

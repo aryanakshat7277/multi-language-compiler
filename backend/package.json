@@ -30,6 +30,7 @@
     "ioredis": "^5.5.0",
     "jsonwebtoken": "^9.0.2",
     "prisma": "^6.3.0",
+    "typescript": "^5.7.0",
     "web-tree-sitter": "^0.24.0",
     "winston": "^3.17.0",
     "ws": "^8.18.0",
@@ -43,7 +44,6 @@
     "@types/node": "^22.13.0",
     "@types/ws": "^8.5.13",
     "tsx": "^4.19.0",
-    "typescript": "^5.7.0",
     "vitest": "^3.0.0"
   },
   "prisma": {

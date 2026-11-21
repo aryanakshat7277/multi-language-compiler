@@ -154,6 +154,7 @@ router.put('/admin/languages/:id', authenticate, requireRole('ADMIN'), adminCont
 
 // User Feedback & Issue Reporting (Available to all users)
 router.post('/feedback', optionalAuth, feedbackController.createFeedback);
+router.get('/feedback/stats', optionalAuth, feedbackController.getFeedbackStats);
 
 // Administrator Feedback Review & Management (RESTRICTED: ONLY ADMIN)
 router.get('/admin/feedback', authenticate, requireRole('ADMIN'), feedbackController.getFeedbackList);
