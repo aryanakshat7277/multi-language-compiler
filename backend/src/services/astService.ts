@@ -128,23 +128,24 @@ export async function parseCode(code: string, language: string): Promise<any> {
 
   const l = (language || "javascript").toLowerCase();
 
-  // 1. Strict Syntax Verification for JavaScript / TypeScript / Python
+  // 1. Instant native AST generation for JavaScript / TypeScript (Babel parser, <1ms)
   if (l === "javascript" || l === "js" || l === "typescript" || l === "ts") {
-    const res = parseJsTs(code, l.includes("ts") ? "typescript" : "javascript");
-    if ((res as any)?.error) return res;
-  } else if (l === "python" || l === "python3" || l === "py") {
-    const res = await parsePython(code);
-    if ((res as any)?.error) return res;
+    return parseJsTs(code, l.includes("ts") ? "typescript" : "javascript");
   }
 
-  // 2. If syntax is valid, generate rich AST
+  // 2. Native AST generation for Python (Local AST parser)
+  if (l === "python" || l === "python3" || l === "py") {
+    return parsePython(code);
+  }
+
+  // 3. For other languages, try AI AST generator with fast 1.5s timeout or high-speed AST fallback
   try {
-    const geminiAst = await aiProvider.generateAst(code, language);
-    if (geminiAst && !geminiAst.error) return geminiAst;
+    const geminiAst = await Promise.race([
+      aiProvider.generateAst(code, language),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 1500))
+    ]);
+    if (geminiAst && !(geminiAst as any).error) return geminiAst;
   } catch (e) {}
 
-  if (l === "javascript" || l === "js") return parseJsTs(code, "javascript");
-  if (l === "typescript" || l === "ts") return parseJsTs(code, "typescript");
-  if (l === "python" || l === "python3" || l === "py") return parsePython(code);
   return fallback(code, l);
 }
