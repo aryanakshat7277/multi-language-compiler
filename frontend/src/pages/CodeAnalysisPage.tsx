@@ -4,14 +4,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   BarChart3, Shield, Zap, CheckCircle2, 
   Sparkles, Loader2, Info, Activity, Cpu, 
-  Layers, Compass, ArrowUpRight, Gauge, AlertCircle
+  Layers, Compass, ArrowUpRight, Gauge, AlertCircle,
+  Wrench, AlertTriangle
 } from 'lucide-react';
 import { 
   AreaChart, Area, XAxis, YAxis, Tooltip, 
   ResponsiveContainer, CartesianGrid, RadarChart, 
   PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar 
 } from 'recharts';
-import { getCodeMetrics, validateCodeCorrectness } from '../services/api';
+import { getCodeMetrics, validateCodeCorrectness, debugCode, DebugResult } from '../services/api';
 import { useCode } from '../contexts/CodeContext';
 import { useToast } from '../contexts/ToastContext';
 import { registerMonacoThemes } from '../utils/monacoThemes';
@@ -101,6 +102,8 @@ export default function CodeAnalysisPage() {
   const [maxConfidence, setMaxConfidence] = useState<string>('99.2% Max');
   const [validationError, setValidationError] = useState<string | null>(null);
   const [validationLine, setValidationLine] = useState<number | undefined>(undefined);
+  const [isFixing, setIsFixing] = useState<boolean>(false);
+  const [diagnosisResult, setDiagnosisResult] = useState<DebugResult | null>(null);
   const editorRef = React.useRef<any>(null);
   const monacoRef = React.useRef<any>(null);
 
@@ -138,13 +141,14 @@ export default function CodeAnalysisPage() {
     return () => clearTimeout(timer);
   }, [code, language]);
 
-  const handleAnalyze = async () => {
+  const handleAnalyze = async (codeOverride?: string) => {
+    const activeCode = codeOverride || code;
     setLoading(true);
     setScanningStep('1/3: Validating code compilation & syntax...');
 
     try {
       // Step 1: Pre-flight Code Correctness & Compilation Validation
-      const valRes = await validateCodeCorrectness(code, language);
+      const valRes = await validateCodeCorrectness(activeCode, language);
 
       if (!valRes.isValid) {
         const errorText = valRes.error || 'Code failed compilation or syntax validation.';
@@ -248,7 +252,7 @@ export default function CodeAnalysisPage() {
       }
 
       setScanningStep('2/3: Computing Cyclomatic & Maintainability Metrics...');
-      const response = await getCodeMetrics(code, language);
+      const response = await getCodeMetrics(activeCode, language);
 
       if (response) {
         // Token stats
@@ -370,6 +374,62 @@ export default function CodeAnalysisPage() {
     }
   };
 
+  const handleDiagnoseAndFix = async () => {
+    if (!code || !code.trim()) return;
+    setIsFixing(true);
+    showToast('Diagnosing compiler error & synthesizing repair...', 'info');
+
+    try {
+      const errToDiagnose = validationError || 'Syntax or compilation error in source code.';
+      const res = await debugCode(code, errToDiagnose, language);
+      setDiagnosisResult(res);
+
+      if (res && res.fix && res.fix.trim().length > 0 && res.fix.trim() !== code.trim()) {
+        const repairedCode = res.fix;
+        setCode(repairedCode);
+        if (editorRef.current) {
+          editorRef.current.setValue(repairedCode);
+        }
+        if (editorRef.current && monacoRef.current) {
+          const model = editorRef.current.getModel();
+          if (model) {
+            monacoRef.current.editor.setModelMarkers(model, 'compiler-validation', []);
+          }
+        }
+        setValidationError(null);
+        setValidationLine(undefined);
+        showToast('✓ Code repaired successfully! Re-running analysis...', 'success');
+        await handleAnalyze(repairedCode);
+      } else {
+        showToast('Diagnostic completed. See pointwise root cause breakdown below.', 'info');
+      }
+    } catch (err: any) {
+      console.error('Diagnosis failed:', err);
+      showToast(err?.message || 'Failed to auto-repair code.', 'error');
+    } finally {
+      setIsFixing(false);
+    }
+  };
+
+  const getDiagnosticPoints = () => {
+    if (diagnosisResult?.errorPoints && diagnosisResult.errorPoints.length > 0) {
+      return diagnosisResult.errorPoints;
+    }
+    const points: string[] = [];
+    if (validationError) {
+      const firstLine = validationError.split('\n')[0].replace(/^Error:\s*/i, '');
+      points.push(`Fatal Error Trace: ${firstLine}`);
+    }
+    if (validationLine) {
+      points.push(`Token Anomaly at Line ${validationLine}: Parser encountered an unexpected token or missing delimiter preventing abstract syntax tree synthesis.`);
+    } else {
+      points.push(`Grammar Invariant: Input code does not conform to the formal grammar specifications of ${language.toUpperCase()}.`);
+    }
+    points.push(`Quality Metrics Blocked: Cyclomatic complexity, maintainability index, and Halstead volume cannot be derived for an invalid program.`);
+    points.push(`Remediation: Click "⚡ Diagnose & Fix with AI" to auto-balance delimiters, correct tokens, and re-compute metrics.`);
+    return points;
+  };
+
   const metricInfo = metricsDef[selectedMetric] || metricsDef.complexity;
 
   return (
@@ -481,35 +541,73 @@ export default function CodeAnalysisPage() {
         <div className="metrics-body-scroll">
           {/* Validation Alert Banner for Invalid Code */}
           {validationError && (
-            <div style={{ 
-              background: '#FCE8E0', 
-              border: '1.5px solid #C85A32', 
-              borderRadius: '8px', 
-              padding: '12px 16px', 
-              marginBottom: '16px', 
-              color: '#8A2A0B',
-              boxShadow: '0 2px 8px rgba(200, 90, 50, 0.15)'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 800, fontSize: '13.5px' }}>
-                <AlertCircle size={16} style={{ color: '#C85A32' }} />
-                <span>Code Correctness Check Failed: Compilation Error Detected</span>
+            <div className="analysis-error-card">
+              <div className="analysis-error-header">
+                <div className="analysis-error-title-wrap">
+                  <AlertTriangle size={18} style={{ color: '#C85A32' }} />
+                  <span>Code Correctness Check Failed: Compilation Error Detected</span>
+                </div>
+                <button 
+                  className="analysis-diagnose-btn"
+                  onClick={handleDiagnoseAndFix}
+                  disabled={isFixing}
+                  title="Automatically diagnose error, repair code, and re-compute metrics"
+                >
+                  {isFixing ? (
+                    <>
+                      <Loader2 size={13} className="spin-icon" />
+                      <span>Diagnosing &amp; Repairing...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles size={13} />
+                      <span>⚡ Diagnose &amp; Fix with AI</span>
+                    </>
+                  )}
+                </button>
               </div>
-              <p style={{ margin: '6px 0 8px', fontSize: '12px', lineHeight: 1.4, color: '#5C4E44' }}>
-                Quality metrics (Maintainability, Cyclomatic Complexity, and Radar Graph) require valid compilable code. Please fix the compiler error below:
+
+              <p className="analysis-error-subtitle">
+                Quality metrics (Maintainability, Cyclomatic Complexity, and Radar Graph) require valid compilable code.
               </p>
-              <pre style={{ 
-                background: '#2D231E', 
-                color: '#F5ECE3', 
-                padding: '8px 12px', 
-                borderRadius: '6px', 
-                fontSize: '11.5px', 
-                overflowX: 'auto', 
-                margin: 0,
-                fontFamily: 'var(--font-mono)',
-                whiteSpace: 'pre-wrap'
-              }}>
+
+              <pre className="analysis-error-trace">
                 {validationError}
               </pre>
+
+              {/* Pointwise Root Cause Analysis */}
+              <div className="analysis-causes-box">
+                <div className="analysis-causes-title">
+                  <Info size={14} style={{ color: '#C85A32' }} />
+                  <span>Root Cause Analysis &amp; Compiler Diagnostics (Pointwise):</span>
+                </div>
+                <ul className="analysis-causes-list">
+                  {getDiagnosticPoints().map((pt, idx) => (
+                    <li key={idx} className="analysis-cause-item">
+                      <span className="cause-bullet-badge">{idx + 1}</span>
+                      <span className="cause-text">{pt}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* If diagnosisResult contains how it was fixed */}
+              {diagnosisResult && diagnosisResult.fixPoints && diagnosisResult.fixPoints.length > 0 && (
+                <div className="analysis-fixed-box">
+                  <div className="analysis-fixed-title">
+                    <CheckCircle2 size={14} style={{ color: '#2A5A3D' }} />
+                    <span>How The Issue Was Fixed (Pointwise):</span>
+                  </div>
+                  <ul className="analysis-causes-list">
+                    {diagnosisResult.fixPoints.map((pt, idx) => (
+                      <li key={idx} className="analysis-cause-item">
+                        <span className="cause-bullet-badge success">{idx + 1}</span>
+                        <span className="cause-text">{pt}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           )}
 

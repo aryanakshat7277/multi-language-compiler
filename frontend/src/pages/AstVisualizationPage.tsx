@@ -2,7 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import Editor, { useMonaco } from '@monaco-editor/react';
 import { 
   GitBranch, Search, CornerDownRight, 
-  Code2, Sparkles, Loader2, Layers, Cpu, AlertTriangle
+  Code2, Sparkles, Loader2, Layers, Cpu, AlertTriangle,
+  Wrench, Info, CheckCircle2, Zap, HelpCircle
 } from 'lucide-react';
 import { api } from '../services/api';
 import { useToast } from '../contexts/ToastContext';
@@ -15,6 +16,69 @@ interface AstNode {
   value?: string;
   loc?: { start: { line: number; column: number }; end: { line: number; column: number } };
   children?: AstNode[];
+}
+
+function smartSyntaxRepair(srcCode: string, lang: string, error: { message: string; line: number; column: number }): string {
+  if (!srcCode) return srcCode;
+  let lines = srcCode.split('\n');
+
+  // 1. Balance curly braces { }
+  const openBraces = (srcCode.match(/\{/g) || []).length;
+  const closeBraces = (srcCode.match(/\}/g) || []).length;
+  if (openBraces > closeBraces) {
+    const missing = openBraces - closeBraces;
+    return srcCode + '\n' + '}'.repeat(missing);
+  } else if (closeBraces > openBraces) {
+    const errIdx = Math.min(Math.max(0, error.line - 1), lines.length - 1);
+    if (lines[errIdx] && lines[errIdx].includes('}')) {
+      lines[errIdx] = lines[errIdx].replace('}', '');
+      return lines.join('\n');
+    }
+  }
+
+  // 2. Balance parentheses ( )
+  const openParens = (srcCode.match(/\(/g) || []).length;
+  const closeParens = (srcCode.match(/\)/g) || []).length;
+  if (openParens > closeParens) {
+    const errIdx = Math.min(Math.max(0, error.line - 1), lines.length - 1);
+    if (lines[errIdx] !== undefined) {
+      lines[errIdx] = lines[errIdx] + ')'.repeat(openParens - closeParens);
+      return lines.join('\n');
+    }
+  }
+
+  // 3. Balance square brackets [ ]
+  const openBrackets = (srcCode.match(/\[/g) || []).length;
+  const closeBrackets = (srcCode.match(/\]/g) || []).length;
+  if (openBrackets > closeBrackets) {
+    const errIdx = Math.min(Math.max(0, error.line - 1), lines.length - 1);
+    if (lines[errIdx] !== undefined) {
+      lines[errIdx] = lines[errIdx] + ']'.repeat(openBrackets - closeBrackets);
+      return lines.join('\n');
+    }
+  }
+
+  // 4. Missing string quote termination on error line
+  const errIdx = Math.min(Math.max(0, error.line - 1), lines.length - 1);
+  const targetLine = lines[errIdx] || '';
+  const singleQuotes = (targetLine.match(/'/g) || []).length;
+  const doubleQuotes = (targetLine.match(/"/g) || []).length;
+  if (singleQuotes % 2 !== 0) {
+    lines[errIdx] = targetLine + "'";
+    return lines.join('\n');
+  }
+  if (doubleQuotes % 2 !== 0) {
+    lines[errIdx] = targetLine + '"';
+    return lines.join('\n');
+  }
+
+  // 5. If trailing dangling token on error line (e.g. repeated semicolon or stray comma)
+  if (targetLine.trim().endsWith(',,') || targetLine.trim().endsWith(';;')) {
+    lines[errIdx] = targetLine.replace(/([,;])\1+$/, '$1');
+    return lines.join('\n');
+  }
+
+  return srcCode;
 }
 
 const DEFAULT_CODE = `function binarySearch(arr, target) {
@@ -38,6 +102,7 @@ export default function AstVisualizationPage() {
   const [loading, setLoading] = useState(false);
   const [hasGenerated, setHasGenerated] = useState(true);
   const [syntaxError, setSyntaxError] = useState<{ message: string; line: number; column: number } | null>(null);
+  const [isFixing, setIsFixing] = useState(false);
   const editorRef = useRef<any>(null);
   const monaco = useMonaco();
   const decorationsRef = useRef<string[]>([]);
@@ -144,11 +209,12 @@ export default function AstVisualizationPage() {
     }
   };
 
-  const handleGenerate = async () => {
+  const handleGenerate = async (codeToUse?: string) => {
+    const src = typeof codeToUse === 'string' ? codeToUse : code;
     setLoading(true);
     setSyntaxError(null);
     try {
-      const res = await api.post('/ast/parse', { code, language });
+      const res = await api.post('/ast/parse', { code: src, language });
 
       if (res && res.success === false) {
         const line = res.line || 1;
@@ -201,6 +267,133 @@ export default function AstVisualizationPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleFixSyntaxError = async () => {
+    if (!syntaxError) return;
+    setIsFixing(true);
+    showToast('Analyzing and repairing syntax error...', 'info');
+
+    let repairedCode = '';
+
+    // 1. Try AI-powered debugger / repair endpoint
+    try {
+      const res = await api.post<any>('/ai-review/debug', {
+        sourceCode: code,
+        languageId: language,
+        errorMessage: `Line ${syntaxError.line}, Col ${syntaxError.column}: ${syntaxError.message}`
+      });
+
+      if (res && res.fix && typeof res.fix === 'string' && res.fix.trim().length > 0) {
+        repairedCode = res.fix;
+      }
+    } catch (aiErr) {
+      console.warn('AI debug endpoint error, using heuristic parser repair:', aiErr);
+    }
+
+    // 2. Intelligent deterministic fallback if AI didn't return code or errored
+    if (!repairedCode || repairedCode.trim() === code.trim()) {
+      repairedCode = smartSyntaxRepair(code, language, syntaxError);
+    }
+
+    if (repairedCode && repairedCode.trim() !== code.trim()) {
+      setCode(repairedCode);
+      if (editorRef.current) {
+        editorRef.current.setValue(repairedCode);
+      }
+      showToast('✓ Syntax error fixed! Re-generating AST...', 'success');
+
+      // Clear monaco error markers
+      if (editorRef.current && monaco) {
+        const model = editorRef.current.getModel();
+        if (model) {
+          monaco.editor.setModelMarkers(model, 'ast-syntax-error', []);
+        }
+      }
+
+      // Automatically re-generate AST with the repaired code
+      await handleGenerate(repairedCode);
+    } else {
+      showToast('Could not automatically determine safe fix for line ' + syntaxError.line, 'warning');
+    }
+    setIsFixing(false);
+  };
+
+  const getCauseBreakdown = () => {
+    if (!syntaxError) return [];
+    const msg = (syntaxError.message || '').toLowerCase();
+    const points: { label: string; text: string; icon: string }[] = [];
+
+    // Point 1: Grammatical Token Conflict
+    if (msg.includes('unexpected token')) {
+      points.push({
+        label: 'Grammatical Token Conflict',
+        text: `The ${language} parser encountered an unexpected token at Line ${syntaxError.line}, Column ${syntaxError.column}. In this grammatical context, the parser expected an identifier, operand, or closing delimiter instead of this symbol.`,
+        icon: '🔴'
+      });
+    } else if (msg.includes('unterminated') || msg.includes('unclosed')) {
+      points.push({
+        label: 'Unterminated Literal or Delimiter',
+        text: `A string literal, quotation mark, or delimiter was opened on or before Line ${syntaxError.line} but never terminated before encountering a newline or end-of-file.`,
+        icon: '🔴'
+      });
+    } else {
+      points.push({
+        label: 'Syntax Specification Violation',
+        text: `The source code at Line ${syntaxError.line} violates the formal Context-Free Grammar (CFG) specification for ${language}: "${syntaxError.message}".`,
+        icon: '🔴'
+      });
+    }
+
+    // Point 2: Scope & Delimiters
+    const openB = (code.match(/\{/g) || []).length;
+    const closeB = (code.match(/\}/g) || []).length;
+    const openP = (code.match(/\(/g) || []).length;
+    const closeP = (code.match(/\)/g) || []).length;
+    const openBrackets = (code.match(/\[/g) || []).length;
+    const closeBrackets = (code.match(/\]/g) || []).length;
+
+    if (openB !== closeB) {
+      points.push({
+        label: 'Unbalanced Block Delimiters { }',
+        text: `Detected ${openB} opening '{' vs ${closeB} closing '}'. An unclosed function, class, or control block leaves statement boundaries ambiguous, causing parser cascading errors.`,
+        icon: '⚠️'
+      });
+    } else if (openP !== closeP) {
+      points.push({
+        label: 'Unbalanced Parentheses ( )',
+        text: `Detected ${openP} opening '(' vs ${closeP} closing ')'. An unclosed parameter list, condition, or expression blocks statement completion.`,
+        icon: '⚠️'
+      });
+    } else if (openBrackets !== closeBrackets) {
+      points.push({
+        label: 'Unbalanced Square Brackets [ ]',
+        text: `Detected ${openBrackets} opening '[' vs ${closeBrackets} closing ']'. Array literals or index accessors remain open.`,
+        icon: '⚠️'
+      });
+    } else {
+      points.push({
+        label: 'Statement Boundary Breakdown',
+        text: `The compiler cannot establish statement termination or scope boundaries at Line ${syntaxError.line}. Check for misplaced punctuation or keywords.`,
+        icon: '⚠️'
+      });
+    }
+
+    // Point 3: Why AST Generation Fails
+    points.push({
+      label: 'AST Pipeline Invariant (Compiler Pre-Flight Requirement)',
+      text: `An Abstract Syntax Tree (AST) represents unambiguous semantic hierarchies. When syntax is malformed, the Concrete Syntax Tree (CST) cannot be derived, preventing AST generation.`,
+      icon: '🚫'
+    });
+
+    // Point 4: Remediation
+    points.push({
+      label: 'Recommended Remediation',
+      text: `Inspect Line ${syntaxError.line} in the code editor, balance delimiter pairs, or click the "⚡ Fix Error Automatically" button to let the system repair the code and rebuild the AST.`,
+      icon: '💡'
+    });
+
+    return points;
   };
 
   const renderAstBranch = (node: AstNode, depth: number = 0) => {
@@ -310,19 +503,71 @@ export default function AstVisualizationPage() {
           )}
 
           {hasGenerated && syntaxError && (
-            <div style={{ padding: '24px', margin: '16px', background: '#FCE8E0', border: '1.5px solid #C85A32', borderRadius: '8px', color: '#8A2A0B' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 800, fontSize: '14px', marginBottom: '8px' }}>
-                <AlertTriangle size={18} style={{ color: '#C85A32' }} />
-                <span>Cannot Build AST: Syntax Error Detected</span>
+            <div className="ast-error-card">
+              <div className="ast-error-header">
+                <div className="ast-error-title-wrap">
+                  <AlertTriangle size={19} style={{ color: '#C85A32' }} />
+                  <span>Cannot Build AST: Syntax Error Detected</span>
+                </div>
+                <button 
+                  className="ast-quick-fix-btn"
+                  onClick={handleFixSyntaxError}
+                  disabled={isFixing}
+                  title="Automatically fix syntax error and re-generate AST"
+                >
+                  {isFixing ? (
+                    <>
+                      <Loader2 size={14} className="animate-spin" />
+                      <span>Fixing Syntax Error...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles size={14} />
+                      <span>⚡ Fix Error Automatically</span>
+                    </>
+                  )}
+                </button>
               </div>
-              <p style={{ margin: '0 0 12px', fontSize: '12.5px', color: '#5C4E44', lineHeight: 1.45 }}>
+
+              <p style={{ margin: 0, fontSize: '13px', color: '#5C4E44', lineHeight: 1.5 }}>
                 An Abstract Syntax Tree (AST) can only be generated for syntactically correct programs. The parser encountered a fatal syntax violation:
               </p>
-              <div style={{ background: '#2D231E', color: '#F5ECE3', padding: '10px 14px', borderRadius: '6px', fontFamily: 'var(--font-mono)', fontSize: '12px' }}>
-                ● Line {syntaxError.line}, Col {syntaxError.column}: {syntaxError.message}
+
+              <div className="ast-error-badge">
+                <span style={{ color: '#E87A50' }}>●</span>
+                <span>Line {syntaxError.line}, Col {syntaxError.column}: {syntaxError.message}</span>
               </div>
-              <div style={{ marginTop: '12px', fontSize: '11.5px', color: '#7A6B61', fontWeight: 600 }}>
-                💡 Fix the syntax error highlighted with the red marker in the left editor and click "Generate AST" again.
+
+              {/* Point-by-point cause breakdown */}
+              <div className="ast-causes-container">
+                <div className="ast-causes-heading">
+                  <Info size={15} style={{ color: '#C85A32' }} />
+                  <span>Root Cause Analysis & Compiler Diagnostics (Pointwise):</span>
+                </div>
+                <ul className="ast-causes-list">
+                  {getCauseBreakdown().map((pt, idx) => (
+                    <li key={idx} className="ast-cause-item">
+                      <span className="ast-cause-bullet">{pt.icon}</span>
+                      <div className="ast-cause-content">
+                        <strong>{pt.label}:</strong> {pt.text}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="ast-actions-footer">
+                <span className="ast-footer-hint">
+                  💡 Fix the syntax error highlighted with the red marker in the left editor or click the fix button to repair automatically.
+                </span>
+                <button 
+                  className="ast-action-fix-btn"
+                  onClick={handleFixSyntaxError}
+                  disabled={isFixing}
+                >
+                  {isFixing ? <Loader2 size={14} className="animate-spin" /> : <Wrench size={14} />}
+                  <span>{isFixing ? 'Applying Fix...' : 'Apply Automated Fix & Re-Generate AST'}</span>
+                </button>
               </div>
             </div>
           )}

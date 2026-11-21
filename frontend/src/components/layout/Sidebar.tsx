@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Terminal, Code2, FileCheck, 
   BarChart3, GitBranch, GitCompare, Brain, Zap,
   ClipboardCheck, Trophy, User, Shield, LogOut, 
-  FolderKanban, X
+  FolderKanban, X, MessageSquarePlus
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import './Sidebar.css';
@@ -14,13 +14,15 @@ interface SidebarProps {
   onToggleCollapse?: () => void;
   mobileOpen?: boolean;
   onCloseMobile?: () => void;
+  onOpenFeedback?: (type?: 'BUG_REPORT' | 'FEATURE_REQUEST') => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ 
   collapsed = false, 
   onToggleCollapse,
   mobileOpen = false,
-  onCloseMobile
+  onCloseMobile,
+  onOpenFeedback
 }) => {
   const { user, isAdmin, logout } = useAuth();
   const navigate = useNavigate();
@@ -56,6 +58,20 @@ const Sidebar: React.FC<SidebarProps> = ({
         { path: '/similarity', label: 'Code DNA Similarity', icon: <GitCompare size={20} /> },
         { path: '/shortest-code', label: 'Shortest Code AI', icon: <Zap size={20} /> },
         { path: '/ai-review', label: 'AI Programming Mentor', icon: <Brain size={20} /> },
+      ]
+    },
+    {
+      title: 'COMMUNITY & SUPPORT',
+      items: [
+        { 
+          path: '#feedback', 
+          label: 'Feedback & Report', 
+          icon: <MessageSquarePlus size={20} />,
+          action: () => {
+            onCloseMobile?.();
+            onOpenFeedback?.('BUG_REPORT');
+          }
+        }
       ]
     },
     ...(isAdmin && user?.email?.toLowerCase() === 'aryanakshat7277@gmail.com' ? [{
@@ -96,19 +112,36 @@ const Sidebar: React.FC<SidebarProps> = ({
               <div className="sidebar-group-title">{section.title}</div>
             )}
             <div className="sidebar-group-items">
-              {section.items.map((item) => (
-                <NavLink 
-                  key={item.path} 
-                  to={item.path} 
-                  className={({ isActive }) => `clay-nav-item ${isActive ? 'active' : ''}`}
-                  title={collapsed ? item.label : undefined}
-                  end={item.path === '/'}
-                  onClick={() => onCloseMobile?.()}
-                >
-                  <span className="nav-item-icon">{item.icon}</span>
-                  {!collapsed && <span className="nav-item-label">{item.label}</span>}
-                </NavLink>
-              ))}
+              {section.items.map((item: any) => {
+                if (item.action) {
+                  return (
+                    <button
+                      key={item.label}
+                      type="button"
+                      className="clay-nav-item"
+                      title={collapsed ? item.label : undefined}
+                      onClick={item.action}
+                      style={{ width: '100%', background: 'none', border: 'none', textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit' }}
+                    >
+                      <span className="nav-item-icon">{item.icon}</span>
+                      {!collapsed && <span className="nav-item-label">{item.label}</span>}
+                    </button>
+                  );
+                }
+                return (
+                  <NavLink 
+                    key={item.path} 
+                    to={item.path} 
+                    className={({ isActive }) => `clay-nav-item ${isActive ? 'active' : ''}`}
+                    title={collapsed ? item.label : undefined}
+                    end={item.path === '/'}
+                    onClick={() => onCloseMobile?.()}
+                  >
+                    <span className="nav-item-icon">{item.icon}</span>
+                    {!collapsed && <span className="nav-item-label">{item.label}</span>}
+                  </NavLink>
+                );
+              })}
             </div>
           </div>
         ))}

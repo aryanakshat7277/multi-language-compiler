@@ -16,6 +16,7 @@ import AssessmentPage from './pages/AssessmentPage';
 import LeaderboardPage from './pages/LeaderboardPage';
 import ProfilePage from './pages/ProfilePage';
 import AdminPage from './pages/AdminPage';
+import FeedbackPage from './pages/FeedbackPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import { AuthProvider } from './contexts/AuthContext';
@@ -62,6 +63,7 @@ function App() {
                 <Route path="leaderboard" element={<LeaderboardPage />} />
                 <Route path="profile" element={<ProfilePage />} />
                 <Route path="admin" element={<AdminPage />} />
+                <Route path="feedback" element={<FeedbackPage />} />
               </Route>
             </Route>
 

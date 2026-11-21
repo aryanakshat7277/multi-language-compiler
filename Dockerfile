@@ -58,6 +58,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     gcc \
     g++ \
+    default-jdk-headless \
+    golang-go \
+    rustc \
     python3 \
     python-is-python3 \
     python3-pip \

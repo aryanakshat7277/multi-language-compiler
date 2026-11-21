@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Play, Square, RotateCcw, Loader2, Sparkles, CheckCircle, Cpu } from 'lucide-react';
+import { Play, Square, RotateCcw, Loader2, Sparkles, CheckCircle, Cpu, Send } from 'lucide-react';
 import { useEditorStore } from '../../stores/editorStore';
 import { api } from '../../services/api';
 import { wsService } from '../../services/websocket';
@@ -37,6 +37,19 @@ const Toolbar: React.FC = () => {
 
   const [languages, setLanguages] = useState<LanguageOption[]>(FALLBACK_LANGUAGES);
   const [isLoadingLangs, setIsLoadingLangs] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    const handleSubmittingStatus = (e: any) => {
+      setIsSubmitting(!!e.detail?.isSubmitting);
+    };
+    window.addEventListener('codeforge:submitting-status', handleSubmittingStatus);
+    return () => window.removeEventListener('codeforge:submitting-status', handleSubmittingStatus);
+  }, []);
+
+  const handleSubmit = () => {
+    window.dispatchEvent(new CustomEvent('codeforge:submit-solution'));
+  };
 
   // Fetch available languages on mount
   useEffect(() => {
@@ -233,9 +246,23 @@ const Toolbar: React.FC = () => {
           </button>
         )}
 
-        <button className="btn btn-secondary btn-submit" disabled={isRunning}>
-          <CheckCircle size={14} />
-          <span>Submit</span>
+        <button 
+          className="btn btn-submit-solution" 
+          disabled={isRunning || isSubmitting}
+          onClick={handleSubmit}
+          title="Submit Solution to Automated Judge (Run All Test Cases)"
+        >
+          {isSubmitting ? (
+            <>
+              <Loader2 size={13} className="spin-icon" />
+              <span>Evaluating...</span>
+            </>
+          ) : (
+            <>
+              <Send size={13} />
+              <span>Submit Solution</span>
+            </>
+          )}
         </button>
       </div>
     </div>

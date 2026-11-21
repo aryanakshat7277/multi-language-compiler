@@ -2,13 +2,16 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Shield, Activity, Server, Users, Cpu, Database, 
   RefreshCw, CheckCircle2, AlertCircle, Clock, Zap, 
-  Terminal, Lock, Unlock, Radio, Globe, Search, ArrowUpRight
+  Terminal, Lock, Unlock, Radio, Globe, Search, ArrowUpRight,
+  MessageSquarePlus, Bug, Lightbulb, Image as ImageIcon, Trash2, Eye, Filter, Check, X, Download
 } from 'lucide-react';
 import { 
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, 
   LineChart, Line 
 } from 'recharts';
-import { api } from '../services/api';
+import { 
+  api, getAdminFeedback, updateAdminFeedback, deleteAdminFeedback, FeedbackItem 
+} from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { wsService } from '../services/websocket';
@@ -80,7 +83,7 @@ export default function AdminPage() {
   const { user, isAdmin, login } = useAuth();
   const { showToast } = useToast();
 
-  const [activeTab, setActiveTab] = useState<'overview' | 'monitoring' | 'users' | 'languages'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'monitoring' | 'users' | 'languages' | 'feedback'>('overview');
   const [overview, setOverview] = useState<ClusterOverview | null>(null);
   const [users, setUsers] = useState<UserRecord[]>([]);
   const [languages, setLanguages] = useState<any[]>([]);
@@ -88,10 +91,41 @@ export default function AdminPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [autoRefresh, setAutoRefresh] = useState(true);
 
+  // User Feedback & Reports State (Restricted to Admin)
+  const [feedbackList, setFeedbackList] = useState<FeedbackItem[]>([]);
+  const [feedbackStats, setFeedbackStats] = useState({ total: 0, pending: 0, bugs: 0, features: 0 });
+  const [feedbackFilterType, setFeedbackFilterType] = useState<string>('ALL');
+  const [feedbackFilterStatus, setFeedbackFilterStatus] = useState<string>('ALL');
+  const [feedbackFilterSection, setFeedbackFilterSection] = useState<string>('ALL');
+  const [feedbackFilterSeverity, setFeedbackFilterSeverity] = useState<string>('ALL');
+  const [feedbackSearch, setFeedbackSearch] = useState<string>('');
+  const [selectedScreenshot, setSelectedScreenshot] = useState<string | null>(null);
+  const [adminNotesDraft, setAdminNotesDraft] = useState<Record<string, string>>({});
+  const [isUpdatingFeedback, setIsUpdatingFeedback] = useState<Record<string, boolean>>({});
+
   // Admin Login Form State for Gatekeeper
   const [adminEmail, setAdminEmail] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
   const [isAuthenticating, setIsAuthenticating] = useState(false);
+
+  const fetchFeedback = useCallback(async () => {
+    if (!isAdmin) return;
+    try {
+      const res = await getAdminFeedback({
+        type: feedbackFilterType,
+        status: feedbackFilterStatus,
+        section: feedbackFilterSection,
+        severity: feedbackFilterSeverity,
+        search: feedbackSearch
+      });
+      if (res && Array.isArray(res.items)) {
+        setFeedbackList(res.items);
+        if (res.stats) setFeedbackStats(res.stats);
+      }
+    } catch (err) {
+      console.warn('Failed to load feedback in admin:', err);
+    }
+  }, [isAdmin, feedbackFilterType, feedbackFilterStatus, feedbackFilterSection, feedbackFilterSeverity, feedbackSearch]);
 
   // Fetch all telemetry data ONLY if user is verified ADMIN
   const fetchData = useCallback(async (notify = false) => {
@@ -107,6 +141,7 @@ export default function AdminPage() {
       if (overviewData) setOverview(overviewData);
       if (Array.isArray(usersData)) setUsers(usersData);
       if (Array.isArray(langsData)) setLanguages(langsData);
+      await fetchFeedback();
 
       if (notify) {
         showToast('Live system metrics refreshed successfully.', 'success', 'Telemetry Updated');
@@ -118,7 +153,7 @@ export default function AdminPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [isAdmin, showToast]);
+  }, [isAdmin, showToast, fetchFeedback]);
 
   const [realtimeActive, setRealtimeActive] = useState(false);
 
@@ -134,6 +169,11 @@ export default function AdminPage() {
         fetchData(false);
       } else if (event === 'USER_ROLE_CHANGED' || event === 'LANGUAGE_TOGGLED' || event === 'NEW_SUBMISSION') {
         fetchData(false);
+      } else if (event === 'NEW_FEEDBACK_SUBMITTED') {
+        showToast(`New user report submitted: ${payload.title || 'Bug/Feature Report'}`, 'info', 'Feedback Submitted');
+        fetchFeedback();
+      } else if (event === 'FEEDBACK_STATUS_UPDATED' || event === 'FEEDBACK_DELETED') {
+        fetchFeedback();
       }
     };
 
@@ -150,7 +190,53 @@ export default function AdminPage() {
       wsService.unsubscribeFromAdmin(onAdminEvent);
       if (interval) clearInterval(interval);
     };
-  }, [isAdmin, fetchData, autoRefresh, showToast]);
+  }, [isAdmin, fetchData, autoRefresh, showToast, fetchFeedback]);
+
+  const handleFeedbackStatusChange = async (id: string, newStatus: string) => {
+    setIsUpdatingFeedback(prev => ({ ...prev, [id]: true }));
+    try {
+      await updateAdminFeedback(id, { status: newStatus });
+      showToast(`Report status updated to ${newStatus}`, 'success', 'Status Saved');
+      setFeedbackList(prev => prev.map(item => item.id === id ? { ...item, status: newStatus as any } : item));
+      setFeedbackStats(prev => ({
+        ...prev,
+        pending: newStatus === 'PENDING' ? prev.pending + 1 : Math.max(0, prev.pending - 1)
+      }));
+    } catch (e: any) {
+      showToast(e.message || 'Failed to update status', 'error', 'Update Error');
+    } finally {
+      setIsUpdatingFeedback(prev => ({ ...prev, [id]: false }));
+    }
+  };
+
+  const handleSaveAdminNotes = async (id: string) => {
+    const notes = adminNotesDraft[id];
+    if (notes === undefined) return;
+    setIsUpdatingFeedback(prev => ({ ...prev, [id]: true }));
+    try {
+      await updateAdminFeedback(id, { adminNotes: notes });
+      showToast('Admin note saved successfully', 'success', 'Note Saved');
+      setFeedbackList(prev => prev.map(item => item.id === id ? { ...item, adminNotes: notes } : item));
+    } catch (e: any) {
+      showToast(e.message || 'Failed to save admin note', 'error', 'Save Error');
+    } finally {
+      setIsUpdatingFeedback(prev => ({ ...prev, [id]: false }));
+    }
+  };
+
+  const handleDeleteFeedback = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this report from the administrator records?')) {
+      return;
+    }
+    try {
+      await deleteAdminFeedback(id);
+      showToast('Feedback report deleted.', 'info', 'Report Deleted');
+      setFeedbackList(prev => prev.filter(item => item.id !== id));
+      setFeedbackStats(prev => ({ ...prev, total: Math.max(0, prev.total - 1) }));
+    } catch (e: any) {
+      showToast(e.message || 'Failed to delete report', 'error', 'Delete Error');
+    }
+  };
 
   // Handle authentic Administrator login submission
   const handleAdminLoginSubmit = async (e: React.FormEvent) => {
@@ -312,6 +398,16 @@ export default function AdminPage() {
           >
             <Terminal size={16} />
             <span>Compiler Runtimes ({languages.length})</span>
+          </button>
+          <button 
+            className={`nav-tab ${activeTab === 'feedback' ? 'active' : ''}`}
+            onClick={() => setActiveTab('feedback')}
+          >
+            <MessageSquarePlus size={16} />
+            <span>User Reports &amp; Ideas ({feedbackStats.total})</span>
+            {feedbackStats.pending > 0 && (
+              <span className="admin-tab-alert-badge">{feedbackStats.pending}</span>
+            )}
           </button>
         </div>
 
@@ -777,6 +873,281 @@ export default function AdminPage() {
                 </tbody>
               </table>
             </div>
+          </div>
+        )}
+
+        {/* ─── TAB 5: User Feedback & Feature Requests (CONFIDENTIAL ADMIN ONLY) ─── */}
+        {activeTab === 'feedback' && (
+          <div className="tab-pane">
+            <div className="feedback-admin-header">
+              <div className="header-left">
+                <h3 className="section-subheading">User Feedback, Bug Reports &amp; Feature Requests</h3>
+                <p className="admin-section-sub">
+                  Confidential administrator portal. Review user-submitted bug reports, inspect error screenshots, and prioritize feature improvement requests.
+                </p>
+              </div>
+              <button className="btn btn-secondary btn-sm" onClick={() => fetchFeedback()}>
+                <RefreshCw size={13} />
+                <span>Refresh Reports</span>
+              </button>
+            </div>
+
+            {/* KPI Cards Row */}
+            <div className="feedback-kpi-grid">
+              <div className="feedback-kpi-card">
+                <span className="kpi-label">Total Submissions</span>
+                <span className="kpi-value">{feedbackStats.total}</span>
+                <span className="kpi-sub">All-time received</span>
+              </div>
+              <div className="feedback-kpi-card pending-kpi">
+                <span className="kpi-label">Pending Review</span>
+                <span className="kpi-value text-amber">{feedbackStats.pending}</span>
+                <span className="kpi-sub">Awaiting action</span>
+              </div>
+              <div className="feedback-kpi-card bug-kpi">
+                <span className="kpi-label">Bug Reports</span>
+                <span className="kpi-value text-terracotta">{feedbackStats.bugs}</span>
+                <span className="kpi-sub">Issues with screenshots</span>
+              </div>
+              <div className="feedback-kpi-card feature-kpi">
+                <span className="kpi-label">Feature &amp; Section Ideas</span>
+                <span className="kpi-value text-forest">{feedbackStats.features}</span>
+                <span className="kpi-sub">Platform enhancements</span>
+              </div>
+            </div>
+
+            {/* Filter and Search Bar */}
+            <div className="feedback-filters-bar">
+              <div className="search-wrap">
+                <Search size={14} className="search-ico" />
+                <input
+                  type="text"
+                  placeholder="Search by title, description, section, or user..."
+                  value={feedbackSearch}
+                  onChange={(e) => setFeedbackSearch(e.target.value)}
+                  className="feedback-search-field"
+                />
+              </div>
+
+              <div className="filter-selects-row">
+                <select
+                  value={feedbackFilterType}
+                  onChange={(e) => setFeedbackFilterType(e.target.value)}
+                  className="feedback-filter-select"
+                >
+                  <option value="ALL">All Types (Bugs &amp; Ideas)</option>
+                  <option value="BUG_REPORT">🐞 Bug Reports Only</option>
+                  <option value="FEATURE_REQUEST">💡 Feature Requests Only</option>
+                  <option value="IMPROVEMENT">⚡ Section Improvements</option>
+                </select>
+
+                <select
+                  value={feedbackFilterStatus}
+                  onChange={(e) => setFeedbackFilterStatus(e.target.value)}
+                  className="feedback-filter-select"
+                >
+                  <option value="ALL">All Statuses</option>
+                  <option value="PENDING">Pending Review</option>
+                  <option value="UNDER_REVIEW">Under Investigation</option>
+                  <option value="RESOLVED">Resolved / Implemented</option>
+                  <option value="DISMISSED">Dismissed</option>
+                </select>
+
+                <select
+                  value={feedbackFilterSection}
+                  onChange={(e) => setFeedbackFilterSection(e.target.value)}
+                  className="feedback-filter-select"
+                >
+                  <option value="ALL">All Sections</option>
+                  <option value="Compiler IDE & Terminal">Compiler IDE &amp; Terminal</option>
+                  <option value="AST Hierarchy Visualizer">AST Hierarchy Visualizer</option>
+                  <option value="Code Metrics & Analysis">Code Metrics &amp; Analysis</option>
+                  <option value="Coding Assessments & Exams">Coding Assessments &amp; Exams</option>
+                  <option value="Problem Detail & Judge">Problem Detail &amp; Judge</option>
+                  <option value="AI Mentor & Review">AI Mentor &amp; Review</option>
+                  <option value="Code Shortener AI">Code Shortener AI</option>
+                  <option value="Code DNA Similarity">Code DNA Similarity</option>
+                  <option value="General Interface & Navigation">General Interface</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Reports List */}
+            {feedbackList.length === 0 ? (
+              <div className="feedback-empty-state">
+                <CheckCircle2 size={36} className="text-forest" />
+                <h4>No User Reports Matching Criteria</h4>
+                <p>All user bug reports and feature requests have been addressed or no submissions match the current filters.</p>
+              </div>
+            ) : (
+              <div className="feedback-cards-container">
+                {feedbackList.map((item) => (
+                  <div key={item.id} className={`feedback-admin-card ${item.status.toLowerCase()}`}>
+                    {/* Card Header */}
+                    <div className="card-top-row">
+                      <div className="tags-left">
+                        <span className={`pill-type ${item.type.toLowerCase()}`}>
+                          {item.type === 'BUG_REPORT' ? <Bug size={12} /> : <Lightbulb size={12} />}
+                          <span>{item.type === 'BUG_REPORT' ? 'Bug Report' : item.type === 'FEATURE_REQUEST' ? 'Feature Request' : 'Improvement'}</span>
+                        </span>
+
+                        <span className="pill-section">{item.section}</span>
+
+                        {item.type === 'BUG_REPORT' && item.severity && (
+                          <span className={`pill-severity ${item.severity.toLowerCase()}`}>
+                            {item.severity} Severity
+                          </span>
+                        )}
+
+                        <span className={`pill-status ${item.status.toLowerCase()}`}>
+                          {item.status === 'PENDING' ? '● Pending' : item.status === 'UNDER_REVIEW' ? '● Under Review' : item.status === 'RESOLVED' ? '✓ Resolved' : '✕ Dismissed'}
+                        </span>
+                      </div>
+
+                      <div className="date-right">
+                        <Clock size={12} />
+                        <span>{new Date(item.createdAt).toLocaleString()}</span>
+                      </div>
+                    </div>
+
+                    {/* User Identity Info */}
+                    <div className="reporter-info-row">
+                      <div className="reporter-avatar">
+                        <img 
+                          src={item.user?.avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(item.userName || 'User')}&backgroundColor=c85a32,2a5a3d,b35e17`} 
+                          alt={item.userName || 'User'} 
+                        />
+                      </div>
+                      <div className="reporter-details">
+                        <div className="reporter-name-row">
+                          <strong className="reporter-name">{item.userName || 'Anonymous User'}</strong>
+                          {item.user ? (
+                            <span className="badge-verified-user">Registered ({item.user.role})</span>
+                          ) : (
+                            <span className="badge-guest-user">Guest</span>
+                          )}
+                        </div>
+                        <span className="reporter-email">{item.userEmail || 'No email provided'}</span>
+                      </div>
+                    </div>
+
+                    {/* Report Content */}
+                    <div className="report-main-content">
+                      <h4 className="report-title">{item.title}</h4>
+                      <p className="report-desc">{item.description}</p>
+                    </div>
+
+                    {/* User's Proposed Section Modification / Idea */}
+                    {item.suggestedFix && (
+                      <div className="suggested-fix-box">
+                        <div className="suggested-fix-header">
+                          <Lightbulb size={13} style={{ color: '#B35E17' }} />
+                          <strong>
+                            {item.type === 'BUG_REPORT' 
+                              ? 'User Suggested Workaround / Fix:' 
+                              : 'Proposed Section Modification / New Feature Idea:'}
+                          </strong>
+                        </div>
+                        <p className="suggested-fix-text">{item.suggestedFix}</p>
+                      </div>
+                    )}
+
+                    {/* Attached Screenshot (if any) */}
+                    {item.screenshotUrl && (
+                      <div className="screenshot-attached-box">
+                        <div className="screenshot-header">
+                          <ImageIcon size={14} style={{ color: '#C85A32' }} />
+                          <span>Attached Error Screenshot (Uploaded by User):</span>
+                        </div>
+                        <div 
+                          className="screenshot-thumb-wrapper"
+                          onClick={() => setSelectedScreenshot(item.screenshotUrl!)}
+                          title="Click to view full-resolution screenshot"
+                        >
+                          <img 
+                            src={item.screenshotUrl} 
+                            alt={`Screenshot for ${item.title}`} 
+                            className="screenshot-admin-thumb" 
+                          />
+                          <div className="screenshot-zoom-hover">
+                            <Eye size={18} />
+                            <span>Click to Zoom Screenshot</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Admin Management Bar */}
+                    <div className="admin-management-bar">
+                      <div className="status-changer">
+                        <label className="admin-bar-label">Update Status:</label>
+                        <select
+                          value={item.status}
+                          onChange={(e) => handleFeedbackStatusChange(item.id, e.target.value)}
+                          disabled={isUpdatingFeedback[item.id]}
+                          className="status-dropdown"
+                        >
+                          <option value="PENDING">Pending Review</option>
+                          <option value="UNDER_REVIEW">Under Investigation</option>
+                          <option value="RESOLVED">Resolved / Implemented</option>
+                          <option value="DISMISSED">Dismissed</option>
+                        </select>
+                      </div>
+
+                      <div className="notes-box">
+                        <input
+                          type="text"
+                          placeholder={item.adminNotes || "Add internal admin note / action taken..."}
+                          value={adminNotesDraft[item.id] !== undefined ? adminNotesDraft[item.id] : (item.adminNotes || '')}
+                          onChange={(e) => setAdminNotesDraft({ ...adminNotesDraft, [item.id]: e.target.value })}
+                          className="notes-input"
+                        />
+                        <button
+                          className="btn-save-note"
+                          onClick={() => handleSaveAdminNotes(item.id)}
+                          disabled={isUpdatingFeedback[item.id]}
+                        >
+                          Save Note
+                        </button>
+                      </div>
+
+                      <button
+                        className="btn-delete-report"
+                        onClick={() => handleDeleteFeedback(item.id)}
+                        title="Delete report from records"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Screenshot Lightbox Modal */}
+            {selectedScreenshot && (
+              <div className="lightbox-zoom-overlay" onClick={() => setSelectedScreenshot(null)}>
+                <div className="lightbox-content" onClick={(e) => e.stopPropagation()}>
+                  <img src={selectedScreenshot} alt="Full resolution screenshot" className="lightbox-img" />
+                  <div className="lightbox-bar">
+                    <a 
+                      href={selectedScreenshot} 
+                      download="user-screenshot.png" 
+                      className="btn btn-secondary btn-sm"
+                    >
+                      <Download size={13} />
+                      <span>Download Image</span>
+                    </a>
+                    <button 
+                      className="btn btn-primary btn-sm" 
+                      onClick={() => setSelectedScreenshot(null)}
+                    >
+                      Close Zoom
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

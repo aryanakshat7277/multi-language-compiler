@@ -76,11 +76,30 @@ export class EvaluationService {
       let oomKilled = false;
 
       try {
-        let pistonRes: any;
+        let pistonRes: any = null;
         try {
           pistonRes = await pistonClient.executeCode(pistonReq);
         } catch {
-          pistonRes = await (await import('./localExecutorService')).LocalExecutorService.execute(pistonReq);
+          // Piston offline / unauthorized
+        }
+
+        if (!pistonRes) {
+          const { LocalExecutorService } = await import('./localExecutorService');
+          if (LocalExecutorService.isLanguageAvailable(pistonReq.language)) {
+            try {
+              const localRes = await LocalExecutorService.execute(pistonReq);
+              if (localRes.run?.code !== 127 || !localRes.run?.stderr?.includes('installed on the host system?')) {
+                pistonRes = localRes;
+              }
+            } catch {
+              // Fallback to cloud
+            }
+          }
+        }
+
+        if (!pistonRes) {
+          const { CloudSandboxService } = await import('./cloudSandboxService');
+          pistonRes = await CloudSandboxService.execute(pistonReq);
         }
         
         if (pistonRes.compile && pistonRes.compile.code !== 0) {

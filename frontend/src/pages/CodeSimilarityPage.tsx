@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import Editor from '@monaco-editor/react';
 import { 
-  GitCompare, Sparkles, Loader2, FileCode, Play, Terminal, AlertTriangle, CheckCircle2
+  GitCompare, Sparkles, Loader2, FileCode, Play, Terminal, AlertTriangle, CheckCircle2,
+  Info, Wrench
 } from 'lucide-react';
-import { getCodeSimilarity, validateCodeCorrectness, SimilarityResult, api } from '../services/api';
+import { getCodeSimilarity, validateCodeCorrectness, SimilarityResult, api, debugCode, DebugResult } from '../services/api';
 import { useToast } from '../contexts/ToastContext';
 import { registerMonacoThemes } from '../utils/monacoThemes';
 import { formatToPoints } from '../utils/bulletPoints';
@@ -40,6 +41,8 @@ export default function CodeSimilarityPage() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<SimilarityResult | null>(null);
   const [validationFailed, setValidationFailed] = useState<boolean>(false);
+  const [isFixing, setIsFixing] = useState<boolean>(false);
+  const [diagnosisResult, setDiagnosisResult] = useState<DebugResult | null>(null);
 
   // Execution Outputs for Program A & B
   const [outputA, setOutputA] = useState<string | null>(null);
@@ -65,15 +68,17 @@ export default function CodeSimilarityPage() {
     return 'main.js';
   };
 
-  const handleCompareAndRun = async () => {
+  const handleCompareAndRun = async (overrideA?: string, overrideB?: string) => {
+    const activeA = overrideA || codeA;
+    const activeB = overrideB || codeB;
     setLoading(true);
     setValidationFailed(false);
 
     try {
       // Step 1: Pre-flight Code Correctness Validation for BOTH Program A & B
       const [valA, valB] = await Promise.all([
-        validateCodeCorrectness(codeA, language, stdinInput),
-        validateCodeCorrectness(codeB, language, stdinInput)
+        validateCodeCorrectness(activeA, language, stdinInput),
+        validateCodeCorrectness(activeB, language, stdinInput)
       ]);
 
       setOutputA(valA.isValid ? (valA.stdout || '➜ Program A executed cleanly') : `❌ Program A Compilation/Runtime Error:\n${valA.error}`);
@@ -101,7 +106,7 @@ export default function CodeSimilarityPage() {
       }
 
       // Step 2: Both programs verified valid! Proceed with full similarity calculation
-      const simRes = await getCodeSimilarity(codeA, codeB, language);
+      const simRes = await getCodeSimilarity(activeA, activeB, language);
       if (simRes) {
         setResult(simRes);
         showToast('✓ AI Code DNA Comparison verified & complete!', 'success');
@@ -111,6 +116,67 @@ export default function CodeSimilarityPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDiagnoseAndFix = async () => {
+    setIsFixing(true);
+    showToast('Diagnosing compiler error & synthesizing repair...', 'info');
+
+    let newCodeA = codeA;
+    let newCodeB = codeB;
+    let diag: DebugResult | null = null;
+
+    try {
+      const isErrA = outputA && outputA.includes('❌ Program A');
+      const isErrB = outputB && outputB.includes('❌ Program B');
+
+      if (isErrA) {
+        const resA = await debugCode(codeA, outputA || 'Program A error', language);
+        if (resA && resA.fix && resA.fix.trim().length > 0) {
+          newCodeA = resA.fix;
+          setCodeA(newCodeA);
+        }
+        diag = resA;
+      }
+
+      if (isErrB) {
+        const resB = await debugCode(codeB, outputB || 'Program B error', language);
+        if (resB && resB.fix && resB.fix.trim().length > 0) {
+          newCodeB = resB.fix;
+          setCodeB(newCodeB);
+        }
+        if (!diag) diag = resB;
+      }
+
+      setDiagnosisResult(diag);
+      setValidationFailed(false);
+      showToast('✓ Program(s) repaired successfully! Re-running DNA comparison...', 'success');
+      await handleCompareAndRun(newCodeA, newCodeB);
+    } catch (err: any) {
+      console.error('Similarity diagnosis failed:', err);
+      showToast(err?.message || 'Failed to auto-repair programs', 'error');
+    } finally {
+      setIsFixing(false);
+    }
+  };
+
+  const getSimilarityDiagnosticPoints = () => {
+    if (diagnosisResult?.errorPoints && diagnosisResult.errorPoints.length > 0) {
+      return diagnosisResult.errorPoints;
+    }
+    const pts: string[] = [];
+    if (outputA && outputA.includes('❌ Program A')) {
+      const firstLine = outputA.replace('❌ Program A Compilation/Runtime Error:\n', '').split('\n')[0];
+      pts.push(`Program A Defect: ${firstLine}`);
+    }
+    if (outputB && outputB.includes('❌ Program B')) {
+      const firstLine = outputB.replace('❌ Program B Compilation/Runtime Error:\n', '').split('\n')[0];
+      pts.push(`Program B Defect: ${firstLine}`);
+    }
+    pts.push(`Code DNA & AST Invariant: Code similarity compares lexical tokens, control flow graphs, and vector embeddings. Broken programs cannot generate valid AST nodes.`);
+    pts.push(`Execution Integrity: Both programs must successfully parse and execute before semantic logic equivalence can be measured.`);
+    pts.push(`Remediation: Click "⚡ Diagnose & Fix Program(s)" to automatically repair syntax and delimiter errors.`);
+    return pts;
   };
 
   const overallScorePct = result ? Math.round(result.overallScore * 100) : 0;
@@ -215,14 +281,80 @@ export default function CodeSimilarityPage() {
       {/* Bottom Diagnostics & Live Outputs */}
       <div className="similarity-bottom-stats-card">
         {validationFailed && (
-          <div style={{ background: '#FCE8E0', border: '1.5px solid #C85A32', borderRadius: '8px', padding: '12px 16px', margin: '0 0 16px', color: '#8A2A0B' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 800, fontSize: '13.5px' }}>
-              <AlertTriangle size={16} style={{ color: '#C85A32' }} />
-              <span>Code Correctness Check Failed: One or Both Programs Contain Errors</span>
+          <div style={{ background: '#FCE8E0', border: '1.5px solid #C85A32', borderRadius: '8px', padding: '14px 18px', margin: '0 0 16px', color: '#8A2A0B', display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 800, fontSize: '13.5px' }}>
+                <AlertTriangle size={16} style={{ color: '#C85A32' }} />
+                <span>Code Correctness Check Failed: One or Both Programs Contain Errors</span>
+              </div>
+              <button
+                onClick={handleDiagnoseAndFix}
+                disabled={isFixing}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  background: 'linear-gradient(135deg, #C85A32 0%, #B24620 100%)',
+                  color: '#FFF',
+                  border: '1px solid rgba(0,0,0,0.1)',
+                  padding: '6px 14px',
+                  borderRadius: 6,
+                  fontSize: 12.5,
+                  fontWeight: 700,
+                  cursor: isFixing ? 'not-allowed' : 'pointer'
+                }}
+                title="Automatically diagnose error, repair code, and re-run similarity analysis"
+              >
+                {isFixing ? (
+                  <>
+                    <Loader2 size={13} className="spin-icon" />
+                    <span>Diagnosing &amp; Repairing...</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles size={13} />
+                    <span>⚡ Diagnose &amp; Fix Broken Program(s)</span>
+                  </>
+                )}
+              </button>
             </div>
-            <p style={{ margin: '6px 0 0', fontSize: '12px', color: '#5C4E44', lineHeight: 1.4 }}>
+
+            <p style={{ margin: 0, fontSize: '12px', color: '#5C4E44', lineHeight: 1.4 }}>
               Algorithmic DNA similarity requires both programs to be syntactically valid and executable. Check the console outputs below to see the exact compiler or runtime errors.
             </p>
+
+            {/* Pointwise Diagnostics */}
+            <div style={{ background: 'rgba(255,255,255,0.65)', border: '1px solid rgba(200,90,50,0.3)', borderRadius: 6, padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: '#8A2A0B' }}>
+                <Info size={13} style={{ color: '#C85A32' }} />
+                <span>Root Cause Analysis &amp; Compiler Diagnostics (Pointwise):</span>
+              </div>
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 5 }}>
+                {getSimilarityDiagnosticPoints().map((pt, idx) => (
+                  <li key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: 7, fontSize: 11.5, color: '#4A3E38', lineHeight: 1.4 }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 16, height: 16, borderRadius: '50%', backgroundColor: '#C85A32', color: '#FFF', fontSize: 10, fontWeight: 800, flexShrink: 0, marginTop: 1 }}>{idx + 1}</span>
+                    <span style={{ flex: 1 }}>{pt}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {diagnosisResult && diagnosisResult.fixPoints && diagnosisResult.fixPoints.length > 0 && (
+              <div style={{ background: 'rgba(235, 246, 238, 0.8)', border: '1px solid rgba(76, 122, 93, 0.35)', borderRadius: 6, padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: '#2A5A3D' }}>
+                  <CheckCircle2 size={13} style={{ color: '#2A5A3D' }} />
+                  <span>How The Program(s) Were Fixed (Pointwise):</span>
+                </div>
+                <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 5 }}>
+                  {diagnosisResult.fixPoints.map((pt, idx) => (
+                    <li key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: 7, fontSize: 11.5, color: '#4A3E38', lineHeight: 1.4 }}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 16, height: 16, borderRadius: '50%', backgroundColor: '#4C7A5D', color: '#FFF', fontSize: 10, fontWeight: 800, flexShrink: 0, marginTop: 1 }}>{idx + 1}</span>
+                      <span style={{ flex: 1 }}>{pt}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
         )}
 

@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import Editor from '@monaco-editor/react';
 import { 
-  Zap, Sparkles, Loader2, FileCode, Play, Terminal, CheckCircle2, Copy, Check, ArrowRight, AlertTriangle
+  Zap, Sparkles, Loader2, FileCode, Play, Terminal, CheckCircle2, Copy, Check, ArrowRight, AlertTriangle,
+  Info, Wrench
 } from 'lucide-react';
-import { getShortestCode, ShortestCodeResult, api } from '../services/api';
+import { getShortestCode, ShortestCodeResult, api, debugCode, DebugResult } from '../services/api';
 import { useToast } from '../contexts/ToastContext';
 import { registerMonacoThemes } from '../utils/monacoThemes';
 import { formatToPoints } from '../utils/bulletPoints';
@@ -40,6 +41,8 @@ export default function CodeShortenerPage() {
   const [origOutput, setOrigOutput] = useState<string | null>(null);
   const [shortOutput, setShortOutput] = useState<string | null>(null);
   const [hasError, setHasError] = useState<boolean>(false);
+  const [isFixing, setIsFixing] = useState<boolean>(false);
+  const [diagnosisResult, setDiagnosisResult] = useState<DebugResult | null>(null);
 
   const { showToast } = useToast();
 
@@ -59,7 +62,8 @@ export default function CodeShortenerPage() {
     }
   };
 
-  const handleGenerateShortest = async () => {
+  const handleGenerateShortest = async (codeOverride?: string) => {
+    const activeCode = codeOverride || code;
     setLoading(true);
     setResult(null);
     setOrigOutput(null);
@@ -72,7 +76,7 @@ export default function CodeShortenerPage() {
       // 1. Run user's original code on backend compiler to verify correctness & get baseline stdout
       const resA = await api.post('/compiler/execute', {
         language,
-        files: [{ name: fn, content: code }],
+        files: [{ name: fn, content: activeCode }],
         stdin: stdinInput
       });
 
@@ -95,7 +99,7 @@ export default function CodeShortenerPage() {
       setOrigOutput(finalOrigOut);
 
       // 2. Call AI model API to generate the shortest code producing exact same output
-      const aiRes = await getShortestCode(code, language, finalOrigOut);
+      const aiRes = await getShortestCode(activeCode, language, finalOrigOut);
       setResult(aiRes);
 
       // 3. Concurrently run the AI's shortest code on backend compiler to verify exact output matching!
@@ -120,6 +124,47 @@ export default function CodeShortenerPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDiagnoseAndFix = async () => {
+    if (!code || !code.trim()) return;
+    setIsFixing(true);
+    showToast('Diagnosing original code error & synthesizing repair...', 'info');
+
+    try {
+      const errToFix = origOutput || 'Code execution failed.';
+      const res = await debugCode(code, errToFix, language);
+      setDiagnosisResult(res);
+
+      if (res && res.fix && res.fix.trim().length > 0 && res.fix.trim() !== code.trim()) {
+        setCode(res.fix);
+        setHasError(false);
+        showToast('✓ Original code fixed! Re-generating shortest code...', 'success');
+        await handleGenerateShortest(res.fix);
+      } else {
+        showToast('Diagnostic completed. See pointwise root cause breakdown below.', 'info');
+      }
+    } catch (err: any) {
+      console.error('Shortener diagnosis failed:', err);
+      showToast(err?.message || 'Failed to auto-repair original code', 'error');
+    } finally {
+      setIsFixing(false);
+    }
+  };
+
+  const getShortenerDiagnosticPoints = () => {
+    if (diagnosisResult?.errorPoints && diagnosisResult.errorPoints.length > 0) {
+      return diagnosisResult.errorPoints;
+    }
+    const pts: string[] = [];
+    if (origOutput) {
+      const firstLine = origOutput.split('\n')[0];
+      pts.push(`Execution Failure: ${firstLine}`);
+    }
+    pts.push(`Equivalence Invariant: Code golf requires an unambiguous baseline stdout. Non-compiling or crashing programs cannot be golfed.`);
+    pts.push(`Runtime Termination: The compiler/runtime exited with a non-zero exit code or error output.`);
+    pts.push(`Remediation: Click "⚡ Diagnose & Fix Original Code" to auto-patch syntax and logic errors, then re-synthesize.`);
+    return pts;
   };
 
   const handleCopyShortestCode = async () => {
@@ -343,14 +388,48 @@ export default function CodeShortenerPage() {
             </div>
           </>
         ) : hasError ? (
-          <div style={{ background: '#FCE8E0', border: '1.5px solid #C85A32', borderRadius: 8, padding: '18px 20px', color: '#8A2A0B', margin: '20px 0' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 800, fontSize: 14 }}>
-              <AlertTriangle size={18} style={{ color: '#C85A32' }} />
-              <span>Original Code Execution Failed: Cannot Generate Shortest Code</span>
+          <div style={{ background: '#FCE8E0', border: '1.5px solid #C85A32', borderRadius: 8, padding: '18px 20px', color: '#8A2A0B', margin: '20px 0', display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 800, fontSize: 14 }}>
+                <AlertTriangle size={18} style={{ color: '#C85A32' }} />
+                <span>Original Code Execution Failed: Cannot Generate Shortest Code</span>
+              </div>
+              <button
+                onClick={handleDiagnoseAndFix}
+                disabled={isFixing}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  background: 'linear-gradient(135deg, #C85A32 0%, #B24620 100%)',
+                  color: '#FFF',
+                  border: '1px solid rgba(0,0,0,0.1)',
+                  padding: '6px 14px',
+                  borderRadius: 6,
+                  fontSize: 12.5,
+                  fontWeight: 700,
+                  cursor: isFixing ? 'not-allowed' : 'pointer'
+                }}
+                title="Automatically diagnose error, repair code, and re-generate shortest code"
+              >
+                {isFixing ? (
+                  <>
+                    <Loader2 size={13} className="spin-icon" />
+                    <span>Diagnosing &amp; Repairing...</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles size={13} />
+                    <span>⚡ Diagnose &amp; Fix Original Code</span>
+                  </>
+                )}
+              </button>
             </div>
-            <p style={{ margin: '8px 0 12px', fontSize: 12.5, lineHeight: 1.45, color: '#5C4E44' }}>
+
+            <p style={{ margin: 0, fontSize: 12.5, lineHeight: 1.45, color: '#5C4E44' }}>
               CodeForge AI requires your original program to compile and run cleanly with valid stdout before it can synthesize and verify the shortest golfed version. Please resolve the compilation / runtime error below:
             </p>
+
             <div style={{ background: '#2D231E', borderRadius: 6, padding: '12px 14px', border: '1px solid #3F332C' }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: '#DE7048', marginBottom: 6, fontFamily: 'var(--font-mono)' }}>
                 ● COMPILER / RUNTIME OUTPUT:
@@ -359,6 +438,39 @@ export default function CodeShortenerPage() {
                 {origOutput}
               </pre>
             </div>
+
+            {/* Pointwise Diagnostics */}
+            <div style={{ background: 'rgba(255,255,255,0.65)', border: '1px solid rgba(200,90,50,0.3)', borderRadius: 6, padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: '#8A2A0B' }}>
+                <Info size={13} style={{ color: '#C85A32' }} />
+                <span>Root Cause Analysis &amp; Compiler Diagnostics (Pointwise):</span>
+              </div>
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 5 }}>
+                {getShortenerDiagnosticPoints().map((pt, idx) => (
+                  <li key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: 7, fontSize: 11.5, color: '#4A3E38', lineHeight: 1.4 }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 16, height: 16, borderRadius: '50%', backgroundColor: '#C85A32', color: '#FFF', fontSize: 10, fontWeight: 800, flexShrink: 0, marginTop: 1 }}>{idx + 1}</span>
+                    <span style={{ flex: 1 }}>{pt}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {diagnosisResult && diagnosisResult.fixPoints && diagnosisResult.fixPoints.length > 0 && (
+              <div style={{ background: 'rgba(235, 246, 238, 0.8)', border: '1px solid rgba(76, 122, 93, 0.35)', borderRadius: 6, padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: '#2A5A3D' }}>
+                  <CheckCircle2 size={13} style={{ color: '#2A5A3D' }} />
+                  <span>How The Original Code Was Fixed (Pointwise):</span>
+                </div>
+                <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 5 }}>
+                  {diagnosisResult.fixPoints.map((pt, idx) => (
+                    <li key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: 7, fontSize: 11.5, color: '#4A3E38', lineHeight: 1.4 }}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 16, height: 16, borderRadius: '50%', backgroundColor: '#4C7A5D', color: '#FFF', fontSize: 10, fontWeight: 800, flexShrink: 0, marginTop: 1 }}>{idx + 1}</span>
+                      <span style={{ flex: 1 }}>{pt}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
         ) : (
           <div className="empty-shortener-state">

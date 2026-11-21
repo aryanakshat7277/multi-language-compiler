@@ -3,10 +3,12 @@ import { useParams, useNavigate } from 'react-router-dom';
 import Editor from '@monaco-editor/react';
 import { 
   Clock, CheckCircle2, 
-  Play, ArrowLeft, Send, CheckSquare, Award, Loader2, Sparkles, X, Plus, Search, Check
+  Play, ArrowLeft, Send, CheckSquare, Award, Loader2, Sparkles, X, Plus, Search, Check,
+  AlertTriangle, Info, Wrench
 } from 'lucide-react';
 import { 
-  api, generateAiAssessment, submitAssessmentReport, AssessmentGradeReport 
+  api, generateAiAssessment, submitAssessmentReport, AssessmentGradeReport,
+  debugCode, DebugResult
 } from '../services/api';
 import { useToast } from '../contexts/ToastContext';
 import { registerMonacoThemes } from '../utils/monacoThemes';
@@ -279,6 +281,8 @@ export default function AssessmentPage() {
   // Code execution output
   const [testOutput, setTestOutput] = useState<string | null>(null);
   const [runningTest, setRunningTest] = useState(false);
+  const [isFixingTest, setIsFixingTest] = useState(false);
+  const [testDiagnosis, setTestDiagnosis] = useState<DebugResult | null>(null);
 
   // Grade Certificate Report Modal
   const [gradeReport, setGradeReport] = useState<AssessmentGradeReport | null>(null);
@@ -396,11 +400,11 @@ export default function AssessmentPage() {
 
   const activeProblem = problems.find(p => p.id === activeProblemId) || problems[0];
 
-  const handleRunCodeTest = async () => {
+  const handleRunCodeTest = async (codeOverride?: string) => {
     setRunningTest(true);
     setTestOutput('➜ Compiling and running solution against sample test cases...\n');
     try {
-      const currentCode = codes[activeProblemId] || '';
+      const currentCode = codeOverride || codes[activeProblemId] || '';
       const sampleIn = activeProblem?.sampleInput || '';
 
       const res = await api.post('/compiler/execute', {
@@ -435,6 +439,55 @@ export default function AssessmentPage() {
     } finally {
       setRunningTest(false);
     }
+  };
+
+  const handleDiagnoseAndFixTest = async () => {
+    const currentCode = codes[activeProblemId] || '';
+    if (!currentCode.trim()) {
+      showToast('No code in editor to diagnose', 'warning');
+      return;
+    }
+    setIsFixingTest(true);
+    showToast('Diagnosing test failure & synthesizing repair...', 'info');
+
+    try {
+      const errorDetails = testOutput || 'Error running test case';
+      const res = await debugCode(currentCode, errorDetails, language);
+      setTestDiagnosis(res);
+
+      if (res && res.fix && res.fix.trim().length > 0 && res.fix.trim() !== currentCode.trim()) {
+        const repaired = res.fix;
+        setCodes(prev => ({ ...prev, [activeProblemId]: repaired }));
+        showToast('✓ Solution repaired successfully! Re-running test cases...', 'success');
+        await handleRunCodeTest(repaired);
+      } else {
+        showToast('Pointwise diagnosis generated below.', 'info');
+      }
+    } catch (err: any) {
+      console.error('Test diagnosis failed:', err);
+      showToast(err?.message || 'Failed to auto-repair test code', 'error');
+    } finally {
+      setIsFixingTest(false);
+    }
+  };
+
+  const getTestDiagnosticPoints = () => {
+    if (testDiagnosis?.errorPoints && testDiagnosis.errorPoints.length > 0) {
+      return testDiagnosis.errorPoints;
+    }
+    const pts: string[] = [];
+    if (testOutput) {
+      const errMatch = testOutput.match(/(?:Errors:|Error:)\s*([^\n]+)/i);
+      if (errMatch) {
+        pts.push(`Execution Failure: ${errMatch[1].trim()}`);
+      } else {
+        pts.push(`Execution Abort: Runtime exception or syntax failure during test execution.`);
+      }
+    }
+    pts.push(`Test Input Assertion: Problem input "${activeProblem?.sampleInput || 'sample'}" failed to yield the expected output.`);
+    pts.push(`Boundary & Edge Conditions: Check array bounds, null checks, and expected return types.`);
+    pts.push(`Automated Remediation: Click "⚡ Diagnose & Fix Error" to patch the logic and re-test.`);
+    return pts;
   };
 
   const handleSaveAnswer = () => {
@@ -769,11 +822,92 @@ export default function AssessmentPage() {
             />
           </div>
 
-          {testOutput && (
-            <div style={{ background: '#1C130E', color: '#F5ECE3', fontFamily: 'var(--font-mono)', fontSize: 12, padding: '10px 14px', borderTop: '1px solid #C8B6A6', maxHeight: 120, overflowY: 'auto', whiteSpace: 'pre-wrap' }}>
-              {testOutput}
-            </div>
-          )}
+          {testOutput && (() => {
+            const isTestError = Boolean(
+              testOutput.includes('Errors:') ||
+              testOutput.toLowerCase().includes('syntaxerror') ||
+              testOutput.toLowerCase().includes('error:') ||
+              testOutput.toLowerCase().includes('failed') ||
+              testOutput.toLowerCase().includes('traceback') ||
+              testOutput.toLowerCase().includes('exception') ||
+              testOutput.includes('COMPILATION_ERROR') ||
+              testOutput.includes('RUNTIME_ERROR')
+            );
+
+            if (isTestError) {
+              return (
+                <div className="assessment-error-panel">
+                  <div className="assessment-error-header">
+                    <div className="assessment-error-title">
+                      <AlertTriangle size={15} style={{ color: '#C85A32' }} />
+                      <span>Test Case Execution Failed</span>
+                    </div>
+                    <button 
+                      className="assessment-diagnose-btn"
+                      onClick={handleDiagnoseAndFixTest}
+                      disabled={isFixingTest}
+                      title="Diagnose test error, patch solution, and re-run tests"
+                    >
+                      {isFixingTest ? (
+                        <>
+                          <Loader2 size={13} className="spin-icon" />
+                          <span>Diagnosing &amp; Repairing...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles size={13} />
+                          <span>⚡ Diagnose &amp; Fix Error</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  <pre className="assessment-error-console">
+                    {testOutput}
+                  </pre>
+
+                  {/* Pointwise Diagnostics */}
+                  <div className="assessment-causes-card">
+                    <div className="assessment-causes-heading">
+                      <Info size={13} style={{ color: '#C85A32' }} />
+                      <span>Root Cause &amp; Test Diagnostics (Pointwise):</span>
+                    </div>
+                    <ul className="assessment-causes-list">
+                      {getTestDiagnosticPoints().map((pt, idx) => (
+                        <li key={idx} className="assessment-cause-item">
+                          <span className="assessment-bullet-badge">{idx + 1}</span>
+                          <span className="assessment-cause-txt">{pt}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {testDiagnosis && testDiagnosis.fixPoints && testDiagnosis.fixPoints.length > 0 && (
+                    <div className="assessment-causes-card success-card">
+                      <div className="assessment-causes-heading success-heading">
+                        <CheckCircle2 size={13} style={{ color: '#2A5A3D' }} />
+                        <span>How The Issue Was Fixed (Pointwise):</span>
+                      </div>
+                      <ul className="assessment-causes-list">
+                        {testDiagnosis.fixPoints.map((pt, idx) => (
+                          <li key={idx} className="assessment-cause-item">
+                            <span className="assessment-bullet-badge success">{idx + 1}</span>
+                            <span className="assessment-cause-txt">{pt}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              );
+            }
+
+            return (
+              <div style={{ background: '#1C130E', color: '#F5ECE3', fontFamily: 'var(--font-mono)', fontSize: 12, padding: '10px 14px', borderTop: '1px solid #C8B6A6', maxHeight: 120, overflowY: 'auto', whiteSpace: 'pre-wrap' }}>
+                {testOutput}
+              </div>
+            );
+          })()}
           
           <div className="exam-action-bar" style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
             <button className="btn btn-secondary btn-sm" onClick={handleRunCodeTest} disabled={runningTest}>

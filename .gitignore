@@ -52,6 +52,8 @@ data/
 *.apk
 *.zip
 *.pdf
+*.pptx
+*.mp4
 desktop/dist/
 scratch/
 frontend/public/*.apk

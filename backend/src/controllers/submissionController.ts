@@ -32,17 +32,68 @@ export const createSubmission = async (req: AuthRequest, res: Response, next: Ne
 export const getSubmissionById = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const id = req.params.id as string;
-    const submission = await prisma.submission.findUnique({ where: { id },
-      include: { files: true, testResults: { include: { testCase: { select: { points: true, isHidden: true } } } },
-        language: true, problem: { select: { title: true, slug: true } } } });
+    const submission = await prisma.submission.findUnique({
+      where: { id },
+      include: {
+        files: true,
+        testResults: {
+          include: {
+            testCase: {
+              select: {
+                id: true,
+                input: true,
+                expectedOutput: true,
+                points: true,
+                isHidden: true,
+                orderIndex: true
+              }
+            }
+          }
+        },
+        language: true,
+        problem: {
+          select: {
+            id: true,
+            title: true,
+            slug: true,
+            difficulty: true,
+            testCases: {
+              select: {
+                id: true,
+                input: true,
+                expectedOutput: true,
+                points: true,
+                isHidden: true,
+                orderIndex: true
+              },
+              orderBy: { orderIndex: 'asc' }
+            }
+          }
+        }
+      }
+    });
     if (!submission) { res.status(404).json({ error: 'Submission not found' }); return; }
-    // Hide actual output for hidden test cases for students
+
+    // Mask sensitive details for hidden test cases if student, but keep rich failure diagnostics
     const result: any = { ...submission };
-    if (req.user?.role === 'STUDENT') {
-      result.testResults = submission.testResults.map((tr: any) => {
-        if (tr.testCase?.isHidden) { return { ...tr, actualOutput: 'Hidden' }; }
-        return tr;
-      });
+    if (result.testResults && Array.isArray(result.testResults)) {
+      result.testResults.sort((a: any, b: any) => (a.testCase?.orderIndex || 0) - (b.testCase?.orderIndex || 0));
+      if (req.user?.role === 'STUDENT') {
+        result.testResults = result.testResults.map((tr: any) => {
+          if (tr.testCase?.isHidden) {
+            return {
+              ...tr,
+              actualOutput: tr.status === 'PASS' ? 'Passed' : 'Output hidden for edge validation',
+              testCase: {
+                ...tr.testCase,
+                input: 'Hidden (Boundary / Edge Test Case)',
+                expectedOutput: 'Hidden'
+              }
+            };
+          }
+          return tr;
+        });
+      }
     }
     res.status(200).json(result);
   } catch (error) { next(error); }

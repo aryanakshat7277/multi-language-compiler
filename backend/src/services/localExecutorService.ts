@@ -123,34 +123,64 @@ export class LocalExecutorService {
       const programFilesX86 = process.env['ProgramFiles(x86)'] || 'C:\\Program Files (x86)';
 
       const candidateDirs = [
+        // Java candidates
+        process.env.JAVA_HOME ? path.join(process.env.JAVA_HOME, 'bin') : '',
+        process.env.JAVA_HOME || '',
+        path.join(programFiles, 'Common Files', 'Oracle', 'Java', 'javapath'),
+        path.join(programFiles, 'Java'),
+        path.join(programFiles, 'Eclipse Adoptium'),
+        path.join(programFiles, 'Amazon Corretto'),
+        path.join(programFiles, 'Microsoft'),
+        path.join(programFiles, 'BellSoft'),
+        path.join(programFiles, 'Zulu'),
+        path.join(programFilesX86, 'Java'),
+
+        // Rust candidates
+        process.env.CARGO_HOME ? path.join(process.env.CARGO_HOME, 'bin') : '',
+        process.env.CARGO_HOME || '',
+        path.join(userHome, '.cargo', 'bin'),
+        path.join(programFiles, 'Rust stable GNU 1.98', 'bin'),
+        path.join(programFiles, 'Rust stable MSVC 1.98', 'bin'),
+        path.join(programFiles, 'Rust', 'bin'),
+        'C:\\Rust\\bin',
+
+        // Go candidates
+        process.env.GOROOT ? path.join(process.env.GOROOT, 'bin') : '',
+        process.env.GOROOT || '',
+        path.join(programFiles, 'Go', 'bin'),
+        'C:\\Program Files\\Go\\bin',
+        'C:\\Go\\bin',
+        path.join(userHome, 'go', 'bin'),
+
+        // C / C++ GCC MinGW candidates
         path.join(localAppData, 'Microsoft', 'WinGet', 'Packages'),
         path.join(localAppData, 'Programs'),
         path.join(programFiles, 'mingw64', 'bin'),
         path.join(programFiles, 'MinGW', 'bin'),
         path.join(programFiles, 'LLVM', 'bin'),
-        path.join(programFiles, 'Go', 'bin'),
-        path.join(userHome, 'go', 'bin'),
-        path.join(userHome, '.cargo', 'bin'),
-        path.join(programFiles, 'Rust stable GNU 1.98', 'bin'),
-        path.join(programFiles, 'Rust stable MSVC 1.98', 'bin'),
-        'C:\\Rust\\bin',
-        path.join(programFiles, 'Common Files', 'Oracle', 'Java', 'javapath'),
-        path.join(programFiles, 'Java'),
         'C:\\mingw64\\bin',
         'C:\\MinGW\\bin',
         'C:\\TDM-GCC-64\\bin',
+        'C:\\msys64\\mingw64\\bin',
+        'C:\\msys64\\ucrt64\\bin',
+
+        // Python candidates
         'C:\\Python314',
         'C:\\Python313',
         'C:\\Python312',
         'C:\\Python311',
         'C:\\Python310',
-        'C:\\Program Files\\Go\\bin',
+        path.join(localAppData, 'Programs', 'Python'),
+
+        // PHP candidates
         'C:\\php',
         'C:\\tools\\php',
         path.join(programFiles, 'PHP'),
         path.join(localAppData, 'Programs', 'PHP'),
         path.join(localAppData, 'Microsoft', 'WinGet', 'Packages', 'PHP.PHP.8.4_Microsoft.Winget.Source_8wekyb3d8bbwe'),
         path.join(localAppData, 'Microsoft', 'WinGet', 'Links'),
+
+        // Ruby candidates
         'C:\\Ruby34-x64\\bin',
         'C:\\Ruby33-x64\\bin',
         'C:\\Ruby32-x64\\bin',
@@ -158,7 +188,7 @@ export class LocalExecutorService {
         path.join(programFiles, 'Ruby33-x64', 'bin'),
         path.join(programFiles, 'Ruby34-x64', 'bin'),
         path.join(localAppData, 'Programs', 'Ruby33-x64', 'bin'),
-      ];
+      ].filter(Boolean);
 
       // Direct check in candidates
       for (const cDir of candidateDirs) {
@@ -215,6 +245,59 @@ export class LocalExecutorService {
   }
 
   /**
+   * Check if the runtime binary actually exists on this host system.
+   */
+  public static isLanguageAvailable(lang: string): boolean {
+    const l = (lang || '').toLowerCase().trim();
+    try {
+      if (l === 'python' || l === 'python3' || l.includes('py')) {
+        const bin = this.findBinary('python');
+        return fs.existsSync(bin);
+      }
+      if (l === 'javascript' || l === 'node' || l === 'js') {
+        const bin = this.findBinary('node');
+        return fs.existsSync(bin);
+      }
+      if (l === 'typescript' || l === 'ts') {
+        const bin = this.findBinary('node');
+        return fs.existsSync(bin);
+      }
+      if (l === 'c' || l === 'gcc') {
+        const bin = this.findBinary('gcc');
+        return fs.existsSync(bin);
+      }
+      if (l === 'cpp' || l === 'c++' || l === 'g++') {
+        const bin = this.findBinary('g++');
+        return fs.existsSync(bin);
+      }
+      if (l === 'java') {
+        const javac = this.findBinary('javac');
+        const java = this.findBinary('java');
+        return fs.existsSync(javac) && fs.existsSync(java);
+      }
+      if (l === 'go' || l === 'golang') {
+        const bin = this.findBinary('go');
+        return fs.existsSync(bin);
+      }
+      if (l === 'rust' || l === 'rs') {
+        const bin = this.findBinary('rustc');
+        return fs.existsSync(bin);
+      }
+      if (l === 'php') {
+        const bin = this.findBinary('php');
+        return fs.existsSync(bin);
+      }
+      if (l === 'ruby' || l === 'rb') {
+        const bin = this.findBinary('ruby');
+        return fs.existsSync(bin);
+      }
+    } catch {
+      return false;
+    }
+    return false;
+  }
+
+  /**
    * Execute code locally on the host system as a fallback when Piston container is offline.
    */
   static async execute(request: PistonExecuteRequest): Promise<PistonExecuteResponse> {
@@ -248,6 +331,9 @@ export class LocalExecutorService {
       // Write files to temporary execution directory
       for (const file of request.files) {
         let filename = file.name || (lang.includes('py') ? 'main.py' : lang === 'java' ? mainFile : 'index.js');
+        if (lang === 'java') {
+          filename = mainFile;
+        }
         const safeName = path.basename(filename);
         fs.writeFileSync(path.join(tempDir, safeName), file.content, 'utf8');
       }
@@ -288,16 +374,15 @@ export class LocalExecutorService {
         const javaBin = this.findBinary('java');
         const className = path.basename(mainFile, '.java');
         return await this.compileAndRun(tempDir, javacBin, [mainFilePath], javaBin, request.stdin, request.run_timeout || 6000, ['-cp', tempDir, className]);
-      } else if (lang === 'go') {
-        const isWin = process.platform === 'win32';
-        const outBin = path.join(tempDir, isWin ? 'main.exe' : 'main.out');
-        const goBin = this.findBinary('go');
-        return await this.compileAndRun(tempDir, goBin, ['build', '-o', outBin, mainFilePath], outBin, request.stdin, request.run_timeout || 8000);
-      } else if (lang === 'rust') {
+      } else if (lang === 'go' || lang === 'golang') {
+        // Direct execution via 'go run' avoids module cache deadlocks and executes instantaneously
+        cmd = this.findBinary('go');
+        args = ['run', mainFilePath, ...(request.args || [])];
+      } else if (lang === 'rust' || lang === 'rs') {
         const isWin = process.platform === 'win32';
         const outBin = path.join(tempDir, isWin ? 'main.exe' : 'main.out');
         const rustcBin = this.findBinary('rustc');
-        return await this.compileAndRun(tempDir, rustcBin, [mainFilePath, '-O', '-o', outBin], outBin, request.stdin, request.run_timeout || 5000);
+        return await this.compileAndRun(tempDir, rustcBin, [mainFilePath, '-O', '-o', outBin], outBin, request.stdin, request.run_timeout || 6000);
       } else if (lang === 'php') {
         cmd = this.findBinary('php');
         args = [mainFilePath, ...(request.args || [])];
@@ -432,13 +517,22 @@ export class LocalExecutorService {
         NODE_ENV: 'production',
         TEMP: process.env.TEMP || os.tmpdir(),
         TMP: process.env.TMP || os.tmpdir(),
-        USERPROFILE: os.tmpdir(),
-        HOME: os.tmpdir(),
+        USERPROFILE: process.env.USERPROFILE || os.homedir() || os.tmpdir(),
+        HOME: process.env.HOME || os.homedir() || os.tmpdir(),
         GOCACHE: goCacheDir,
         GOPATH: goPathDir,
         LOCALAPPDATA: process.env.LOCALAPPDATA || path.join(os.tmpdir(), 'localappdata'),
         LANG: 'en_US.UTF-8'
       };
+
+      if (process.env.JAVA_HOME) sanitizedEnv.JAVA_HOME = process.env.JAVA_HOME;
+      if (process.env.GOROOT) sanitizedEnv.GOROOT = process.env.GOROOT;
+      if (process.env.CARGO_HOME) sanitizedEnv.CARGO_HOME = process.env.CARGO_HOME;
+      if (process.env.RUSTUP_HOME) sanitizedEnv.RUSTUP_HOME = process.env.RUSTUP_HOME;
+      if (process.env.APPDATA) sanitizedEnv.APPDATA = process.env.APPDATA;
+      if (process.env.ProgramFiles) sanitizedEnv.ProgramFiles = process.env.ProgramFiles;
+      if (process.env['ProgramFiles(x86)']) sanitizedEnv['ProgramFiles(x86)'] = process.env['ProgramFiles(x86)'];
+      if (process.env.SystemDrive) sanitizedEnv.SystemDrive = process.env.SystemDrive;
 
       if (process.platform === 'win32') {
         if (process.env.SystemRoot) sanitizedEnv.SystemRoot = process.env.SystemRoot;

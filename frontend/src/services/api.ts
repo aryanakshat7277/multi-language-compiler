@@ -463,3 +463,74 @@ export async function debugCode(code: string, errorOutput: string, languageId: s
   return api.post('/ai-review/debug', { sourceCode: code, errorOutput, languageId });
 }
 
+// ─── Feedback & Issue Reporting ──────────────────────────────────────────────
+export interface FeedbackItem {
+  id: string;
+  userId?: string | null;
+  userName?: string | null;
+  userEmail?: string | null;
+  type: 'BUG_REPORT' | 'FEATURE_REQUEST' | 'IMPROVEMENT';
+  section: string;
+  title: string;
+  description: string;
+  suggestedFix?: string | null;
+  screenshotUrl?: string | null;
+  severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  status: 'PENDING' | 'UNDER_REVIEW' | 'RESOLVED' | 'DISMISSED';
+  adminNotes?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  user?: {
+    id: string;
+    displayName: string;
+    email: string;
+    avatarUrl?: string;
+    role: string;
+  };
+}
+
+export interface FeedbackSubmissionPayload {
+  type: 'BUG_REPORT' | 'FEATURE_REQUEST' | 'IMPROVEMENT';
+  section: string;
+  title: string;
+  description: string;
+  suggestedFix?: string;
+  screenshotUrl?: string;
+  severity?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  userName?: string;
+  userEmail?: string;
+}
+
+export interface FeedbackListResponse {
+  items: FeedbackItem[];
+  stats: {
+    total: number;
+    pending: number;
+    bugs: number;
+    features: number;
+  };
+}
+
+export async function submitFeedback(payload: FeedbackSubmissionPayload): Promise<{ success: boolean; message: string; feedback: FeedbackItem }> {
+  return api.post('/feedback', payload);
+}
+
+export async function getAdminFeedback(params?: { type?: string; status?: string; section?: string; severity?: string; search?: string }): Promise<FeedbackListResponse> {
+  const query = new URLSearchParams();
+  if (params) {
+    Object.entries(params).forEach(([k, v]) => {
+      if (v && v !== 'ALL') query.append(k, v);
+    });
+  }
+  const qs = query.toString();
+  return api.get(`/admin/feedback${qs ? `?${qs}` : ''}`);
+}
+
+export async function updateAdminFeedback(id: string, data: { status?: string; adminNotes?: string }): Promise<{ success: boolean; feedback: FeedbackItem }> {
+  return api.patch(`/admin/feedback/${id}`, data);
+}
+
+export async function deleteAdminFeedback(id: string): Promise<{ success: boolean; message: string }> {
+  return api.delete(`/admin/feedback/${id}`);
+}
+

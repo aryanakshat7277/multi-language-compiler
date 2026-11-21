@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { 
   Play, CheckCircle, Brain, BarChart3, Terminal, 
   Code2, GitBranch, GitCompare, User, Search, 
-  Keyboard, Sparkles, FolderCode, ArrowRight, X
+  Keyboard, Sparkles, FolderCode, ArrowRight, X,
+  MessageSquarePlus, Wrench
 } from 'lucide-react';
 import { useEditorStore } from '../../stores/editorStore';
 import { useToast } from '../../contexts/ToastContext';
@@ -47,6 +48,41 @@ export const CommandPalette: React.FC<{ isOpen: boolean; onClose: () => void }> 
         navigate('/compiler');
         // Dispatch run event
         window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', ctrlKey: true }));
+        onClose();
+      }
+    },
+    {
+      id: 'diagnose-fix-code',
+      title: 'Diagnose & Auto-Fix Current Code (Pointwise Analysis)',
+      category: 'Actions',
+      icon: <Wrench size={14} className="cmd-icon-amber" />,
+      action: () => {
+        navigate('/compiler');
+        // Trigger diagnose button if available
+        setTimeout(() => {
+          const btn = document.querySelector('.btn-diagnose-fix') as HTMLButtonElement;
+          if (btn) btn.click();
+        }, 150);
+        onClose();
+      }
+    },
+    {
+      id: 'report-bug-issue',
+      title: 'Report a Bug / Issue (Upload Screenshot)',
+      category: 'Actions',
+      icon: <MessageSquarePlus size={14} className="cmd-icon-rose" />,
+      action: () => {
+        navigate('/feedback?tab=bug');
+        onClose();
+      }
+    },
+    {
+      id: 'suggest-feature-idea',
+      title: 'Suggest Section Modification / New Feature Idea',
+      category: 'Actions',
+      icon: <Sparkles size={14} className="cmd-icon-cyan" />,
+      action: () => {
+        navigate('/feedback?tab=feature');
         onClose();
       }
     },

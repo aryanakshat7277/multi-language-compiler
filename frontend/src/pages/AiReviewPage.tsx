@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import Editor from '@monaco-editor/react';
-import { Brain, Sparkles, Loader2, Bug, CheckCircle2, Zap, AlertTriangle, Tag, Play } from 'lucide-react';
+import { Brain, Sparkles, Loader2, Bug, CheckCircle2, Zap, AlertTriangle, Tag, Play, Info, Wrench } from 'lucide-react';
 import { 
   getAiExplanation, getAiTests, getAiDebug, getAiReview, 
-  validateCodeCorrectness,
+  validateCodeCorrectness, debugCode,
   ExplanationResult, TestsResult, DebugResult, ReviewResult 
 } from '../services/api';
 import { useToast } from '../contexts/ToastContext';
@@ -35,6 +35,8 @@ export default function AiReviewPage() {
   const [errorOutput, setErrorOutput] = useState('');
   const [problemDesc, setProblemDesc] = useState('');
   const [compilationWarning, setCompilationWarning] = useState<string | null>(null);
+  const [isFixing, setIsFixing] = useState(false);
+  const [diagnosisResult, setDiagnosisResult] = useState<DebugResult | null>(null);
   const { showToast } = useToast();
 
   const modes = [
@@ -44,14 +46,15 @@ export default function AiReviewPage() {
     { id: 'review',  label: 'Code Review' },
   ];
 
-  const handleAnalyze = async () => {
+  const handleAnalyze = async (codeOverride?: string) => {
+    const activeCode = codeOverride || code;
     setLoading(true);
     setResult(null);
     setCompilationWarning(null);
 
     try {
       // Step 1: Pre-flight Code Correctness Validation
-      const valRes = await validateCodeCorrectness(code, language);
+      const valRes = await validateCodeCorrectness(activeCode, language);
 
       let activeErr = errorOutput;
       if (!valRes.isValid) {
@@ -72,13 +75,13 @@ export default function AiReviewPage() {
 
       let res: any;
       if (mode === 'explain') {
-        res = await getAiExplanation(code, language);
+        res = await getAiExplanation(activeCode, language);
       } else if (mode === 'tests') {
-        res = await getAiTests(code, language, problemDesc);
+        res = await getAiTests(activeCode, language, problemDesc);
       } else if (mode === 'debug') {
-        res = await getAiDebug(code, activeErr, language);
+        res = await getAiDebug(activeCode, activeErr, language);
       } else if (mode === 'review') {
-        res = await getAiReview(code, language);
+        res = await getAiReview(activeCode, language);
         if (!valRes.isValid && res) {
           // Inject compilation failure as the primary critical issue
           res.issues = [
@@ -100,6 +103,47 @@ export default function AiReviewPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDiagnoseAndFix = async () => {
+    if (!code || !code.trim()) return;
+    setIsFixing(true);
+    showToast('Diagnosing error & synthesizing repair...', 'info');
+
+    try {
+      const errToFix = compilationWarning || errorOutput || 'Syntax/compilation error in code.';
+      const res = await debugCode(code, errToFix, language);
+      setDiagnosisResult(res);
+
+      if (res && res.fix && res.fix.trim().length > 0 && res.fix.trim() !== code.trim()) {
+        setCode(res.fix);
+        setCompilationWarning(null);
+        showToast('✓ Code successfully repaired! Re-running analysis...', 'success');
+        await handleAnalyze(res.fix);
+      } else {
+        showToast('Diagnostic completed. See pointwise root cause breakdown below.', 'info');
+      }
+    } catch (err: any) {
+      console.error('Diagnosis failed:', err);
+      showToast(err?.message || 'Failed to auto-repair code', 'error');
+    } finally {
+      setIsFixing(false);
+    }
+  };
+
+  const getWarningDiagnosticPoints = () => {
+    if (diagnosisResult?.errorPoints && diagnosisResult.errorPoints.length > 0) {
+      return diagnosisResult.errorPoints;
+    }
+    const pts: string[] = [];
+    if (compilationWarning) {
+      const firstLine = compilationWarning.split('\n')[0];
+      pts.push(`Fatal Error Trace: ${firstLine}`);
+    }
+    pts.push(`Syntax Integrity: Parser encountered an illegal or unexpected token in the program stream.`);
+    pts.push(`Execution Constraint: Broken code cannot be compiled or verified; automated unit testing and AST synthesis are suspended.`);
+    pts.push(`Remediation: Click "⚡ Diagnose & Fix with AI" to auto-repair delimiters, correct grammar, and re-run.`);
+    return pts;
   };
 
   const btnLabel = { explain: 'Explain Code', tests: 'Generate Tests', debug: 'Debug Error', review: 'Review Code' }[mode];
@@ -194,19 +238,87 @@ export default function AiReviewPage() {
 
         <div className="ai-output-scroll-container">
           {compilationWarning && (
-            <div style={{ background: '#FCE8E0', border: '1.5px solid #C85A32', borderRadius: 8, padding: '14px 18px', margin: '16px', color: '#8A2A0B' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 800, fontSize: 13.5 }}>
-                <AlertTriangle size={16} style={{ color: '#C85A32' }} />
-                <span>Code Correctness Warning: Compilation / Syntax Error</span>
+            <div className="ai-warning-diagnose-card" style={{ background: '#FCE8E0', border: '1.5px solid #C85A32', borderRadius: 8, padding: '14px 18px', margin: '16px', color: '#8A2A0B', display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 800, fontSize: 13.5 }}>
+                  <AlertTriangle size={16} style={{ color: '#C85A32' }} />
+                  <span>Code Correctness Warning: Compilation / Syntax Error</span>
+                </div>
+                <button
+                  className="analysis-diagnose-btn"
+                  onClick={handleDiagnoseAndFix}
+                  disabled={isFixing}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    background: 'linear-gradient(135deg, #C85A32 0%, #B24620 100%)',
+                    color: '#FFF',
+                    border: '1px solid rgba(0,0,0,0.1)',
+                    padding: '6px 14px',
+                    borderRadius: 6,
+                    fontSize: 12.5,
+                    fontWeight: 700,
+                    cursor: isFixing ? 'not-allowed' : 'pointer'
+                  }}
+                  title="Automatically diagnose error, repair code, and re-run AI analysis"
+                >
+                  {isFixing ? (
+                    <>
+                      <Loader2 size={13} className="spin-icon" />
+                      <span>Diagnosing &amp; Repairing...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles size={13} />
+                      <span>⚡ Diagnose &amp; Fix with AI</span>
+                    </>
+                  )}
+                </button>
               </div>
-              <p style={{ margin: '6px 0 0', fontSize: 12, color: '#5C4E44', lineHeight: 1.4 }}>
+
+              <p style={{ margin: 0, fontSize: 12, color: '#5C4E44', lineHeight: 1.4 }}>
                 {mode === 'tests' 
                   ? 'Test generation cannot validate broken code. Please fix the compiler error below:' 
                   : 'This code contains syntax or compilation errors and will fail to execute:'}
               </p>
-              <pre style={{ background: '#2D231E', color: '#F5ECE3', padding: '8px 12px', borderRadius: 6, margin: '8px 0 0', fontSize: 11.5, fontFamily: 'var(--font-mono)', overflowX: 'auto', whiteSpace: 'pre-wrap' }}>
+
+              <pre style={{ background: '#2D231E', color: '#F5ECE3', padding: '8px 12px', borderRadius: 6, margin: 0, fontSize: 11.5, fontFamily: 'var(--font-mono)', overflowX: 'auto', whiteSpace: 'pre-wrap', borderLeft: '3px solid #C85A32' }}>
                 {compilationWarning}
               </pre>
+
+              {/* Pointwise Root Cause Analysis */}
+              <div style={{ background: 'rgba(255,255,255,0.65)', border: '1px solid rgba(200,90,50,0.3)', borderRadius: 6, padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: '#8A2A0B' }}>
+                  <Info size={13} style={{ color: '#C85A32' }} />
+                  <span>Root Cause Analysis &amp; Compiler Diagnostics (Pointwise):</span>
+                </div>
+                <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 5 }}>
+                  {getWarningDiagnosticPoints().map((pt, idx) => (
+                    <li key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: 7, fontSize: 11.5, color: '#4A3E38', lineHeight: 1.4 }}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 16, height: 16, borderRadius: '50%', backgroundColor: '#C85A32', color: '#FFF', fontSize: 10, fontWeight: 800, flexShrink: 0, marginTop: 1 }}>{idx + 1}</span>
+                      <span style={{ flex: 1 }}>{pt}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {diagnosisResult && diagnosisResult.fixPoints && diagnosisResult.fixPoints.length > 0 && (
+                <div style={{ background: 'rgba(235, 246, 238, 0.8)', border: '1px solid rgba(76, 122, 93, 0.35)', borderRadius: 6, padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: '#2A5A3D' }}>
+                    <CheckCircle2 size={13} style={{ color: '#2A5A3D' }} />
+                    <span>How The Issue Was Fixed (Pointwise):</span>
+                  </div>
+                  <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 5 }}>
+                    {diagnosisResult.fixPoints.map((pt, idx) => (
+                      <li key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: 7, fontSize: 11.5, color: '#4A3E38', lineHeight: 1.4 }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 16, height: 16, borderRadius: '50%', backgroundColor: '#4C7A5D', color: '#FFF', fontSize: 10, fontWeight: 800, flexShrink: 0, marginTop: 1 }}>{idx + 1}</span>
+                        <span style={{ flex: 1 }}>{pt}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           )}
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { 
-  Search, Sparkles, Bell, ChevronLeft, Maximize2, Minimize2, Menu
+  Search, Sparkles, Bell, ChevronLeft, Maximize2, Minimize2, Menu, MessageSquarePlus
 } from 'lucide-react';
 import './Header.css';
 
@@ -10,13 +10,15 @@ interface HeaderProps {
   collapsed?: boolean;
   onToggleSidebar?: () => void;
   onOpenMobileDrawer?: () => void;
+  onOpenFeedback?: (type?: 'BUG_REPORT' | 'FEATURE_REQUEST') => void;
 }
 
 const Header: React.FC<HeaderProps> = ({ 
   onOpenCommandPalette, 
   collapsed = false, 
   onToggleSidebar,
-  onOpenMobileDrawer
+  onOpenMobileDrawer,
+  onOpenFeedback
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -151,6 +153,17 @@ const Header: React.FC<HeaderProps> = ({
           <Sparkles size={14} className="sparkle-ico" />
           <span>AI Intelligence</span>
         </div>
+
+        {onOpenFeedback && (
+          <button 
+            className="feedback-header-btn" 
+            title="Report an issue or suggest a feature to administrators" 
+            onClick={() => onOpenFeedback('BUG_REPORT')}
+          >
+            <MessageSquarePlus size={16} />
+            <span className="feedback-hdr-text">Report / Idea</span>
+          </button>
+        )}
 
         <button 
           className="bell-ghost-btn" 

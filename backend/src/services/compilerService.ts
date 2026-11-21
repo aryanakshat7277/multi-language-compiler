@@ -12,6 +12,7 @@ import prisma from '../config/database';
 import { logger } from '../utils/logger';
 import { config } from '../config/env';
 import { LocalExecutorService } from './localExecutorService';
+import { CloudSandboxService } from './cloudSandboxService';
 
 export class CompilerService {
   private static verifiedLanguages = new Set<string>();
@@ -103,19 +104,42 @@ export class CompilerService {
       // Broadcast COMPILING / RUNNING
       broadcastJobStatus(executionId, 'RUNNING');
 
-      let pistonRes: any;
+      let pistonRes: any = null;
       const isPrivatePiston = config.pistonBaseUrl && !config.pistonBaseUrl.includes('emkc.org');
       
+      // Tier 1: Private Piston Sandbox (if configured and reachable)
       if (isPrivatePiston) {
         try {
           pistonRes = await pistonClient.executeCode(pistonReq);
         } catch (pistonErr: any) {
-          logger.warn(`Private Piston offline (${pistonErr.message}), falling back to LocalExecutorService`);
-          pistonRes = await LocalExecutorService.execute(pistonReq);
+          logger.warn(`Private Piston offline (${pistonErr.message}), falling back to local/cloud runners`);
         }
-      } else {
-        // Direct native local execution: sub-100ms ultra-low latency, zero dead network waits
-        pistonRes = await LocalExecutorService.execute(pistonReq);
+      }
+
+      // Tier 2: Host Native Execution (if compiler toolchain is installed locally)
+      if (!pistonRes) {
+        const isLocalAvailable = LocalExecutorService.isLanguageAvailable(pistonReq.language);
+        if (isLocalAvailable) {
+          try {
+            const localRes = await LocalExecutorService.execute(pistonReq);
+            // Check if local executor failed due to missing runtime or command not found (code 127)
+            if (localRes.run?.code === 127 && localRes.run?.stderr?.includes('installed on the host system?')) {
+              logger.warn(`Local toolchain missing for ${pistonReq.language}, escalating to Cloud Universal Sandbox`);
+            } else {
+              pistonRes = localRes;
+            }
+          } catch (localErr: any) {
+            logger.warn(`Local execution error for ${pistonReq.language}: ${localErr.message}, escalating to Cloud Universal Sandbox`);
+          }
+        } else {
+          logger.info(`Host lacks local toolchain for ${pistonReq.language}, routing directly to Cloud Universal Sandbox`);
+        }
+      }
+
+      // Tier 3: Universal Cloud Sandbox Runner (Runs on ANY device without any software installation)
+      if (!pistonRes) {
+        logger.info(`Executing ${pistonReq.language} via Zero-Install Cloud Universal Sandbox...`);
+        pistonRes = await CloudSandboxService.execute(pistonReq);
       }
       
       compileResult = pistonRes.compile;

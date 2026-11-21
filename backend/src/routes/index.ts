@@ -16,6 +16,7 @@ import * as aiController from '../controllers/aiController';
 import * as assessmentController from '../controllers/assessmentController';
 import * as adminController from '../controllers/adminController';
 import * as compilerController from '../controllers/compilerController';
+import * as feedbackController from '../controllers/feedbackController';
 import prisma from '../config/database';
 import { parseCode } from '../services/astService';
 import { LocalExecutorService } from '../services/localExecutorService';
@@ -150,6 +151,14 @@ router.get('/admin/health', adminController.getHealth);
 router.get('/admin/users', authenticate, requireRole('ADMIN'), adminController.getUsersList);
 router.put('/admin/users/:id/role', authenticate, requireRole('ADMIN'), adminController.updateUserRole);
 router.put('/admin/languages/:id', authenticate, requireRole('ADMIN'), adminController.toggleLanguage);
+
+// User Feedback & Issue Reporting (Available to all users)
+router.post('/feedback', optionalAuth, feedbackController.createFeedback);
+
+// Administrator Feedback Review & Management (RESTRICTED: ONLY ADMIN)
+router.get('/admin/feedback', authenticate, requireRole('ADMIN'), feedbackController.getFeedbackList);
+router.patch('/admin/feedback/:id', authenticate, requireRole('ADMIN'), feedbackController.updateFeedback);
+router.delete('/admin/feedback/:id', authenticate, requireRole('ADMIN'), feedbackController.deleteFeedback);
 
 router.get('/leaderboard', async (_req: any, res: any, next: any) => {
   try {

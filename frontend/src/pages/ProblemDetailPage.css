@@ -516,22 +516,93 @@
 }
 
 /* --------------------------------------------------------------------------
-   Footer Bar
+   Footer Bar Actions
    -------------------------------------------------------------------------- */
-.problem-footer-bar {
-  padding: 14px 20px;
+.problem-footer-bar,
+.problem-footer-action {
+  padding: 12px 16px;
   background-color: var(--bg-surface-sunken);
   border-top: 1px solid var(--border-hairline);
-  box-shadow: 0 -2px 8px rgba(166, 145, 127, 0.15);
+  box-shadow: 0 -2px 8px rgba(166, 145, 127, 0.14);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 10;
 }
 
-.btn-submit-solution {
-  width: 100%;
-  padding: 12px;
-  font-size: 14.5px;
+.problem-quick-diagnose-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 10px 14px;
+  font-family: var(--font-sans);
+  font-size: 13px;
   font-weight: 700;
-  letter-spacing: 0.01em;
+  color: #7A3516;
+  background: linear-gradient(180deg, #FFF7F2 0%, #F5DFD4 100%);
+  border: 1px solid rgba(200, 90, 50, 0.4);
   border-radius: var(--radius-sm);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(186, 79, 39, 0.12);
+}
+
+.problem-quick-diagnose-btn:hover:not(:disabled) {
+  background: linear-gradient(180deg, #FFFFFF 0%, #F0D5C7 100%);
+  border-color: #C85A32;
+  color: #5C2208;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(186, 79, 39, 0.22);
+}
+
+.problem-quick-diagnose-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.submit-solution-btn,
+.btn-submit-solution {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 18px;
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  font-weight: 700;
+  letter-spacing: 0.015em;
+  color: #FAF4EE;
+  background: linear-gradient(180deg, #D4663E 0%, #BA4F27 100%);
+  border: 1px solid #A2421D;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 2px 2px 5px rgba(186, 79, 39, 0.3), inset 0 1px 0 rgba(253, 248, 243, 0.25);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.submit-solution-btn:hover:not(:disabled),
+.btn-submit-solution:hover:not(:disabled) {
+  background: linear-gradient(180deg, #DE7048 0%, #C85A32 100%);
+  box-shadow: 3px 4px 8px rgba(186, 79, 39, 0.4), inset 0 1px 0 rgba(253, 248, 243, 0.35);
+  transform: translateY(-1px);
+}
+
+.submit-solution-btn:active:not(:disabled),
+.btn-submit-solution:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 1px 1px 3px rgba(186, 79, 39, 0.3), inset 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+.submit-solution-btn:disabled,
+.btn-submit-solution:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
 }
 
 /* --------------------------------------------------------------------------
@@ -560,4 +631,477 @@
 
 .problem-loading .spin-icon {
   color: var(--accent-terracotta);
+}
+
+/* --------------------------------------------------------------------------
+   Problem Diagnose & Fix Card
+   -------------------------------------------------------------------------- */
+.problem-diagnose-card {
+  background: #FCE8E0;
+  border: 1.5px solid #C85A32;
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 4px 12px rgba(200, 90, 50, 0.12);
+}
+
+.problem-diagnose-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.problem-diagnose-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #8A2A0B;
+}
+
+.problem-diagnose-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #C85A32 0%, #B24620 100%);
+  color: #FFFFFF;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  padding: 6px 13px;
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+  box-shadow: 0 2px 6px rgba(200, 90, 50, 0.25);
+}
+
+.problem-diagnose-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #D4663E 0%, #C85A32 100%);
+  transform: translateY(-1px);
+}
+
+.problem-diagnose-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.problem-causes-box {
+  background: rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(200, 90, 50, 0.3);
+  border-radius: 6px;
+  padding: 9px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.problem-causes-box.success-box {
+  background: rgba(235, 246, 238, 0.8);
+  border-color: rgba(76, 122, 93, 0.35);
+}
+
+.problem-causes-heading {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #8A2A0B;
+}
+
+.problem-causes-heading.success-heading {
+  color: #2A5A3D;
+}
+
+.problem-causes-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.problem-cause-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  font-size: 11.5px;
+  color: #4A3E38;
+  line-height: 1.4;
+}
+
+.problem-bullet-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background-color: #C85A32;
+  color: #FFF;
+  font-size: 10px;
+  font-weight: 800;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.problem-bullet-badge.success {
+  background-color: #4C7A5D;
+}
+
+.problem-cause-txt {
+  flex: 1;
+}
+
+/* --------------------------------------------------------------------------
+   Right Editor Panel Top Action Bar
+   -------------------------------------------------------------------------- */
+.problem-editor-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background-color: var(--bg-surface-sunken);
+  border-bottom: 1px solid var(--border-hairline);
+  box-shadow: 0 1px 4px rgba(166, 145, 127, 0.08);
+  gap: 12px;
+  z-index: 10;
+}
+
+.problem-editor-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.editor-title-text {
+  font-family: var(--font-serif);
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.editor-lang-badge {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
+  background-color: var(--bg-surface-inset);
+  color: var(--accent-terracotta);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-xs);
+}
+
+.problem-editor-actions-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* --------------------------------------------------------------------------
+   Pass Rate Bar & Summary
+   -------------------------------------------------------------------------- */
+.pass-rate-wrapper {
+  margin: 12px 0 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pass-rate-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.pass-rate-track {
+  width: 100%;
+  height: 8px;
+  background-color: rgba(0, 0, 0, 0.07);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.pass-rate-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width 0.4s ease-out;
+}
+
+.pass-rate-fill.success {
+  background: linear-gradient(90deg, #4C7A5D, #2E8540);
+}
+
+.pass-rate-fill.partial {
+  background: linear-gradient(90deg, #D4663E, #C85A32);
+}
+
+/* --------------------------------------------------------------------------
+   Test Case Classification Badges
+   -------------------------------------------------------------------------- */
+.test-type-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.01em;
+}
+
+.badge-type-sample {
+  background: #EAF4EE;
+  color: #1E5E3A;
+  border: 1px solid rgba(42, 90, 61, 0.3);
+}
+
+.badge-type-edge {
+  background: #FDF1EA;
+  color: #A2421D;
+  border: 1px solid rgba(200, 90, 50, 0.35);
+}
+
+.badge-type-boundary {
+  background: #FEF8E7;
+  color: #926600;
+  border: 1px solid rgba(180, 130, 20, 0.35);
+}
+
+.badge-type-hidden {
+  background: #F4EEFB;
+  color: #5E2A8A;
+  border: 1px solid rgba(120, 60, 180, 0.3);
+}
+
+/* --------------------------------------------------------------------------
+   Failure Diagnosis & Test Case Focus Card
+   -------------------------------------------------------------------------- */
+.failure-diagnosis-box {
+  background: #FFF7F2;
+  border: 1.5px solid #C85A32;
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin: 14px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 4px 14px rgba(200, 90, 50, 0.12);
+}
+
+.failure-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.failure-target-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #8A2A0B;
+}
+
+.failure-category-desc {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 12px;
+  color: #5C3D2E;
+  background: rgba(255, 255, 255, 0.7);
+  padding: 7px 10px;
+  border-radius: 5px;
+  border-left: 3px solid #C85A32;
+  line-height: 1.45;
+}
+
+.failure-io-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.failure-io-cell {
+  background: #FFFFFF;
+  border: 1px solid var(--border-hairline);
+  border-radius: 6px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.failure-io-cell.expected-cell {
+  border-left: 3px solid #2E8540;
+}
+
+.failure-io-cell.actual-cell {
+  border-left: 3px solid #C85A32;
+  background: #FFFBF9;
+}
+
+.io-tag {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.io-code {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 90px;
+  overflow-y: auto;
+}
+
+.failure-points-card {
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(200, 90, 50, 0.3);
+  border-radius: 6px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.failure-points-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #8A2A0B;
+}
+
+.failure-action-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+/* --------------------------------------------------------------------------
+   All Test Cases Breakdown Matrix
+   -------------------------------------------------------------------------- */
+.tc-matrix-section {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tc-matrix-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.tc-matrix-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tc-card-item {
+  border: 1px solid var(--border-hairline);
+  border-radius: 6px;
+  background: var(--bg-surface);
+  overflow: hidden;
+  transition: all 0.15s ease;
+}
+
+.tc-card-item.pass {
+  border-left: 3px solid #2E8540;
+}
+
+.tc-card-item.fail {
+  border-left: 3px solid #C85A32;
+  background: #FFFDFB;
+}
+
+.tc-card-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 12px;
+  cursor: pointer;
+  background: var(--bg-surface-sunken);
+  gap: 8px;
+}
+
+.tc-summary-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tc-verdict-tag {
+  font-size: 10.5px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 3px;
+  text-transform: uppercase;
+}
+
+.tc-verdict-tag.pass {
+  background: #EAF4EE;
+  color: #1E5E3A;
+}
+
+.tc-verdict-tag.fail {
+  background: #FDF1EA;
+  color: #A2421D;
+}
+
+.tc-title-num {
+  font-family: var(--font-serif);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.tc-summary-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11.5px;
+  color: var(--text-tertiary);
+}
+
+.tc-card-body {
+  padding: 10px 12px;
+  border-top: 1px solid var(--border-hairline);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--bg-surface);
+}
+
+.tc-body-desc {
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  line-height: 1.4;
 }
